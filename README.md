@@ -1,6 +1,6 @@
 # Savanna static pages
 
-Three Savanna learner pages, frozen from the **local dev app** into plain HTML + CSS so they can be
+Three Savanna learner pages and an accessible profile module, frozen from the **local dev app** into plain HTML + CSS so they can be
 opened offline and used as a reference for front-end and accessibility work.
 
 Open `index.html` (or any file in `pages/`) directly with `file://` — double-clicking works, no
@@ -13,6 +13,7 @@ server needed.
 | `pages/homepage-v1-paced.html` | Björn Sibanda — **WR 100: Fundamentals of Effective Communication**, cohort F26-SEM-16W (31 Aug – 20 Dec 2026), week 10 of 15 | Courses dropdown (3 courses), week strip with **every week preloaded**, "continue where you left off", immediate deliverables, period progress, overall score (59.56%, "slightly behind"), upcoming events |
 | `pages/homepage-v1-self-paced.html` | Amara Nwosu — **VA-1: VA Foundations & Professional Identity** | Course-progression gauge (16% against the 70% graduation threshold), 1 of 3 modules complete, **working module switcher**, **preloaded programme modal**, pacing boost (11 days left), upcoming events |
 | `pages/concept-with-navigation.html` | Amara Nwosu — concept *"The Future of the VA Industry"* | Curriculum navigation panel (read / current / unread states) beside a full authored concept: callouts, numbered card grid, two-column comparison, icon lists, "Mark as complete". The "Need a Fast Track?" block and the Padlet reflection block are removed on request. |
+| `pages/profile.html` | Accessible profile and career gateway | Offline-first identity status, voice review, private support matching, Amharic and low-literacy modes, read aloud, applications, employer accommodations, and consent-gated resume flow. |
 
 
 ## Layout
@@ -54,5 +55,26 @@ the accessibility tree and no id appears twice):
 | Dropdowns, modals, accordions, collapse, tooltips | all | Bootstrap's own bundle. |
 
 Everything else is inert.
+
+## Profile module
+
+Open `pages/profile.html` directly or use the link on `index.html`. Profile data, support choices,
+applications, and employer drafts are stored in the browser's local storage. Voice input and read
+aloud use browser capabilities when available; the page remains usable with keyboard and typing when
+they are not. The SMS control is intentionally consent-gated and clearly reports that no message is
+sent by this offline capture.
+
+### Gemini Amharic read-aloud
+
+Gemini TTS requires network access and sends the selected page text to Google. To enable it, use
+Node.js 18+ and set the key only in your local environment; never put the key in HTML or JavaScript:
+
+```powershell
+$env:GEMINI_API_KEY = "your-key"
+node server.cjs
+```
+
+Open `http://localhost:4173/` after starting the server. The Read Aloud button sends the current
+text to the local proxy, which keeps the key server-side and returns Gemini audio for playback.
 
 

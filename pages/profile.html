@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Accessible learner profile and career gateway" />
+    <title>My profile | Savanna</title>
+    <link rel="stylesheet" href="../assets/css/application_alx.css" media="all" />
+    <link rel="stylesheet" href="../assets/css/app.css" media="all" />
+    <link rel="stylesheet" href="../assets/css/profile.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="profile-header">
+      <a class="brand" href="../index.html" aria-label="Savanna home">SAVANNA</a>
+      <div class="header-actions">
+        <button class="button button-quiet" id="language-toggle" type="button" aria-pressed="false">አማ / English</button>
+        <button class="button button-quiet" id="literacy-toggle" type="button" aria-pressed="false">Use simple view</button>
+        <button class="button button-primary" id="read-aloud" type="button">🔊 Read this page aloud</button>
+      </div>
+    </header>
+
+    <main class="profile-shell" id="main-content">
+      <div class="page-intro">
+        <p class="eyebrow">MY PROFILE</p>
+        <h1 id="page-title">Your profile, your path</h1>
+        <p id="page-summary">Keep your information private while you build skills and find work that fits you.</p>
+      </div>
+
+      <section class="status-card" aria-labelledby="identity-title">
+        <div>
+          <p class="eyebrow">IDENTITY STATUS</p>
+          <h2 id="identity-title">Your account is verified</h2>
+          <p class="muted">You joined with a partner referral. No kebele ID or passport is required.</p>
+        </div>
+        <span class="status-badge">✓ Partner referral · AAAPD</span>
+        <div class="upload-area">
+          <label for="documents">Add another document (optional)</label>
+          <input id="documents" name="documents" type="file" accept=".pdf,.jpg,.jpeg,.png" />
+          <small>Stored on this device until you choose to share it.</small>
+        </div>
+      </section>
+
+      <div class="notice" role="status" id="save-status">Your progress saves on this device.</div>
+
+      <section class="content-card" aria-labelledby="about-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">STEP 1 OF 3</p>
+            <h2 id="about-title">Tell us about you</h2>
+          </div>
+          <span class="progress-label">Profile 33%</span>
+        </div>
+        <form id="profile-form">
+          <div class="form-grid">
+            <div class="field">
+              <label for="name">Name</label>
+              <input id="name" name="name" autocomplete="name" />
+            </div>
+            <div class="field">
+              <label for="location">City or region</label>
+              <input id="location" name="location" autocomplete="address-level1" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="bio">Short introduction</label>
+            <div class="voice-field">
+              <textarea id="bio" name="bio" rows="4" aria-describedby="bio-help"></textarea>
+              <button class="mic-button" type="button" data-voice-target="bio" aria-label="Dictate short introduction using voice">🎙</button>
+            </div>
+            <small id="bio-help">You can type or use the microphone. You will review words before saving.</small>
+          </div>
+          <div class="field">
+            <label for="skills">Skills and strengths</label>
+            <div class="voice-field">
+              <input id="skills" name="skills" aria-describedby="skills-help" />
+              <button class="mic-button" type="button" data-voice-target="skills" aria-label="Dictate skills and strengths using voice">🎙</button>
+            </div>
+            <small id="skills-help">For example: customer service, sewing, bookkeeping, or repair.</small>
+          </div>
+          <div class="field">
+            <label for="history">Project or work history</label>
+            <div class="voice-field">
+              <textarea id="history" name="history" rows="4"></textarea>
+              <button class="mic-button" type="button" data-voice-target="history" aria-label="Dictate project or work history using voice">🎙</button>
+            </div>
+          </div>
+          <button class="button button-primary" type="submit">Save profile</button>
+        </form>
+      </section>
+
+      <section class="content-card" aria-labelledby="support-title">
+        <p class="eyebrow">PRIVATE SUPPORT</p>
+        <h2 id="support-title">What support would help you learn?</h2>
+        <p class="helper-callout">This request is completely confidential, requires zero medical proof, and is used solely to match you with the right support.</p>
+        <fieldset class="support-options">
+          <legend class="sr-only">Choose any support you need</legend>
+          <label><input type="checkbox" name="support" value="learning" /> Learning coach</label>
+          <label><input type="checkbox" name="support" value="technology" /> Technology or device help</label>
+          <label><input type="checkbox" name="support" value="connectivity" /> Connectivity support</label>
+          <label><input type="checkbox" name="support" value="flexible" /> Flexible schedule</label>
+        </fieldset>
+        <button class="button button-secondary" id="save-support" type="button">Save private request</button>
+      </section>
+
+      <section class="content-card gateway" aria-labelledby="gateway-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CAREER GATEWAY</p>
+            <h2 id="gateway-title">Find work that fits</h2>
+          </div>
+          <span class="privacy-chip">Private matching</span>
+        </div>
+        <p>Choose support you need privately. Employers only see the skills and accommodations they can provide.</p>
+        <div class="job-filter">
+          <fieldset>
+            <legend>Support I need at work</legend>
+            <label><input type="checkbox" class="job-support" value="flexible" /> Flexible hours</label>
+            <label><input type="checkbox" class="job-support" value="remote" /> Remote or low-travel work</label>
+            <label><input type="checkbox" class="job-support" value="screen-reader" /> Screen-reader friendly tools</label>
+          </fieldset>
+          <div id="job-list" class="job-list" aria-live="polite">
+            <article class="job-card" data-support="flexible remote">
+              <div><h3>Customer support assistant</h3><p>Blue Nile Cooperative · Addis Ababa / remote</p></div>
+              <span>Flexible hours</span><button class="button button-primary apply-button" type="button" data-job="Customer support assistant">Apply</button>
+            </article>
+            <article class="job-card" data-support="remote screen-reader">
+              <div><h3>Digital records assistant</h3><p>Open Hands Ethiopia · Remote</p></div>
+              <span>Accessible tools</span><button class="button button-primary apply-button" type="button" data-job="Digital records assistant">Apply</button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-card" aria-labelledby="employer-title">
+        <p class="eyebrow">FOR EMPLOYERS</p>
+        <h2 id="employer-title">List workplace accommodations</h2>
+        <form id="employer-form" class="form-grid">
+          <div class="field"><label for="role">Role title</label><input id="role" required /></div>
+          <div class="field"><label for="employer">Organisation</label><input id="employer" required /></div>
+          <fieldset class="accommodation-list">
+            <legend>Accommodations available</legend>
+            <label><input type="checkbox" name="accommodation" value="physical" /> Physical access</label>
+            <label><input type="checkbox" name="accommodation" value="technical" /> Assistive technology</label>
+            <label><input type="checkbox" name="accommodation" value="schedule" /> Flexible scheduling</label>
+          </fieldset>
+          <button class="button button-secondary" type="submit">Save job details</button>
+        </form>
+        <p class="form-result" id="employer-result" role="status"></p>
+      </section>
+
+      <section class="privacy-row" aria-labelledby="privacy-title">
+        <div>
+          <p class="eyebrow">YOUR CHOICE</p>
+          <h2 id="privacy-title">Share only when you choose</h2>
+          <p>Would you like an AAAPD partner to help register or update your profile?</p>
+        </div>
+        <label class="consent-label"><input id="partner-consent" type="checkbox" /> Yes, I consent to AAAPD partner support</label>
+        <button class="button button-secondary" id="sms-resume" type="button">Save &amp; resume by SMS</button>
+        <p class="form-result" id="sms-result" role="status"></p>
+      </section>
+    </main>
+
+    <dialog id="voice-review" aria-labelledby="voice-review-title">
+      <form method="dialog" class="dialog-card" id="voice-review-form">
+        <h2 id="voice-review-title">Review your words</h2>
+        <p>Check the transcription. Edit it or record again before adding it to your profile.</p>
+        <label for="voice-text">Transcribed text</label>
+        <textarea id="voice-text" rows="5"></textarea>
+        <div class="dialog-actions">
+          <button class="button button-quiet" value="cancel">Cancel</button>
+          <button class="button button-secondary" id="record-again" type="button">Record again</button>
+          <button class="button button-primary" id="use-voice-text" value="default">Use this text</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="application-dialog" aria-labelledby="application-title">
+      <form class="dialog-card" id="application-form">
+        <h2 id="application-title">Apply</h2>
+        <p id="application-job"></p>
+        <label for="application-answer">Why would you be a good fit?</label>
+        <div class="voice-field"><textarea id="application-answer" rows="5" required></textarea><button class="mic-button" type="button" data-voice-target="application-answer" aria-label="Dictate application answer using voice">🎙</button></div>
+        <div class="dialog-actions"><button class="button button-quiet" id="close-application" type="button">Cancel</button><button class="button button-primary" type="submit">Save application</button></div>
+        <p class="form-result" id="application-result" role="status"></p>
+      </form>
+    </dialog>
+    <script src="../assets/js/profile.js"></script>
+  </body>
+</html>
