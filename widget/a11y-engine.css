@@ -716,3 +716,254 @@
   margin: 0;
   word-break: break-word;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHASE 4: COGNITIVE, READING & NEURODIVERGENT ADAPTATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Typography, Spacing & Predictable Layout (WCAG 1.4.12) ─────────────── */
+[data-sa11y-cognitive="true"] body,
+[data-sa11y-cognitive="true"] p,
+[data-sa11y-cognitive="true"] li,
+[data-sa11y-cognitive="true"] .formatted-content {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "OpenDyslexic", "Lexend", sans-serif !important;
+  line-height: 1.85 !important;
+  letter-spacing: 0.04em !important;
+  word-spacing: 0.08em !important;
+  max-width: 75ch !important;
+}
+
+[data-sa11y-cognitive="true"] p {
+  margin-bottom: 1.6rem !important;
+}
+
+/* ── Reduced Distraction Mode (ADHD / Neurodivergent) ───────────────────── */
+[data-sa11y-cognitive="true"] *,
+[data-sa11y-cognitive="true"] *::before,
+[data-sa11y-cognitive="true"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* ── Reading Guide Ruler Overlay ────────────────────────────────────────── */
+.sa11y-reading-ruler {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483620;
+  pointer-events: none;
+}
+
+.sa11y-reading-ruler[hidden] {
+  display: none !important;
+}
+
+.sa11y-ruler-dim-top,
+.sa11y-ruler-dim-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(1.5px);
+  pointer-events: none;
+}
+
+.sa11y-ruler-dim-top {
+  top: 0;
+  height: 250px;
+}
+
+.sa11y-ruler-guide-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 250px;
+  height: 110px;
+  border-top: 2px solid #3b82f6;
+  border-bottom: 2px solid #3b82f6;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.25);
+  pointer-events: none;
+}
+
+.sa11y-ruler-reading-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(59, 130, 246, 0.4);
+}
+
+.sa11y-ruler-dim-bottom {
+  top: 360px;
+  bottom: 0;
+}
+
+/* ── Floating Reading Ruler Toggle Pill ─────────────────────────────────── */
+.sa11y-ruler-toggle-pill {
+  all: unset;
+  position: fixed;
+  top: 4.8rem;
+  right: 1.5rem;
+  z-index: 2147483640;
+  background: #1e293b;
+  color: #ffffff;
+  border: 1px solid var(--sa11y-border);
+  padding: 0.45rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: background 0.15s, transform 0.15s;
+}
+
+.sa11y-ruler-toggle-pill:hover {
+  background: #334155;
+  transform: translateY(-1px);
+}
+
+.sa11y-ruler-toggle-pill:focus-visible {
+  outline: 3px solid var(--sa11y-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ── Step-by-Step Chunking Badges ───────────────────────────────────────── */
+.sa11y-step-badge {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-weight: 800;
+  font-size: 0.725rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Plain-Language Simplify Button & Card ──────────────────────────────── */
+.sa11y-simplify-container {
+  margin: 0.4rem 0 1.25rem 0;
+}
+
+.sa11y-simplify-btn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.sa11y-simplify-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.sa11y-simplify-btn:focus-visible {
+  outline: 3px solid var(--sa11y-focus-ring);
+  outline-offset: 2px;
+}
+
+.sa11y-simplified-card {
+  margin-top: 0.65rem;
+  background: #f0fdf4;
+  border: 2px solid #86efac;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+
+.sa11y-simplified-card[hidden] {
+  display: none !important;
+}
+
+.sa11y-simplified-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid #bbf7d0;
+}
+
+.sa11y-simplified-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #166534;
+  font-size: 0.95rem;
+}
+
+.sa11y-card-audio-btn {
+  all: unset;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.sa11y-card-audio-btn:hover {
+  background: #bbf7d0;
+}
+
+.sa11y-card-audio-btn:focus-visible {
+  outline: 2px solid #16a34a;
+}
+
+.sa11y-plain-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #14532d;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.sa11y-plain-list li {
+  margin-bottom: 0.4rem;
+}
+
+/* High Contrast Mode Overrides for Phase 4 */
+[data-sa11y-contrast="high"] .sa11y-ruler-toggle-pill {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+[data-sa11y-contrast="high"] .sa11y-step-badge {
+  background: #000000 !important;
+  color: #facc15 !important;
+  border: 1px solid #facc15 !important;
+}
+
+[data-sa11y-contrast="high"] .sa11y-simplify-btn {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+[data-sa11y-contrast="high"] .sa11y-simplified-card {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+[data-sa11y-contrast="high"] .sa11y-plain-list {
+  color: #ffffff !important;
+}

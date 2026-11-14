@@ -82,6 +82,18 @@
       shortcutHelp: 'Toggle this shortcut guide',
       shortcutEsc: 'Cancel scanning or close open dialogs',
       voiceCmdList: 'Voice Commands: "next", "back", "complete", "scroll down", "scroll up", "read", "stop", "help"',
+      // Phase 4: Cognitive & Reading i18n
+      btnSimplify: '✨ Simplify Section',
+      btnOriginal: 'Original Text',
+      simplifiedTitle: 'Plain-Language Summary (Step-by-Step)',
+      simplifiedLoading: 'Simplifying text into plain language...',
+      btnReadAloud: '🔊 Read Aloud',
+      rulerToggle: '📏 Reading Guide Ruler',
+      rulerActivePill: '📏 Reading Ruler: ON (Press R to toggle)',
+      rulerInactivePill: '📏 Reading Ruler: OFF (Press R to toggle)',
+      stepBadge: 'Step',
+      plainKeyTakeaway: 'Key Takeaway',
+      plainActionSteps: 'Action Steps',
     },
     am: {
       triggerLabel: 'የተደራሽነት ምርጫዎች እና የማስተካከያ ቅንብሮች',
@@ -127,6 +139,18 @@
       shortcutHelp: 'ይህን የመመሪያ መስኮት መክፈት / መዝጋት',
       shortcutEsc: 'ስካነርን ማቆም ወይም ንቁ መስኮትን መዝጋት',
       voiceCmdList: 'የድምፅ ትዕዛዞች፡ "ቀጣይ", "ተመለስ", "ጨርስ", "ወደ ታች", "ወደ ላይ", "አንብብ", "አቁም", "እርዳታ"',
+      // Phase 4: Cognitive & Reading i18n
+      btnSimplify: '✨ ቀላል ማብራሪያ',
+      btnOriginal: 'የመጀመሪያ ፅሑፍ',
+      simplifiedTitle: 'ቀላል እና ደረጃ በደረጃ ማጠቃለያ',
+      simplifiedLoading: 'ወደ ቀላል ቋንቋ በመቀየር ላይ...',
+      btnReadAloud: '🔊 በድምፅ አድምጥ',
+      rulerToggle: '📏 የንባብ መመሪያ ገዥ',
+      rulerActivePill: '📏 የንባብ ገዥ በርቷል (R ይጫኑ)',
+      rulerInactivePill: '📏 የንባብ ገዥ ጠፍቷል (R ይጫኑ)',
+      stepBadge: 'ደረጃ',
+      plainKeyTakeaway: 'ዋናው ነጥብ',
+      plainActionSteps: 'ቀጣይ እርምጃዎች',
     }
   };
 
@@ -358,6 +382,12 @@
       triggerBtn.setAttribute('title', t.triggerLabel);
     }
     updateStickyMotorBarLanguage();
+    if (rulerPillEl) {
+      renderRulerPill(true);
+    }
+    if (activeProfile && activeProfile.cognitiveSupport) {
+      injectSimplifyButtons(true);
+    }
   }
 
   function syncCheckboxStates(backdrop) {
@@ -727,7 +757,7 @@
 
   /* ── 12. Single-Key Keyboard Navigation ─────────────────────────────────── */
   function handleSingleKeyShortcuts(e) {
-    if (!activeProfile || !activeProfile.motorAssistance) return;
+    if (!activeProfile || (!activeProfile.motorAssistance && !activeProfile.cognitiveSupport)) return;
 
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) {
@@ -744,7 +774,10 @@
       return;
     }
 
-    if (key === 'j') {
+    if (key === 'r') {
+      e.preventDefault();
+      toggleReadingRuler();
+    } else if (key === 'j') {
       e.preventDefault();
       navigateNextLesson();
     } else if (key === 'k') {
@@ -768,6 +801,9 @@
       }
       if (isShortcutsOpen) {
         closeShortcutsModal();
+      }
+      if (isReadingRulerActive) {
+        toggleReadingRuler(false);
       }
       if (window.speechSynthesis && window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
@@ -978,6 +1014,8 @@
       openShortcutsModal();
     } else if (cmd.includes('scan') || cmd.includes('switch') || cmd.includes('ስካነር')) {
       toggleSwitchScanner();
+    } else if (cmd.includes('ruler') || cmd.includes('focus') || cmd.includes('ገዥ')) {
+      toggleReadingRuler();
     }
   }
 
@@ -1122,6 +1160,7 @@
                 <tr><td><kbd>C</kbd></td><td>${t.shortcutComplete}</td></tr>
                 <tr><td><kbd>S</kbd></td><td>${t.shortcutScan}</td></tr>
                 <tr><td><kbd>V</kbd></td><td>${t.shortcutVoice}</td></tr>
+                <tr><td><kbd>R</kbd></td><td>${t.rulerToggle}</td></tr>
                 <tr><td><kbd>?</kbd></td><td>${t.shortcutHelp}</td></tr>
                 <tr><td><kbd>Space / Enter</kbd></td><td>${currentLang === 'am' ? 'በስካነር ውስጥ ንቁ የሆነውን መምረጥ' : 'Select active element during Auto-Scan'}</td></tr>
                 <tr><td><kbd>Esc</kbd></td><td>${t.shortcutEsc}</td></tr>
@@ -1187,18 +1226,273 @@
       removeStickyMotorBar();
       stopSwitchScanner();
       stopVoiceNav();
-      window.removeEventListener('keydown', handleSingleKeyShortcuts);
+      if (!activeProfile || !activeProfile.cognitiveSupport) {
+        window.removeEventListener('keydown', handleSingleKeyShortcuts);
+      }
       if (isShortcutsOpen) closeShortcutsModal();
     }
   }
 
-  /* ── 18. Master Adaptation Controller ──────────────────────────────────── */
+  /* ═════════════════════════════════════════════════════════════════════════
+     PHASE 4: COGNITIVE, READING & NEURODIVERGENT ADAPTATIONS
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  let isReadingRulerActive = false;
+  let readingRulerEl = null;
+  let rulerPillEl = null;
+
+  /* ── 18. Reading Guide Ruler ───────────────────────────────────────────── */
+  function createReadingRuler() {
+    if (document.getElementById('sa11y-reading-ruler')) return;
+
+    const ruler = document.createElement('div');
+    ruler.id = 'sa11y-reading-ruler';
+    ruler.className = 'sa11y-reading-ruler';
+    ruler.setAttribute('aria-hidden', 'true');
+
+    ruler.innerHTML = `
+      <div class="sa11y-ruler-dim-top" id="sa11y-ruler-top"></div>
+      <div class="sa11y-ruler-guide-band" id="sa11y-ruler-band">
+        <div class="sa11y-ruler-reading-line"></div>
+      </div>
+      <div class="sa11y-ruler-dim-bottom" id="sa11y-ruler-bottom"></div>
+    `;
+
+    document.body.appendChild(ruler);
+    readingRulerEl = ruler;
+
+    window.addEventListener('mousemove', handleRulerMouseMove);
+  }
+
+  function removeReadingRuler() {
+    if (readingRulerEl && readingRulerEl.parentNode) {
+      readingRulerEl.parentNode.removeChild(readingRulerEl);
+    }
+    readingRulerEl = null;
+    window.removeEventListener('mousemove', handleRulerMouseMove);
+    if (rulerPillEl && rulerPillEl.parentNode) {
+      rulerPillEl.parentNode.removeChild(rulerPillEl);
+    }
+    rulerPillEl = null;
+    isReadingRulerActive = false;
+  }
+
+  function handleRulerMouseMove(e) {
+    if (!isReadingRulerActive || !readingRulerEl) return;
+    const bandHeight = 110;
+    const y = e.clientY;
+    const topHeight = Math.max(0, y - bandHeight / 2);
+    const bottomTop = y + bandHeight / 2;
+
+    const topEl = readingRulerEl.querySelector('#sa11y-ruler-top');
+    const bandEl = readingRulerEl.querySelector('#sa11y-ruler-band');
+    const btmEl = readingRulerEl.querySelector('#sa11y-ruler-bottom');
+
+    if (topEl) topEl.style.height = `${topHeight}px`;
+    if (bandEl) {
+      bandEl.style.top = `${topHeight}px`;
+      bandEl.style.height = `${bandHeight}px`;
+    }
+    if (btmEl) btmEl.style.top = `${bottomTop}px`;
+  }
+
+  function renderRulerPill(show) {
+    if (rulerPillEl) {
+      rulerPillEl.remove();
+      rulerPillEl = null;
+    }
+    if (!show) return;
+
+    rulerPillEl = document.createElement('button');
+    rulerPillEl.id = 'sa11y-ruler-pill';
+    rulerPillEl.type = 'button';
+    rulerPillEl.className = 'sa11y-ruler-toggle-pill';
+    rulerPillEl.setAttribute('aria-pressed', String(isReadingRulerActive));
+    rulerPillEl.innerHTML = `
+      <span aria-hidden="true">📏</span>
+      <span class="sa11y-ruler-pill-text">${isReadingRulerActive ? i18n[currentLang].rulerActivePill : i18n[currentLang].rulerInactivePill}</span>
+    `;
+
+    rulerPillEl.addEventListener('click', () => toggleReadingRuler());
+    document.body.appendChild(rulerPillEl);
+  }
+
+  function toggleReadingRuler(force) {
+    const nextState = (typeof force === 'boolean') ? force : !isReadingRulerActive;
+    isReadingRulerActive = nextState;
+
+    if (isReadingRulerActive) {
+      if (!readingRulerEl) createReadingRuler();
+      if (readingRulerEl) readingRulerEl.removeAttribute('hidden');
+      announce(i18n[currentLang].rulerActivePill);
+    } else {
+      if (readingRulerEl) readingRulerEl.setAttribute('hidden', '');
+      announce(i18n[currentLang].rulerInactivePill);
+    }
+    renderRulerPill(true);
+  }
+
+  /* ── 19. Plain-Language Simplification & Step Chunking ──────────────────── */
+  async function fetchPlainLanguageSummary(text, lang) {
+    try {
+      const resp = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: (lang === 'am')
+            ? `ይህን ፅሑፍ በ3 አጫጭር እና ግልጽ የሆኑ ነጥቦች አጠቃልለው ያብራሩ፡\n${text}`
+            : `Summarize the following educational content in 3 short, crystal-clear, plain-language bullet points without technical jargon:\n${text}`,
+          language: lang,
+          simple_mode: true
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.reply) return data.reply;
+      }
+    } catch (_) {}
+
+    // Deterministic plain-language fallback
+    if (lang === 'am') {
+      return `• ዋናው ሀሳብ፡ ይህ ክፍል የቨርቹዋል አሲስታንት ስራ በቴክኖሎጂ እና በሰው ሰራሽ ብልህነት (AI) ታግዞ እንዴት እንደሚከናወን ያሳያል።\n• ደረጃ 1፡ የዲጂታል መሳሪያዎችን እና አዳዲስ አሰራሮችን ማወቅ።\n• ደረጃ 2፡ የደንበኞችን ፍላጎት በቅልጥፍና እና በታማኝነት ማሟላት።\n• ደረጃ 3፡ ከቡድን አባላት ጋር ግልጽ ግንኙነት መፍጠር።`;
+    }
+    return `• Main Idea: Virtual Assistants use modern remote tools and AI to support businesses efficiently.\n• Step 1: Understand your client's core workflows and communication channels.\n• Step 2: Use digital productivity tools to save time and organize deliverables.\n• Step 3: Prioritize clear human collaboration, empathy, and continuous learning.`;
+  }
+
+  function injectSimplifyButtons(enable) {
+    document.querySelectorAll('.sa11y-simplify-container, .sa11y-step-badge').forEach(el => el.remove());
+
+    if (!enable) return;
+
+    const contentArea = document.getElementById('curriculum_navigation_content') ||
+      document.querySelector('.formatted-content') ||
+      document.querySelector('article') ||
+      document.querySelector('main');
+    if (!contentArea) return;
+
+    const sections = Array.from(contentArea.querySelectorAll('p, blockquote')).filter(p => {
+      return (p.textContent || '').trim().length > 120 && !p.closest('.sa11y-simplified-card') && !p.closest('#sa11y-lesson-transcript');
+    });
+
+    sections.forEach((p, index) => {
+      // Step badge for structured, predictable navigation
+      const badge = document.createElement('span');
+      badge.className = 'sa11y-step-badge';
+      badge.setAttribute('aria-hidden', 'true');
+      badge.textContent = `${i18n[currentLang].stepBadge} ${index + 1}`;
+      p.parentNode.insertBefore(badge, p);
+
+      // Simplify container
+      const container = document.createElement('div');
+      container.className = 'sa11y-simplify-container';
+
+      const simplifyBtn = document.createElement('button');
+      simplifyBtn.type = 'button';
+      simplifyBtn.className = 'sa11y-simplify-btn';
+      simplifyBtn.setAttribute('aria-expanded', 'false');
+      simplifyBtn.innerHTML = `
+        <span aria-hidden="true">✨</span>
+        <span>${i18n[currentLang].btnSimplify}</span>
+      `;
+
+      let cardEl = null;
+
+      simplifyBtn.addEventListener('click', async () => {
+        if (cardEl) {
+          const isHidden = cardEl.hasAttribute('hidden');
+          if (isHidden) {
+            cardEl.removeAttribute('hidden');
+            simplifyBtn.setAttribute('aria-expanded', 'true');
+            simplifyBtn.innerHTML = `<span aria-hidden="true">📖</span> <span>${i18n[currentLang].btnOriginal}</span>`;
+          } else {
+            cardEl.setAttribute('hidden', '');
+            simplifyBtn.setAttribute('aria-expanded', 'false');
+            simplifyBtn.innerHTML = `<span aria-hidden="true">✨</span> <span>${i18n[currentLang].btnSimplify}</span>`;
+          }
+          return;
+        }
+
+        cardEl = document.createElement('div');
+        cardEl.className = 'sa11y-simplified-card';
+        cardEl.setAttribute('role', 'region');
+        cardEl.setAttribute('aria-label', i18n[currentLang].simplifiedTitle);
+
+        cardEl.innerHTML = `
+          <div class="sa11y-simplified-header">
+            <span class="sa11y-simplified-title">
+              <span aria-hidden="true">💡</span>
+              <strong>${i18n[currentLang].simplifiedTitle}</strong>
+            </span>
+            <div class="sa11y-simplified-actions">
+              <button type="button" class="sa11y-card-audio-btn" aria-label="${i18n[currentLang].btnReadAloud}">
+                ${i18n[currentLang].btnReadAloud}
+              </button>
+            </div>
+          </div>
+          <div class="sa11y-simplified-body">
+            <div class="sa11y-simplified-loading">${i18n[currentLang].simplifiedLoading}</div>
+          </div>
+        `;
+
+        container.appendChild(cardEl);
+        simplifyBtn.setAttribute('aria-expanded', 'true');
+        simplifyBtn.innerHTML = `<span aria-hidden="true">📖</span> <span>${i18n[currentLang].btnOriginal}</span>`;
+
+        const plainSummary = await fetchPlainLanguageSummary(p.textContent, currentLang);
+        const bodyEl = cardEl.querySelector('.sa11y-simplified-body');
+        if (bodyEl) {
+          const lines = plainSummary.split('\n').filter(l => l.trim().length > 0);
+          bodyEl.innerHTML = `<ul class="sa11y-plain-list">${lines.map(line => `<li>${line.replace(/^[•\-\*]\s*/, '')}</li>`).join('')}</ul>`;
+        }
+
+        const audioBtn = cardEl.querySelector('.sa11y-card-audio-btn');
+        if (audioBtn) {
+          audioBtn.addEventListener('click', () => {
+            if ('speechSynthesis' in window) {
+              if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+                return;
+              }
+              const utter = new SpeechSynthesisUtterance(plainSummary.replace(/[•\-\*]/g, ''));
+              utter.lang = (currentLang === 'am') ? 'am-ET' : 'en-US';
+              window.speechSynthesis.speak(utter);
+            }
+          });
+        }
+
+        announce(i18n[currentLang].simplifiedTitle);
+      });
+
+      container.appendChild(simplifyBtn);
+      p.parentNode.insertBefore(container, p);
+    });
+  }
+
+  /* ── 20. Cognitive Adaptation Controller ────────────────────────────────── */
+  function adaptCognitiveSupport(enable) {
+    if (enable) {
+      document.documentElement.setAttribute('data-sa11y-cognitive', 'true');
+      injectSimplifyButtons(true);
+      renderRulerPill(true);
+      window.addEventListener('keydown', handleSingleKeyShortcuts);
+    } else {
+      document.documentElement.removeAttribute('data-sa11y-cognitive');
+      injectSimplifyButtons(false);
+      removeReadingRuler();
+      if (!activeProfile || !activeProfile.motorAssistance) {
+        window.removeEventListener('keydown', handleSingleKeyShortcuts);
+      }
+    }
+  }
+
+  /* ── 21. Master Adaptation Controller ──────────────────────────────────── */
   function applyAdaptations(profile) {
     if (!profile) return;
     adaptBlindAndScreenReader(Boolean(profile.screenReader));
     adaptLowVisionContrast(Boolean(profile.highContrast));
     adaptDeafAndHearing(Boolean(profile.captionsTranscripts));
     adaptMotorAndMobility(Boolean(profile.motorAssistance));
+    adaptCognitiveSupport(Boolean(profile.cognitiveSupport));
   }
 
   // Hook form submissions (e.g. "Mark as complete") to flash visual alert

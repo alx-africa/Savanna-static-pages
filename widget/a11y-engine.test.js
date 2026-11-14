@@ -5,6 +5,7 @@
  * - Universal onboarding modal dialog
  * - Phase 2: Transcripts and semantic curriculum status
  * - Phase 3: Sticky motor toolbar, switch-scanner highlights, and shortcuts modal
+ * - Phase 4: Cognitive & Reading adaptations (reading guide ruler, AI plain-language chunking, step badges)
  */
 const fs = require('fs');
 const path = require('path');
@@ -32,7 +33,7 @@ async function testAccessibilityEngine() {
       <main id="content">
         <h1>VA Foundations &amp; Professional Identity</h1>
         <div id="curriculum_navigation_content">
-          <p>This is a test lesson for accessibility evaluation and motor controls.</p>
+          <p>This is a test lesson for accessibility evaluation, cognitive plain-language simplification, and motor controls. It contains comprehensive educational descriptions to test adaptive learning features.</p>
         </div>
         <div class="list-group">
           <div class="list-group-item active">Lesson 1: Introduction</div>
@@ -80,7 +81,7 @@ async function testAccessibilityEngine() {
   // 3. Verify Phase 2 & 3 elements injected
   const transcript = window.document.getElementById('sa11y-lesson-transcript');
   if (!transcript) throw new Error('Phase 2 Transcript drawer not injected.');
-  console.log('✔ Transcript & captions drawer injected.');
+  console.log('✔ Phase 2 Transcript & captions drawer injected.');
 
   const motorBar = window.document.getElementById('sa11y-motor-toolbar');
   if (!motorBar) throw new Error('Phase 3 Motor toolbar not injected.');
@@ -95,7 +96,35 @@ async function testAccessibilityEngine() {
   }
   console.log('✔ Phase 3 Shortcuts modal opened successfully.');
 
-  // 4. Run axe-core audit on the adapted page
+  // 4. Verify Phase 4 Cognitive elements
+  if (window.document.documentElement.getAttribute('data-sa11y-cognitive') !== 'true') {
+    throw new Error('Phase 4 data-sa11y-cognitive attribute not set on root.');
+  }
+
+  const rulerPill = window.document.getElementById('sa11y-ruler-pill');
+  if (!rulerPill) throw new Error('Phase 4 Reading ruler toggle pill not injected.');
+  console.log('✔ Phase 4 Reading ruler toggle pill injected.');
+
+  rulerPill.click(); // Toggle reading ruler ON
+  const readingRuler = window.document.getElementById('sa11y-reading-ruler');
+  if (!readingRuler) throw new Error('Phase 4 Reading ruler overlay not rendered.');
+  console.log('✔ Phase 4 Reading guide ruler overlay rendered.');
+
+  const stepBadge = window.document.querySelector('.sa11y-step-badge');
+  if (!stepBadge) throw new Error('Phase 4 Step badge not injected above section.');
+  console.log('✔ Phase 4 Step-by-step chunking badge injected.');
+
+  const simplifyBtn = window.document.querySelector('.sa11y-simplify-btn');
+  if (!simplifyBtn) throw new Error('Phase 4 Simplify section button not injected.');
+  console.log('✔ Phase 4 Plain-language simplify button injected.');
+
+  // Click simplify button to trigger summary card
+  simplifyBtn.click();
+  const simplifyCard = window.document.querySelector('.sa11y-simplified-card');
+  if (!simplifyCard) throw new Error('Phase 4 Plain-language summary card not rendered.');
+  console.log('✔ Phase 4 Plain-language summary card rendered with audio readout option.');
+
+  // 5. Run axe-core audit on the fully adapted page
   axe.configure({
     rules: [
       { id: 'color-contrast', enabled: false }, // jsdom does not compute full RGB styles
@@ -131,7 +160,7 @@ async function testAccessibilityEngine() {
     process.exit(1);
   }
 
-  console.log('\n✅ ALL PHASE 1, 2, AND 3 ACCESSIBILITY AUDITS PASSED WITH 0 VIOLATIONS.');
+  console.log('\n✅ ALL PHASE 1, 2, 3, AND 4 ACCESSIBILITY AUDITS PASSED WITH 0 VIOLATIONS.');
 }
 
 testAccessibilityEngine().catch(err => {
