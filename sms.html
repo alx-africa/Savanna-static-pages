@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>InkluBot SMS Simulator</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 30px; }
+        .phone { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 12px; }
+        textarea { width: 100%; height: 90px; margin: 10px 0; }
+        button { width: 100%; padding: 12px; background: #0088cc; color: white; border: none; border-radius: 6px; }
+        .reply { background: #eef6ff; padding: 12px; border-radius: 6px; margin-top: 15px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <h2>InkluBot SMS Simulator</h2>
+        <form method="post" action="/send">
+            <label>Type an SMS message:</label>
+            <textarea name="message" placeholder="What courses are available?">{{ message }}</textarea>
+            <button type="submit">Send SMS</button>
+        </form>
+
+        {% if reply %}
+        <div class="reply">
+            <strong>InkluBot reply:</strong><br>
+            {{ reply }}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
