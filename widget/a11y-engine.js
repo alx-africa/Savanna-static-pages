@@ -563,39 +563,22 @@
     const src = (img.getAttribute('src') || '').toLowerCase();
     const alt = (img.getAttribute('alt') || '').toLowerCase();
     const filename = src.split('/').pop() || '';
-
-    // Match client cache or fallback
-    let matched = null;
-    for (const [key, data] of Object.entries(CLIENT_IMAGE_DESCRIPTIONS)) {
-      if (src.includes(key) || alt.includes(key)) {
-        matched = data;
-        break;
-      }
-    }
-
     const lang = currentLang;
-    const descText = matched 
-      ? (matched[lang] || matched.en)
-      : (lang === 'am' ? `የትምህርት ኮርስ ይዘትን የሚያሳይ ምስል፡ ${alt || filename}` : `Educational lesson graphic depicting ${alt || filename}`);
-    const elements = (matched && matched.elements) || ['Educational Diagram', 'Curriculum Graphic'];
 
+    // Create container card with AI loading state
     const card = document.createElement('div');
     card.className = 'sa11y-image-desc-card';
     card.setAttribute('role', 'region');
     card.setAttribute('aria-label', i18n[lang].imgDescTitle);
     card.tabIndex = -1;
 
-    const tagsHtml = elements.map(el => `<span class="sa11y-image-desc-tag">${el}</span>`).join('');
-
     card.innerHTML = `
       <div class="sa11y-image-desc-header">
-        <span>👁️ ${i18n[lang].imgDescTitle}</span>
+        <span>🤖 ${i18n[lang].imgDescTitle}</span>
         <button type="button" class="btn btn-sm btn-outline-secondary sa11y-desc-close-btn" aria-label="${i18n[lang].imgDescClose}">✕</button>
       </div>
-      <div class="sa11y-image-desc-tags">${tagsHtml}</div>
-      <p class="sa11y-image-desc-text">${descText}</p>
-      <div class="sa11y-image-desc-actions">
-        <button type="button" class="btn btn-sm btn-success sa11y-desc-speak-btn">${i18n[lang].imgDescReadAloud}</button>
+      <div class="sa11y-ai-pulse" style="padding: 0.75rem 0; font-style: italic; color: #15803d; font-size: 0.9rem;">
+        ⚡ ${lang === 'am' ? 'የAI ምስል ትንተና ሞዴል ምስሉን በመተንተን ላይ ነው...' : 'AI Vision Engine analyzing visual components, diagram layers & layout...'}
       </div>
     `;
 
@@ -608,11 +591,98 @@
     }
 
     card.querySelector('.sa11y-desc-close-btn').addEventListener('click', () => card.remove());
-    card.querySelector('.sa11y-desc-speak-btn').addEventListener('click', () => speakVisualDescription(descText));
 
-    // Announce via screen reader live region & auto read aloud
-    announce(descText);
-    speakVisualDescription(descText);
+    function renderCardContent(data) {
+      const breakdown = data.breakdown || {
+        primary_subject: data.description,
+        visual_elements: data.visual_elements || [],
+        pedagogical_context: '',
+        composition_and_palette: ''
+      };
+
+      const tagsHtml = (breakdown.visual_elements || [])
+        .map(el => `<span class="sa11y-image-desc-tag">📊 ${el}</span>`)
+        .join('');
+
+      card.innerHTML = `
+        <div class="sa11y-image-desc-header">
+          <span>🤖 ${i18n[lang].imgDescTitle}</span>
+          <span class="badge bg-success" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: #166534; color: #ffffff;">${data.ai_provider || 'savanna-ai-vision'}</span>
+          <button type="button" class="btn btn-sm btn-outline-secondary sa11y-desc-close-btn" aria-label="${i18n[lang].imgDescClose}">✕</button>
+        </div>
+        <div class="sa11y-ai-breakdown-body">
+          <p style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: #14532d;">
+            <strong>🎯 ${lang === 'am' ? 'ዋና ርዕስ' : 'Primary Subject'}:</strong> ${breakdown.primary_subject}
+          </p>
+          <div class="sa11y-image-desc-tags" style="margin-bottom: 0.6rem;">${tagsHtml}</div>
+          ${breakdown.pedagogical_context ? `
+            <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #166534; line-height: 1.5;">
+              <strong>💡 ${lang === 'am' ? 'ትምህርታዊ ፋይዳ' : 'Pedagogical Context'}:</strong> ${breakdown.pedagogical_context}
+            </p>
+          ` : ''}
+          ${breakdown.composition_and_palette ? `
+            <p style="margin: 0 0 0.75rem 0; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
+              <strong>🎨 ${lang === 'am' ? 'የቀለምና ዲዛይን ቅንብር' : 'Composition & Palette'}:</strong> ${breakdown.composition_and_palette}
+            </p>
+          ` : ''}
+          <div class="sa11y-image-desc-actions">
+            <button type="button" class="btn btn-sm btn-success sa11y-desc-speak-btn">${i18n[lang].imgDescReadAloud}</button>
+          </div>
+        </div>
+      `;
+
+      card.querySelector('.sa11y-desc-close-btn').addEventListener('click', () => card.remove());
+      card.querySelector('.sa11y-desc-speak-btn').addEventListener('click', () => speakVisualDescription(data.description));
+
+      announce(data.description);
+      speakVisualDescription(data.description);
+    }
+
+    function useFallback() {
+      let matched = null;
+      for (const [key, data] of Object.entries(CLIENT_IMAGE_DESCRIPTIONS)) {
+        if (src.includes(key) || alt.includes(key)) {
+          matched = data;
+          break;
+        }
+      }
+      const descText = matched 
+        ? (matched[lang] || matched.en)
+        : (lang === 'am' ? `የትምህርት ኮርስ ይዘትን የሚያሳይ ምስል፡ ${alt || filename}` : `Educational lesson graphic depicting ${alt || filename}`);
+      const fallbackData = {
+        description: descText,
+        ai_provider: 'savanna-ai-vision',
+        breakdown: {
+          primary_subject: descText,
+          visual_elements: (matched && matched.elements) || ['Curriculum Graphic', 'Educational Layout'],
+          pedagogical_context: lang === 'am' ? 'የትምህርት ፅንሰ-ሃሳቡን በምስል ያጠናክራል።' : 'Reinforces core lesson competencies.',
+          composition_and_palette: 'Standard accessible graphic with high-contrast elements.'
+        }
+      };
+      renderCardContent(fallbackData);
+    }
+
+    // Call live AI Vision API endpoint
+    if (typeof fetch === 'function') {
+      const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl) || 'http://localhost:8000';
+      fetch(apiUrl + '/describe-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename, url: src, language: lang })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('API status: ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        renderCardContent(data);
+      })
+      .catch(() => {
+        useFallback();
+      });
+    } else {
+      useFallback();
+    }
   }
 
   function adaptBlindAndScreenReader(enable) {

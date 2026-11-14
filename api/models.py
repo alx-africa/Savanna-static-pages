@@ -135,6 +135,13 @@ class SMSInbound(BaseModel):
 
 # ─── Vision / Image Description ──────────────────────────────────────────────
 
+class VisualBreakdown(BaseModel):
+    primary_subject: str
+    visual_elements: list[str] = []
+    pedagogical_context: str
+    composition_and_palette: str
+
+
 class DescribeImageRequest(BaseModel):
     url: Optional[str] = None
     filename: Optional[str] = None
@@ -147,7 +154,9 @@ class DescribeImageResponse(BaseModel):
     description: str
     language: str
     source: str
+    ai_provider: str = "savanna-ai-vision"
     visual_elements: list[str] = []
+    breakdown: Optional[VisualBreakdown] = None
     ethiopian_date: Optional[str] = None
 
 

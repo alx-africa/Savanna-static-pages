@@ -131,6 +131,7 @@ async function testAccessibilityEngine() {
   console.log('✔ Phase 5 Describe Image button injected for screen reader users.');
 
   describeBtn.click();
+  await new Promise(r => setTimeout(r, 50));
   const descCard = window.document.querySelector('.sa11y-image-desc-card');
   if (!descCard) throw new Error('Phase 5 AI Image Description card not rendered.');
   console.log('✔ Phase 5 AI Image Description card rendered with pedagogical description.');
