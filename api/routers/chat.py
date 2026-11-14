@@ -41,16 +41,113 @@ def _get_redis() -> Optional[aioredis.Redis]:
         return None
 
 
-# ── Language detection ────────────────────────────────────────────────────────
+# ── Language specification & detection ────────────────────────────────────────
+
+SUPPORTED_LANGUAGES: dict[str, dict[str, str]] = {
+    "en": {"name": "English", "native": "English", "dir": "ltr"},
+    "am": {"name": "Amharic", "native": "አማርኛ", "dir": "ltr"},
+    "om": {"name": "Afaan Oromo", "native": "Afaan Oromoo", "dir": "ltr"},
+    "ti": {"name": "Tigrinya", "native": "ትግርኛ", "dir": "ltr"},
+    "so": {"name": "Somali", "native": "Soomaali", "dir": "ltr"},
+    "ar": {"name": "Arabic", "native": "العربية", "dir": "rtl"},
+    "sw": {"name": "Swahili", "native": "Kiswahili", "dir": "ltr"},
+    "fr": {"name": "French", "native": "Français", "dir": "ltr"},
+}
+
+_TIGRINYA_MARKERS = {
+    "ከመይ", "ናይ", "ኣለኹ", "እዩ", "እንታይ", "ትምህርቲ", "ብኸመይ", "ቀዳማይ", "ሓበሬታ",
+    "ቐ", "ቘ", "ኸ", "ዀ", "ጘ", "ጝ"
+}
+
+_OROMO_KEYWORDS = {
+    "afaan", "oromoo", "oromo", "oromootiin", "akkam", "nagaa", "barnoota", "barachuu", "barataa", 
+    "hojii", "danda", "danda'aa", "danda'u", "maaloo", "waa", "ani", "eessa", "akkamitti", "maal"
+}
+
+_SOMALI_KEYWORDS = {
+    "soomaali", "sidee", "barashada", "shaqo", "mahadsanid", "fadlan", "waa", "maxay", "waxbarasho", "koorsada"
+}
+
+_SWAHILI_KEYWORDS = {
+    "habari", "jambo", "kazi", "masomo", "asante", "naomba", "tafadhali", "nini", "vipi", "mimi", "kujifunza", "nataka"
+}
+
+_FRENCH_KEYWORDS = {
+    "bonjour", "comment", "formation", "merci", "travail", "suis", "cours", "pourquoi", "aide", "inscrire"
+}
+
+_TIMEOUT_MESSAGES = {
+    "en": "I'm taking longer than expected. Please try again in a moment.",
+    "am": "ትንሽ ጊዜ ወስዷል። እባክዎ እንደገና ይሞክሩ።",
+    "om": "Yeroo dheeraa fudhachaa jira. Maaloo xiqqoo turanii irra deebi'aa yaalaa.",
+    "ti": "ካብቲ ዝተጸበናዮ ንላዕሊ ግዜ ወሲዱ ኣሎ። እባክኹም ድሕሪ ቅሩብ ደቓይቕ ደጊምኩም ፈትኑ።",
+    "so": "Waqti dheer ayey qaadatay. Fadlan wax yar ka dib mar kale isku day.",
+    "ar": "استغرق الرد وقتًا أطول من المتوقع. يرجى المحاولة مرة أخرى بعد لحظات.",
+    "sw": "Inachukua muda mrefu kuliko ilivyotarajiwa. Tafadhali jaribu tena baada ya muda mfupi.",
+    "fr": "Le délai de réponse est plus long que prévu. Veuillez réessayer dans un instant.",
+}
+
+_ERROR_MESSAGES = {
+    "en": "An error occurred while generating a response. Please try again.",
+    "am": "ምላሽ ሲፈጥር ስህተት ተከስቷል። እባክዎ እንደገና ይሞክሩ።",
+    "om": "Deebii uumuu irratti dogoggorri uumameera. Maaloo irra deebi'aa yaalaa.",
+    "ti": "ምላሽ ኣብ ምፍጣር ጌጋ ተፈጢሩ። እባክኹም ደጊምኩም ፈትኑ።",
+    "so": "Khalad ayaa dhacay intii jawaabta la samaynayay. Fadlan mar kale isku day.",
+    "ar": "حدث خطأ أثناء إنشاء الرد. يرجى المحاولة مرة أخرى.",
+    "sw": "Hitilafu imetokea wakati wa kutoa jibu. Tafadhali jaribu tena.",
+    "fr": "Une erreur s'est produite lors de la génération de la réponse. Veuillez réessayer.",
+}
+
 
 def _detect_language(text: str) -> str:
-    """Return 'am' or 'en'; falls back to 'en' on failure."""
+    """
+    Zero-shot language detection across Ethiopian and regional refugee languages:
+    - Amharic (am), Afaan Oromo (om), Tigrinya (ti), Somali (so)
+    - Arabic (ar), Swahili (sw), French (fr), English (en)
+    """
+    if not text or not text.strip():
+        return "en"
+
+    # 1. Arabic script detection (\u0600 - \u06FF)
+    if any("\u0600" <= c <= "\u06ff" for c in text):
+        return "ar"
+
+    # 2. Ethiopic script detection (\u1200 - \u137F)
+    if any("\u1200" <= c <= "\u137f" for c in text):
+        # Disambiguate Tigrinya vs Amharic
+        words = set(text.split())
+        if any(marker in text for marker in _TIGRINYA_MARKERS) or any(m in words for m in _TIGRINYA_MARKERS):
+            return "ti"
+        return "am"
+
+    # 3. Keyword heuristic check for Latin scripts
+    lower = text.lower()
+    words = set(lower.split())
+
+    # Strip punctuation for cleaner token matching
+    import re
+    cleaned_tokens = set(re.findall(r"[\w']+", lower))
+
+    if any(k in cleaned_tokens for k in _OROMO_KEYWORDS) or any(k in lower for k in ("afaan orom", "barachuu", "akkamitti", "akkam jirtu", "barnoota")):
+        return "om"
+    if any(k in cleaned_tokens for k in _SOMALI_KEYWORDS) or any(k in lower for k in ("mahadsanid", "waxbarasho")):
+        return "so"
+    if any(k in cleaned_tokens for k in _SWAHILI_KEYWORDS) or any(k in lower for k in ("habari", "asante sana", "naomba kusaidiwa")):
+        return "sw"
+    if any(k in cleaned_tokens for k in _FRENCH_KEYWORDS) or any(k in lower for k in ("bonjour", "s'il vous plaît", "merci beaucoup")):
+        return "fr"
+
+    # 4. Fallback to langdetect
     try:
         code = detect(text)
-        # langdetect uses 'am' for Amharic
-        return "am" if code == "am" else "en"
+        if code in SUPPORTED_LANGUAGES:
+            return code
+        if code in ("so", "sw", "fr", "ar", "am"):
+            return code
     except LangDetectException:
-        return "en"
+        pass
+
+    return "en"
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -58,15 +155,12 @@ def _detect_language(text: str) -> str:
 @router.post("", response_model=ChatResponse, summary="Send a chat message")
 async def chat(body: ChatRequest) -> ChatResponse:
     """
-    Accept a chat message, run RAG retrieval, call the AI provider,
-    and return a structured response with citations.
-
-    A 500 ms timeout guard wraps the AI call; if it fires we return a
-    graceful error response rather than hanging the client.
+    Accept a chat message, run cross-lingual RAG retrieval, call the AI provider,
+    and return a structured response with citations in the learner's language.
     """
-    # 1. Language detection
+    # 1. Language detection & routing
     language = body.language
-    if not language or language not in ("en", "am"):
+    if not language or language == "auto" or language not in SUPPORTED_LANGUAGES:
         language = _detect_language(body.message)
 
     # Record question anonymously for instructor analytics (NO user info)
@@ -74,7 +168,7 @@ async def chat(body: ChatRequest) -> ChatResponse:
 
     # Ethiopian calendar calculation for response timestamp
     eth_date = gregorian_to_ethiopian(datetime.now())
-    eth_str = eth_date.format_am() if language == "am" else eth_date.format_en()
+    eth_str = eth_date.format_am() if language in ("am", "ti") else eth_date.format_en()
 
     # 2. RAG retrieval
     try:
@@ -117,19 +211,11 @@ async def chat(body: ChatRequest) -> ChatResponse:
         if ai_citations:
             citations = ai_citations
     except asyncio.TimeoutError:
-        reply_text = (
-            "I'm taking longer than expected. Please try again in a moment."
-            if language == "en"
-            else "ትንሽ ጊዜ ወስዷል። እባክዎ እንደገና ይሞክሩ።"
-        )
+        reply_text = _TIMEOUT_MESSAGES.get(language, _TIMEOUT_MESSAGES["en"])
         logger.warning("AI provider timed out for session %s", body.session_id)
     except Exception as exc:
         logger.error("AI provider error: %s", exc)
-        reply_text = (
-            "An error occurred while generating a response. Please try again."
-            if language == "en"
-            else "ምላሽ ሲፈጥር ስህተት ተከስቷል። እባክዎ እንደገና ይሞክሩ።"
-        )
+        reply_text = _ERROR_MESSAGES.get(language, _ERROR_MESSAGES["en"])
 
     response = ChatResponse(
         id=response_id,

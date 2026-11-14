@@ -15,20 +15,35 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_SYSTEM_PROMPT_EN = (
-    "You are a helpful learning assistant for Savanna, an online learning platform. "
-    "Answer ONLY from the provided course content. "
-    "If the answer is not in the provided content, say so clearly. "
-    "Always cite your sources using [source_id] notation. "
-    "Do not make up information."
-)
+_LANGUAGE_NAMES: dict[str, str] = {
+    "en": "English",
+    "am": "Amharic (አማርኛ)",
+    "om": "Afaan Oromo (Afaan Oromoo)",
+    "ti": "Tigrinya (ትግርኛ)",
+    "so": "Somali (Soomaali)",
+    "ar": "Arabic (العربية)",
+    "sw": "Kiswahili (Swahili)",
+    "fr": "French (Français)",
+}
 
-_SYSTEM_PROMPT_AM = (
-    "እርስዎ ለሳቫና የመስመር ላይ ትምህርት መድረክ አጋዥ የትምህርት ረዳት ነዎት። "
-    "ከቀረበው የኮርስ ይዘት ብቻ ይመልሱ። "
-    "መልሱ ካልተገኘ ግልጽ ያድርጉ። "
-    "ምንጮቹን ሁልጊዜ ጠቅሰው [source_id] ምልክት ይጠቀሙ።"
-)
+def get_system_prompt(language: str, simple_mode: bool = False) -> str:
+    lang_name = _LANGUAGE_NAMES.get(language, "English")
+    prompt = (
+        f"You are a helpful multilingual learning assistant for Savanna, an online learning platform "
+        f"serving Ethiopian and regional refugee learners (including Eritrean, Sudanese, Somali, and Congolese learners). "
+        f"You MUST respond fluently and naturally in {lang_name}. "
+        f"Answer ONLY from the provided course content. "
+        f"If the answer is not in the provided content, state clearly in {lang_name} that the course material does not mention it. "
+        f"Always cite your sources using [source_id] notation corresponding to the course chunks provided. "
+        f"Do not make up information."
+    )
+    if simple_mode:
+        prompt += (
+            f" [SIMPLE MODE ACTIVATED] Use very plain, simple words in {lang_name}. "
+            f"Keep sentences short (under 12 words). Avoid technical jargon so non-native speakers "
+            f"and low-literacy learners can easily understand."
+        )
+    return prompt
 
 _CITATION_RE = re.compile(r"\[([^\]]+)\]")
 
@@ -83,12 +98,7 @@ class OpenAIProvider(AIProvider):
         history: list[ChatMessage],
         simple_mode: bool = False,
     ) -> tuple[str, list[Citation]]:
-        system_prompt = _SYSTEM_PROMPT_AM if language == "am" else _SYSTEM_PROMPT_EN
-        if simple_mode:
-            if language == "am":
-                system_prompt += " [ቀላል ሁነታ] እባክዎ በጣም ቀላል እና አጫጭር ቃላትን ይጠቀሙ። ዓረፍተ ነገሮችን አጭር ያድርጉ።"
-            else:
-                system_prompt += " [SIMPLE MODE] Use very plain, simple words. Keep sentences short (under 12 words). Avoid technical jargon."
+        system_prompt = get_system_prompt(language, simple_mode)
         context_block = _build_context_block(context_chunks)
 
         messages: list[dict] = [

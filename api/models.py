@@ -6,17 +6,32 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 
+# ─── Language Specification ──────────────────────────────────────────────────
+# Comprehensive 8-language matrix for Ethiopia and regional refugee populations
+SupportedLanguage = Literal[
+    "en",    # English (academic, South Sudan, Kenya)
+    "am",    # Amharic (አማርኛ - Federal working language)
+    "om",    # Afaan Oromo (Afaan Oromoo - largest national demographic)
+    "ti",    # Tigrinya (ትግርኛ - Tigray & Eritrean refugees)
+    "so",    # Somali (Soomaali - Somali region & refugees)
+    "ar",    # Arabic (العربية - Sudanese, South Sudanese, Yemeni refugees, RTL)
+    "sw",    # Kiswahili (DRC, Kenya, Uganda refugees)
+    "fr",    # French (Français - DRC, Burundian refugees)
+    "auto",  # Automatic zero-shot language detection
+]
+
+
 # ─── Chat ────────────────────────────────────────────────────────────────────
 
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant", "system"]
     content: str
-    language: Literal["en", "am"] = "en"
+    language: str = "en"
 
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4096)
-    language: Literal["en", "am"] = "en"
+    language: SupportedLanguage | str = "auto"
     history: list[ChatMessage] = Field(default_factory=list, max_length=20)
     session_id: Optional[str] = None
     user_id: Optional[str] = None
@@ -33,7 +48,7 @@ class Citation(BaseModel):
 class ChatResponse(BaseModel):
     id: str
     text: str
-    language: Literal["en", "am"]
+    language: str
     citations: list[Citation] = []
     provider: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
@@ -75,7 +90,7 @@ class JobAlertRequest(BaseModel):
     channel: Literal["telegram", "sms", "both"] = "both"
     contact: str                          # Telegram chat_id or phone number
     keywords: list[str] = []
-    language: Literal["en", "am"] = "en"
+    language: SupportedLanguage | str = "en"
 
 
 class JobAlertResponse(BaseModel):
@@ -96,7 +111,7 @@ class AccommodationRequest(BaseModel):
     )
     interview_date: Optional[str] = None
     notes: Optional[str] = None
-    language: Literal["en", "am"] = "en"
+    language: SupportedLanguage | str = "en"
 
 
 class AccommodationResponse(BaseModel):

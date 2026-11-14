@@ -195,6 +195,68 @@ body {
   border-color: #fff;
 }
 
+/* ── Multilingual Language Selector ────────────────────────── */
+.lang-select-container {
+  display: inline-flex;
+  align-items: center;
+}
+
+.lang-select {
+  appearance: auto;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.35rem;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.15s, border-color 0.15s;
+  max-width: 125px;
+}
+
+.lang-select:hover, .lang-select:focus-visible {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: #ffffff;
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.lang-select option {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+/* ── Right-to-Left (RTL) Layout & Arabic Typography ────────── */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] .widget-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .chat-input-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .user-msg {
+  text-align: right;
+}
+
+[dir="rtl"] .assistant-msg {
+  text-align: right;
+}
+
+.rtl-msg {
+  direction: rtl !important;
+  text-align: right !important;
+  font-family: 'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif !important;
+  line-height: 1.7 !important;
+}
+
 /* ── Message area ──────────────────────────────────────────── */
 .message-area {
   flex: 1;

@@ -15,8 +15,38 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_OFFLINE_NOTE_EN = "⚠️ Offline mode — answers from FAQ only."
-_OFFLINE_NOTE_AM = "⚠️ ከተያዘ ሁኔታ — መልሶች ከፍ ላይ ካለው FAQ ብቻ ናቸው።"
+_OFFLINE_NOTES: dict[str, str] = {
+    "en": "⚠️ Offline mode — answers from FAQ only.",
+    "am": "⚠️ ከመስመር ውጭ ሁነታ — መልሶች ከFAQ ብቻ ናቸው።",
+    "om": "⚠️ Haala toora alaa (Offline) — deebiin FAQ qofa irraa.",
+    "ti": "⚠️ ካብ መስመር ወጻኢ — መልስታት ካብ FAQ ጥራይ እዮም።",
+    "so": "⚠️ Qaabka khadka ka baxsan — jawaabaha FAQ kaliya.",
+    "ar": "⚠️ وضع عدم الاتصال — الإجابات من الأسئلة الشائعة فقط.",
+    "sw": "⚠️ Hali ya nje ya mtandao — majibu kutoka FAQ pekee.",
+    "fr": "⚠️ Mode hors ligne — réponses issues de la FAQ uniquement.",
+}
+
+_MODE_PREFIXES: dict[str, str] = {
+    "en": "💡 [Simple Mode — Plain Language]\n\n",
+    "am": "💡 [ቀላል ሁነታ — አጭር ማብራሪያ]\n\n",
+    "om": "💡 [Haala Salphaa — Ibsa Gabaabaa]\n\n",
+    "ti": "💡 [ቀሊል ሁነታ — ሓጺር መብርሂ]\n\n",
+    "so": "💡 [Qaab Fudud — Sharaxaad Kooban]\n\n",
+    "ar": "💡 [الوضع المبسط — لغة واضحة]\n\n",
+    "sw": "💡 [Hali Rahisi — Lugha Rahisi]\n\n",
+    "fr": "💡 [Mode Simple — Langage Clair]\n\n",
+}
+
+_FALLBACK_TEXTS: dict[str, str] = {
+    "en": "I don't have specific information about that in offline mode. Please try again when you're connected to the internet.",
+    "am": "በመስመር ውጭ ሁነታ ስለዚህ የተለየ መረጃ የለኝም። እባክዎ ከኢንተርኔት ጋር ሲገናኙ እንደገና ይሞክሩ።",
+    "om": "Haala toora alaa keessatti odeeffannoo kana hin qabu. Maaloo yeroo intarneetii qabdutti irra deebi'aa yaalaa.",
+    "ti": "ኣብዚ ካብ መስመር ወጻኢ ኩነታት ብዛዕባዚ ፍሉይ ሓበሬታ የብለይን። ምስ ኢንተርነት ምስ ተራኸብኩም ደጊምኩም ፈትኑ።",
+    "so": "Xog gaar ah kuma hayo qaabka khadka ka baxsan. Fadlan isku day markaad internetka ku xiranto.",
+    "ar": "ليس لدي معلومات محددة حول ذلك في وضع عدم الاتصال. يرجى المحاولة مرة أخرى عند الاتصال بالإنترنت.",
+    "sw": "Sina maelezo mahususi kuhusu hilo katika hali ya nje ya mtandao. Tafadhali jaribu tena ukiwa umeunganishwa.",
+    "fr": "Je n'ai pas d'informations spécifiques à ce sujet en mode hors ligne. Veuillez réessayer lorsque vous serez connecté à Internet.",
+}
 
 _FAQ_SEARCH_PATHS = [
     "/app/docs/offline_faq.json",
@@ -26,28 +56,18 @@ _FAQ_SEARCH_PATHS = [
 
 _DEFAULT_FAQ: list[dict] = [
     {
-        "question": "What is Savanna?",
-        "answer": "Savanna is an online learning platform that connects learners with high-quality courses.",
+        "question": "What is Savanna? ሳቫና ምንድን ነው? Savanna maali? ሳቫና እንታይ እዩ? ما هي سافانا؟ Savanna ni nini? Qu'est-ce que Savanna?",
+        "answer": "Savanna is an inclusive learning platform supporting 3,000 Digital Bridge learners in Amharic, Afaan Oromo, Tigrinya, Somali, Arabic, Swahili, French, and English.",
         "source": "offline_faq",
     },
     {
-        "question": "How do I enroll in a course?",
-        "answer": "Browse the course catalog, click on a course, and press the Enroll button.",
+        "question": "What languages are supported? የሚደገፉ ቋንቋዎች? Afaan kamtu deeggarama? ቋንቋታት? ما هي اللغات المدعومة؟ Lugha gani zinatumika? Quelles langues sont prises en charge?",
+        "answer": "Savanna natively supports 8 languages: Amharic (አማርኛ), Afaan Oromoo, Tigrinya (ትግርኛ), Somali (Soomaali), Arabic (العربية), Kiswahili, French (Français), and English.",
         "source": "offline_faq",
     },
     {
-        "question": "What languages are supported?",
-        "answer": "Savanna supports English and Amharic (አማርኛ).",
-        "source": "offline_faq",
-    },
-    {
-        "question": "How do I get a certificate?",
-        "answer": "Complete all required modules and assessments in a course to receive your certificate.",
-        "source": "offline_faq",
-    },
-    {
-        "question": "Who do I contact for support?",
-        "answer": "For technical support, please use the in-platform chat or email support@savanna.example.com.",
+        "question": "How do I request accommodations? የተደራሽነት ማስተካከያ? Deeggarsa akkamitti gaafadha? ከመይ ገይረ ሓገዝ ይሓትት? طلب التسهيلات؟ Ombi la makazi? Demande d'aménagements?",
+        "answer": "You can request interview and learning accommodations privately without medical proof via the /accommodate endpoint or by asking the assistant.",
         "source": "offline_faq",
     },
 ]
@@ -94,15 +114,14 @@ class OfflineProvider(AIProvider):
         history: list[ChatMessage],
         simple_mode: bool = False,
     ) -> tuple[str, list[Citation]]:
-        note = _OFFLINE_NOTE_AM if language == "am" else _OFFLINE_NOTE_EN
-        mode_prefix = ("💡 [ቀላል ሁነታ — አጭር ማብራሪያ]\n\n" if language == "am" else "💡 [Simple Mode — Plain Language]\n\n") if simple_mode else ""
+        note = _OFFLINE_NOTES.get(language, _OFFLINE_NOTES["en"])
+        mode_prefix = _MODE_PREFIXES.get(language, _MODE_PREFIXES["en"]) if simple_mode else ""
 
         # If RAG context is provided, return the top chunk directly
         if context_chunks:
             top = context_chunks[0]
             raw_text = top['text']
             if simple_mode:
-                # Keep first 2 sentences for simple mode brevity
                 sentences = raw_text.split(". ")
                 raw_text = ". ".join(sentences[:2]) + ("." if not sentences[0].endswith(".") else "")
             text = f"{mode_prefix}{note}\n\n{raw_text}"
@@ -123,10 +142,8 @@ class OfflineProvider(AIProvider):
                 best_entry = entry
 
         if best_entry is None or best_score == 0:
-            fallback_text = (
-                f"{note}\n\nI don't have specific information about that in offline mode. "
-                "Please try again when you're connected to the internet."
-            )
+            fallback_msg = _FALLBACK_TEXTS.get(language, _FALLBACK_TEXTS["en"])
+            fallback_text = f"{note}\n\n{fallback_msg}"
             return fallback_text, []
 
         answer = best_entry.get("answer", "No answer available.")

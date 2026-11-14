@@ -21,14 +21,17 @@ import logging
 import os
 import sys
 
+from config import get_settings
+
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 # ── Language store (in-memory, upgrade to Redis for multi-process) ────────────
-user_language: dict[int, str] = {}  # user_id → "en" | "am"
+user_language: dict[int, str] = {}  # user_id → "en" | "am" | "om" | "ti" | "so" | "ar" | "sw" | "fr" | "auto"
 
 
 def _lang(user_id: int) -> str:
-    return user_language.get(user_id, "en")
+    return user_language.get(user_id, "auto")
 
 
 # ── Copy ──────────────────────────────────────────────────────────────────────
@@ -37,7 +40,7 @@ WELCOME = {
     "en": (
         "👋 Welcome to *Savanna Multilingual Assistant*!\n\n"
         "I can help you with:\n"
-        "• Course questions (Amharic or English)\n"
+        "• Course questions (8 languages supported)\n"
         "• Browsing remote job opportunities\n"
         "• Requesting accessibility accommodations\n"
         "• Connecting you to a live operator\n\n"
@@ -46,11 +49,65 @@ WELCOME = {
     "am": (
         "👋 ወደ *ሳቫና ባለ-ቋንቋ ረዳት* እንኳን ደህና መጡ!\n\n"
         "ሊረዳዎ የምችለው:\n"
-        "• የኮርስ ጥያቄዎች (አማርኛ ወይም እንግሊዝኛ)\n"
+        "• የኮርስ ጥያቄዎች (በ 8 ቋንቋዎች)\n"
         "• የርቀት የሥራ ዕድሎችን ማሰስ\n"
         "• ተደራሽነት ጥያቄ ማስገባት\n"
         "• ወደ ሰው ኦፕሬተር ማስተላለፍ\n\n"
         "ሁሉንም ትዕዛዞች ለማየት /help ይፃፉ።"
+    ),
+    "om": (
+        "👋 Baga nagaan gara *Gargaaraa Afaan Baay'ee Savanna* dhuftan!\n\n"
+        "Waanin isin gargaaruu danda'u:\n"
+        "• Gaaffii barnootaa (afaanota 8n)\n"
+        "• Carraawwan hojii fageenyaa barbaaduu\n"
+        "• Gaaffii mijeeffannaa dhiyeessuu\n"
+        "• Gargaaraa kallattiitti wal qunnamsiisuu\n\n"
+        "Ajajoota hunda arguuf /help barreessaa."
+    ),
+    "ti": (
+        "👋 ናብ *ሳቫና ብዙሕ-ቋንቋ ሓጋዚ* ብደሓን መጻእኩም!\n\n"
+        "ክሕግዘኩም ዝኽእሎም:\n"
+        "• ሕቶታት ትምህርቲ (ብ 8 ቋንቋታት)\n"
+        "• ናይ ርሑቕ ስራሕ ዕድላት ምድላይ\n"
+        "• ናይ ተበጻሕነት ሕቶ ምቕራብ\n"
+        "• ምስ ቀጥታዊ ኦፕሬተር ምትእስሳር\n\n"
+        "ኩሎም ትእዛዛት ንምርኣይ /help ጽሓፉ።"
+    ),
+    "so": (
+        "👋 Ku soo dhowow *Kaaliyaha Luuqadaha Badan ee Savanna*!\n\n"
+        "Waxaan kaa caawin karaa:\n"
+        "• Su'aalaha koorsada (8 luqadood)\n"
+        "• Raadinta fursadaha shaqo ee fog\n"
+        "• Dalbashada wax-ka-beddelka naafada\n"
+        "• Ku xiridda shaqaale toos ah\n\n"
+        "Geli /help si aad u aragto dhammaan amarrada."
+    ),
+    "ar": (
+        "👋 مرحبًا بك في *مساعد سافانا متعدد اللغات*!\n\n"
+        "يمكنني مساعدتك في:\n"
+        "• أسئلة الدورات التدريبية (بـ 8 لغات)\n"
+        "• استعراض فرص العمل عن بُعد\n"
+        "• طلب ترتيبات التيسير لذوي الإعاقة\n"
+        "• التواصل مع موظف دعم مباشر\n\n"
+        "اكتب /help لعرض جميع الأوامر."
+    ),
+    "sw": (
+        "👋 Karibu kwenye *Msaidizi wa Lugha Nyingi wa Savanna*!\n\n"
+        "Ninaweza kukusaidia kwa:\n"
+        "• Maswali ya masomo (lugha 8 zikisaidiwa)\n"
+        "• Kutafuta nafasi za kazi za mbali\n"
+        "• Kuomba usaidizi wa ufikiaji\n"
+        "• Kuunganishwa na opereta wa moja kwa moja\n\n"
+        "Andika /help kuona amri zote."
+    ),
+    "fr": (
+        "👋 Bienvenue sur l'*Assistant Multilingue Savanna* !\n\n"
+        "Je peux vous aider avec :\n"
+        "• Vos questions sur les cours (8 langues prises en charge)\n"
+        "• La recherche d'opportunités d'emploi à distance\n"
+        "• La demande d'aménagements d'accessibilité\n"
+        "• La mise en relation avec un opérateur en direct\n\n"
+        "Tapez /help pour voir toutes les commandes."
     ),
 }
 
@@ -59,27 +116,94 @@ HELP_TEXT = {
         "📋 *Available Commands*\n\n"
         "/start — Welcome message\n"
         "/help — This help text\n"
-        "/language — Toggle English ↔ Amharic\n"
+        "/language — Select your preferred language\n"
         "/jobs — Browse 5 latest job listings\n"
         "/accommodate — Request accessibility accommodation\n"
-        "/escalate — Connect to a live operator\n\n"
-        "Or just type any question and I'll answer it!"
+        "/escalate — Connect to a live human operator\n\n"
+        "Or just ask any course question in any language!"
     ),
     "am": (
         "📋 *የሚገኙ ትዕዛዞች*\n\n"
         "/start — የእንኳን ደህና መጡ መልዕክት\n"
         "/help — ይህ የእርዳታ ጽሑፍ\n"
-        "/language — እንግሊዝኛ ↔ አማርኛ ቀይር\n"
+        "/language — ቋንቋ ይምረጡ\n"
         "/jobs — 5 የቅርብ ጊዜ የሥራ ዕድሎችን ያሳይ\n"
         "/accommodate — ተደራሽነት ጥያቄ ያስገቡ\n"
         "/escalate — ወደ ሕያው ኦፕሬተር ያስተላልፉ\n\n"
-        "ወይም ማንኛውንም ጥያቄ ይፃፉ አሟሟልሁ!"
+        "ወይም ማንኛውንም ጥያቄ በፈለጉት ቋንቋ ይጠይቁ!"
+    ),
+    "om": (
+        "📋 *Ajajoota Jiran*\n\n"
+        "/start — Ergaa baga nagaan dhuftanii\n"
+        "/help — Odeeffannoo gargaarsaa kana\n"
+        "/language — Afaan filadhaa\n"
+        "/jobs — Hojiiwwan dhiyoo 5 ilaalaa\n"
+        "/accommodate — Gaaffii mijeeffannaa dhiyeessaa\n"
+        "/escalate — Gargaaraa namaa qunnamaa\n\n"
+        "Yookaan gaaffii barnootaa afaan kamiiniyyuu gaafadhaa!"
+    ),
+    "ti": (
+        "📋 *ዝርከቡ ትእዛዛት*\n\n"
+        "/start — ናይ እንቋዕ ደሓን መጻእኩም መልእኽቲ\n"
+        "/help — እዚ ናይ ሓገዝ ጽሑፍ\n"
+        "/language — ቋንቋ ምረጹ\n"
+        "/jobs — 5 ዝሓደሹ ናይ ስራሕ ዕድላት ርኣዩ\n"
+        "/accommodate — ናይ ተበጻሕነት ሕቶ ኣቕርቡ\n"
+        "/escalate — ምስ ሰብኣዊ ኦፕሬተር ተራኸቡ\n\n"
+        "ወይ ዝኾነ ናይ ትምህርቲ ሕቶ ብዝመረጽኩምዎ ቋንቋ ሕተቱ!"
+    ),
+    "so": (
+        "📋 *Amarka La Heli Karo*\n\n"
+        "/start — Farriinta soo dhoweynta\n"
+        "/help — Qoraalkan caawinta\n"
+        "/language — Dooro luuqaddaada\n"
+        "/jobs — Eeg 5-ta shaqo ee ugu dambeeya\n"
+        "/accommodate — Dalbo wax-ka-beddelka gelitaanka\n"
+        "/escalate — La xiriir hawlwadeen toos ah\n\n"
+        "Ama weydii su'aal kasta luqad kasta!"
+    ),
+    "ar": (
+        "📋 *الأوامر المتاحة*\n\n"
+        "/start — رسالة الترحيب\n"
+        "/help — نص المساعدة هذا\n"
+        "/language — اختر لغتك المفضلة\n"
+        "/jobs — استعراض أحدث 5 وظائف\n"
+        "/accommodate — طلب ترتيبات التيسير لذوي الإعاقة\n"
+        "/escalate — التواصل مع موظف دعم بشري مباشر\n\n"
+        "أو اكتب أي سؤال دراسي بأي لغة وسأجيبك!"
+    ),
+    "sw": (
+        "📋 *Amri Zinazopatikana*\n\n"
+        "/start — Ujumbe wa kukaribisha\n"
+        "/help — Maelezo haya ya usaidizi\n"
+        "/language — Chagua lugha unayopendelea\n"
+        "/jobs — Tazama nafasi 5 za hivi punde za kazi\n"
+        "/accommodate — Omba marekebisho ya ufikiaji\n"
+        "/escalate — Unganishwa na mhudumu wa kibinadamu\n\n"
+        "Au uliza swali lolote la masomo kwa lugha yoyote!"
+    ),
+    "fr": (
+        "📋 *Commandes disponibles*\n\n"
+        "/start — Message de bienvenue\n"
+        "/help — Ce texte d'aide\n"
+        "/language — Choisissez votre langue préférée\n"
+        "/jobs — Consulter les 5 dernières offres d'emploi\n"
+        "/accommodate — Demander un aménagement d'accessibilité\n"
+        "/escalate — Contacter un opérateur humain en direct\n\n"
+        "Ou posez simplement n'importe quelle question de cours dans votre langue !"
     ),
 }
 
-LANGUAGE_TOGGLED = {
-    "en": "✅ Language set to *English*.",
-    "am": "✅ ቋንቋ *አማርኛ* ሆኗል።",
+LANGUAGE_CONFIRMED = {
+    "en": "✅ Language set to *English* 🇬🇧",
+    "am": "✅ ቋንቋ ወደ *አማርኛ* ተቀይሯል 🇪🇹",
+    "om": "✅ Afaan gara *Afaan Oromootti* jijjiirameera 🇪🇹",
+    "ti": "✅ ቋንቋ ናብ *ትግርኛ* ተቐይሩ ኣሎ 🇪🇷",
+    "so": "✅ Luuqadda waxaa loo beddelay *Soomaali* 🇸🇴",
+    "ar": "✅ تم ضبط اللغة إلى *العربية* 🇸🇦",
+    "sw": "✅ Lugha imewekwa kuwa *Kiswahili* 🇰🇪",
+    "fr": "✅ Langue définie sur *Français* 🇫🇷",
+    "auto": "✨ *Auto-Detection* enabled. Savanna will reply in the language you type!",
 }
 
 ESCALATE_MSG = {
@@ -91,6 +215,36 @@ ESCALATE_MSG = {
     "am": (
         "🚨 ጥያቄዎ ወደ ኦፕሬተር ተልኳል።\n"
         "ቀጥታ ክፍለ ጊዜ ለማድረግ የድር ረዳቱን ይከፍቱ:\n"
+        "{url}"
+    ),
+    "om": (
+        "🚨 Gaaffiin keessan gara gargaaraatti ergameera.\n"
+        "Walgahii kallattii gochuuf gargaaraa weebii banaa:\n"
+        "{url}"
+    ),
+    "ti": (
+        "🚨 ሕቶኹም ናብ ኦፕሬተር ተላኢኹ ኣሎ።\n"
+        "ቀጥታዊ ርክብ ንምግባር ናይ ወብ ሓጋዚ ይኽፈቱ:\n"
+        "{url}"
+    ),
+    "so": (
+        "🚨 Codsigaaga waxaa loo diray hawlwadeen.\n"
+        "Waxaad sidoo kale furi kartaa kaaliyaha shabakadda:\n"
+        "{url}"
+    ),
+    "ar": (
+        "🚨 تم إرسال طلب التصعيد الخاص بك إلى موظف الدعم.\n"
+        "يمكنك أيضًا فتح المساعد عبر الويب لجلسة مباشرة:\n"
+        "{url}"
+    ),
+    "sw": (
+        "🚨 Ombi lako la kupata msaada limetumwa kwa mhudumu.\n"
+        "Unaweza pia kufungua msaidizi wa wavuti kwa kipindi cha moja kwa moja:\n"
+        "{url}"
+    ),
+    "fr": (
+        "🚨 Votre demande de transfert a été envoyée à un opérateur.\n"
+        "Vous pouvez également ouvrir l'assistant web pour une session en direct :\n"
         "{url}"
     ),
 }
@@ -144,15 +298,32 @@ async def _chat_api(message: str, language: str) -> str:
         sources = [c.source for c in citations if c.source] if citations else [c.get("source") for c in chunks if c.get("source")]
         sources = list(dict.fromkeys(sources))
         if sources:
-            reply += "\n\n📚 *Sources:* " + ", ".join(sources[:3])
+            source_labels = {
+                "en": "📚 *Sources:* ",
+                "am": "📚 *ምንጮች:* ",
+                "om": "📚 *Maddoota:* ",
+                "ti": "📚 *መወከሲታት:* ",
+                "so": "📚 *Xogta:* ",
+                "ar": "📚 *المصادر:* ",
+                "sw": "📚 *Vyanzo:* ",
+                "fr": "📚 *Sources :* ",
+            }
+            label = source_labels.get(language, "📚 *Sources:* ")
+            reply += f"\n\n{label}" + ", ".join(sources[:3])
         return reply
     except Exception as exc:
         logger.error("Chat API error in Telegram bot: %s", exc)
-        return (
-            "Sorry, I couldn't generate a response right now."
-            if language == "en"
-            else "ይቅርታ፣ ምላሽ አልሰጠሁም።"
-        )
+        fallbacks = {
+            "en": "Sorry, I couldn't generate a response right now.",
+            "am": "ይቅርታ፣ ምላሽ ማመንጨት አልቻልኩም።",
+            "om": "Dhiifama, yeroo ammaa deebii kennuu hin dandeenye.",
+            "ti": "ይቕሬታ፣ ሕጂ መልሲ ክህብ ኣይከኣልኩን።",
+            "so": "Waan ka xumahay, hadda jawaab ma bixin karo.",
+            "ar": "عذرًا، لم أتمكن من إنشاء رد في الوقت الحالي.",
+            "sw": "Samahani, sikuweza kutoa jibu kwa sasa.",
+            "fr": "Désolé, je n'ai pas pu générer de réponse pour le moment.",
+        }
+        return fallbacks.get(language, fallbacks["en"])
 
 
 # ── Bot handlers ──────────────────────────────────────────────────────────────
@@ -174,27 +345,67 @@ def build_application(token: str):
     # ── /start ────────────────────────────────────────────────────────────────
     async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         uid = update.effective_user.id
-        lang = _lang(uid)
-        await update.message.reply_text(WELCOME[lang], parse_mode="Markdown")
+        lang = user_language.get(uid, "en")
+        if lang == "auto":
+            lang = "en"
+        await update.message.reply_text(WELCOME.get(lang, WELCOME["en"]), parse_mode="Markdown")
 
     # ── /help ─────────────────────────────────────────────────────────────────
     async def help_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         uid = update.effective_user.id
-        lang = _lang(uid)
-        await update.message.reply_text(HELP_TEXT[lang], parse_mode="Markdown")
+        lang = user_language.get(uid, "en")
+        if lang == "auto":
+            lang = "en"
+        await update.message.reply_text(HELP_TEXT.get(lang, HELP_TEXT["en"]), parse_mode="Markdown")
 
     # ── /language ─────────────────────────────────────────────────────────────
     async def language_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         uid = update.effective_user.id
-        current = _lang(uid)
-        new_lang = "am" if current == "en" else "en"
-        user_language[uid] = new_lang
-        await update.message.reply_text(LANGUAGE_TOGGLED[new_lang], parse_mode="Markdown")
+        current = user_language.get(uid, "auto")
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("🇬🇧 English", callback_data="setlang_en"),
+                InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="setlang_am"),
+            ],
+            [
+                InlineKeyboardButton("🇪🇹 Afaan Oromoo", callback_data="setlang_om"),
+                InlineKeyboardButton("🇪🇷 ትግርኛ", callback_data="setlang_ti"),
+            ],
+            [
+                InlineKeyboardButton("🇸🇴 Soomaali", callback_data="setlang_so"),
+                InlineKeyboardButton("🇸🇦 العربية", callback_data="setlang_ar"),
+            ],
+            [
+                InlineKeyboardButton("🇰🇪 Kiswahili", callback_data="setlang_sw"),
+                InlineKeyboardButton("🇫🇷 Français", callback_data="setlang_fr"),
+            ],
+            [
+                InlineKeyboardButton("✨ Auto-Detect (ራስ-ገዝ)", callback_data="setlang_auto"),
+            ],
+        ])
+        prompt = (
+            f"🌍 *Select your preferred language / ቋንቋ ይምረጡ*\n"
+            f"(Currently: `{current}`)"
+        )
+        await update.message.reply_text(prompt, parse_mode="Markdown", reply_markup=keyboard)
+
+    async def language_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        query = update.callback_query
+        await query.answer()
+        data = query.data or ""
+        if data.startswith("setlang_"):
+            code = data.replace("setlang_", "")
+            uid = query.from_user.id
+            user_language[uid] = code
+            confirmation = LANGUAGE_CONFIRMED.get(code, f"✅ Language set to *{code}*")
+            await query.edit_message_text(confirmation, parse_mode="Markdown")
 
     # ── /jobs ─────────────────────────────────────────────────────────────────
     async def jobs_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         uid = update.effective_user.id
-        lang = _lang(uid)
+        lang = user_language.get(uid, "en")
+        if lang == "auto":
+            lang = "en"
         jobs = await _load_jobs(5)
         if not jobs:
             await update.message.reply_text(
@@ -222,7 +433,9 @@ def build_application(token: str):
         query = update.callback_query
         await query.answer()
         uid = query.from_user.id
-        lang = _lang(uid)
+        lang = user_language.get(uid, "en")
+        if lang == "auto":
+            lang = "en"
         jobs = await _load_jobs(10)
         extra = jobs[5:]  # second page
         if not extra:
@@ -240,9 +453,12 @@ def build_application(token: str):
     # ── /escalate ─────────────────────────────────────────────────────────────
     async def escalate_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         uid = update.effective_user.id
-        lang = _lang(uid)
+        lang = user_language.get(uid, "en")
+        if lang == "auto":
+            lang = "en"
         widget_url = f"{settings.api_base_url}/widget/iframe.html"
-        msg = ESCALATE_MSG[lang].format(url=widget_url)
+        template = ESCALATE_MSG.get(lang, ESCALATE_MSG["en"])
+        msg = template.format(url=widget_url)
 
         # Fire escalation API
         import httpx
@@ -267,7 +483,9 @@ def build_application(token: str):
     # ── /accommodate ConversationHandler ─────────────────────────────────────
     async def accom_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         uid = update.effective_user.id
-        lang = _lang(uid)
+        lang = user_language.get(uid, "en")
+        if lang == "auto":
+            lang = "en"
         ctx.user_data["lang"] = lang
         prompt = (
             "Please enter your *full name* and *email address* (separated by a comma).\nExample: Jane Doe, jane@example.com"
@@ -357,8 +575,17 @@ def build_application(token: str):
     # ── Regular message handler ───────────────────────────────────────────────
     async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         uid = update.effective_user.id
-        lang = _lang(uid)
+        pref = user_language.get(uid, "auto")
         text = update.message.text or ""
+
+        if pref == "auto":
+            try:
+                from routers.chat import _detect_language
+                lang = _detect_language(text)
+            except Exception:
+                lang = "en"
+        else:
+            lang = pref
 
         # Show typing action
         await ctx.bot.send_chat_action(
@@ -391,6 +618,7 @@ def build_application(token: str):
     app.add_handler(CommandHandler("escalate", escalate_cmd))
     app.add_handler(accommodation_handler)
     app.add_handler(CallbackQueryHandler(jobs_more_callback, pattern="^jobs_more$"))
+    app.add_handler(CallbackQueryHandler(language_callback, pattern="^setlang_"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     return app

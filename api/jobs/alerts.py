@@ -112,13 +112,20 @@ async def send_telegram_alert(chat_id: str, job: dict[str, Any], lang: str = "en
 
 
 async def send_sms_alert(phone: str, job: dict[str, Any], lang: str = "en") -> bool:
-    title = job.get("title", "")[:30]
-    company = job.get("company", "")[:20]
+    title = job.get("title", "")[:28]
+    company = job.get("company", "")[:18]
     url = job.get("url", "")
-    if lang == "am":
-        msg = f"አዲስ ሥራ: {title} በ {company}። ማመልከቻ: {url}"
-    else:
-        msg = f"NEW JOB: {title} at {company}. Apply: {url}"
+    templates = {
+        "en": f"NEW JOB: {title} at {company}. Apply: {url}",
+        "am": f"አዲስ ሥራ: {title} በ {company}። ማመልከቻ: {url}",
+        "om": f"HOJII HAARAA: {title} bakka {company}. Iyyadhu: {url}",
+        "ti": f"ሓድሽ ስራሕ: {title} ኣብ {company}። ንምምልካት: {url}",
+        "so": f"SHAQO CUSUB: {title} ee {company}. Codso: {url}",
+        "ar": f"وظيفة جديدة: {title} في {company}. التقديم: {url}",
+        "sw": f"KAZI MPYA: {title} pale {company}. Tuma maombi: {url}",
+        "fr": f"NOUVEL EMPLOI: {title} chez {company}. Postuler: {url}",
+    }
+    msg = templates.get(lang, templates["en"])
     return await send_sms(phone, msg[:160], settings)
 
 

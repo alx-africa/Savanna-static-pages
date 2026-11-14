@@ -40,13 +40,22 @@
   <header class="widget-header" role="banner">
     <h1 id="widget-title">Savanna Assistant</h1>
 
-    <!-- Language toggle -->
-    <button type="button" id="lang-toggle-btn" class="icon-btn lang-toggle"
-            aria-pressed="false"
-            aria-label="Switch to Amharic"
-            title="Switch language / ቋንቋ ቀይር">
-      EN
-    </button>
+    <!-- Multilingual Language Selector (8 Languages + Auto-Detect) -->
+    <div class="lang-select-container">
+      <label for="lang-select" class="sr-only">Choose language / ቋንቋ ይምረጡ</label>
+      <select id="lang-select" class="lang-select" aria-label="Choose Assistant Language / ቋንቋ ይምረጡ" title="Choose language / ቋንቋ ይምረጡ">
+        <option value="auto">✨ Auto</option>
+        <option value="en">EN • English</option>
+        <option value="am">AM • አማርኛ</option>
+        <option value="om">OM • Oromoo</option>
+        <option value="ti">TI • ትግርኛ</option>
+        <option value="so">SO • Soomaali</option>
+        <option value="ar">AR • العربية (RTL)</option>
+        <option value="sw">SW • Kiswahili</option>
+        <option value="fr">FR • Français</option>
+      </select>
+    </div>
+    <button type="button" id="lang-toggle-btn" style="display:none" aria-hidden="true"></button>
 
     <!-- Voice Guide (Self-voicing focus reader) -->
     <button type="button" id="voice-guide-btn" class="icon-btn"
@@ -203,19 +212,32 @@
   const sessionId = sessionStorage.getItem(SESSION_KEY);
   const history   = []; // { role: 'user'|'assistant', content: string }
 
-  /* ── Language state ──────────────────────────────────────── */
+  /* ── Language state (8-Language Matrix + Auto-Detect) ────── */
   const LANG_KEY    = 'savanna_lang';
   const VOICE_GUIDE_KEY = 'savanna_voice_guide';
   const SIMPLE_MODE_KEY = 'savanna_simple_mode';
-  let   isAmharic   = localStorage.getItem(LANG_KEY) === 'am';
+  let   currentLanguage = localStorage.getItem(LANG_KEY) || 'auto';
   let   voiceGuideEnabled = localStorage.getItem(VOICE_GUIDE_KEY) !== 'false';
   let   simpleModeEnabled = localStorage.getItem(SIMPLE_MODE_KEY) === 'true';
   let   isListening = false;
   let   recognition = null;
 
+  const BCP47_MAP = {
+    'en': 'en-US',
+    'am': 'am-ET',
+    'ti': 'ti-ET',
+    'ar': 'ar-SA',
+    'om': 'en-US',
+    'so': 'so-SO',
+    'sw': 'sw-KE',
+    'fr': 'fr-FR',
+    'auto': 'en-US'
+  };
+
   /* ── DOM refs ────────────────────────────────────────────── */
   const htmlEl        = document.documentElement;
   const widgetTitle   = document.getElementById('widget-title');
+  const langSelect    = document.getElementById('lang-select');
   const langToggleBtn = document.getElementById('lang-toggle-btn');
   const voiceGuideBtn = document.getElementById('voice-guide-btn');
   const simpleModeBtn = document.getElementById('simple-mode-btn');
@@ -241,9 +263,9 @@
   const i18n = {
     en: {
       title:        'Savanna Assistant',
-      langLabel:    'Switch to Amharic',
+      langLabel:    'Select language',
       langBtn:      'EN',
-      inputPlaceholder: 'Message (English or Amharic)',
+      inputPlaceholder: 'Message (English, Amharic, Oromo, Arabic...)',
       send:         'Send',
       voiceStart:   'Start voice input',
       voiceStop:    'Stop voice input',
@@ -275,9 +297,9 @@
     },
     am: {
       title:        'ሳቫና ረዳት',
-      langLabel:    'ወደ እንግሊዝኛ ቀይር',
+      langLabel:    'ቋንቋ ይምረጡ',
       langBtn:      'AM',
-      inputPlaceholder: 'ፅሑፍ (በእንግሊዝኛ ወይም አማርኛ)',
+      inputPlaceholder: 'መልእክት ይፃፉ (በአማርኛ፣ ኦሮምኛ፣ አረብኛ...)',
       send:         'ላክ',
       voiceStart:   'የድምፅ ግቤት ጀምር',
       voiceStop:    'የድምፅ ግቤት አቁም',
@@ -309,15 +331,30 @@
     }
   };
 
-  /* ── Apply language ──────────────────────────────────────── */
+  /* ── Apply language & RTL handling ───────────────────────── */
   function applyLanguage() {
-    const lang = isAmharic ? 'am' : 'en';
-    const t    = i18n[lang];
-    htmlEl.setAttribute('lang', lang);
-    widgetTitle.textContent   = t.title;
-    langToggleBtn.textContent = t.langBtn;
-    langToggleBtn.setAttribute('aria-label', t.langLabel);
-    langToggleBtn.setAttribute('aria-pressed', isAmharic ? 'true' : 'false');
+    const isAm = (currentLanguage === 'am' || currentLanguage === 'ti');
+    const isRtl = (currentLanguage === 'ar');
+    const t = isAm ? i18n.am : i18n.en;
+
+    htmlEl.setAttribute('lang', (currentLanguage === 'auto') ? 'en' : currentLanguage);
+    htmlEl.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+
+    if (langSelect) langSelect.value = currentLanguage;
+
+    const titles = {
+      'en': 'Savanna Assistant',
+      'am': 'ሳቫና ረዳት',
+      'om': 'Gargaaraa Savanna',
+      'ti': 'ሳቫና ሓጋዚ',
+      'so': 'Kaaliyaha Savanna',
+      'ar': 'مساعد سافانا',
+      'sw': 'Msaidizi wa Savanna',
+      'fr': 'Assistant Savanna',
+      'auto': 'Savanna Assistant'
+    };
+    widgetTitle.textContent = titles[currentLanguage] || titles['en'];
+
     voiceGuideBtn.setAttribute('aria-label', voiceGuideEnabled ? t.voiceGuideOn : t.voiceGuideOff);
     voiceGuideBtn.setAttribute('aria-pressed', voiceGuideEnabled ? 'true' : 'false');
     voiceGuideBtn.style.opacity = voiceGuideEnabled ? '1' : '0.6';
@@ -325,30 +362,59 @@
     simpleModeBtn.setAttribute('aria-pressed', simpleModeEnabled ? 'true' : 'false');
     simpleModeBtn.style.background = simpleModeEnabled ? 'rgba(255,255,255,0.3)' : '';
     simpleModeBtn.style.opacity = simpleModeEnabled ? '1' : '0.6';
-    inputLabel.textContent    = t.inputPlaceholder;
-    sendBtnLabel.textContent  = t.send;
+
+    const placeholders = {
+      'en': 'Message (English, Amharic, Oromo, Arabic...)',
+      'am': 'መልእክት ይፃፉ (በአማርኛ፣ ኦሮምኛ፣ አረብኛ...)',
+      'om': 'Ergaa barreessi (Afaan Oromoo, English...)',
+      'ti': 'መልእኽቲ ጸሓፉ (ትግርኛ፣ እንግሊዝኛ...)',
+      'so': 'Farriin qor (Soomaali, English...)',
+      'ar': 'اكتب رسالتك (العربية، الإنجليزية...)',
+      'sw': 'Andika ujumbe (Kiswahili, Kiingereza...)',
+      'fr': 'Écrivez un message (Français, Anglais...)',
+      'auto': 'Message (English, Amharic, Oromo, Arabic...)'
+    };
+    inputLabel.textContent = placeholders[currentLanguage] || placeholders['en'];
+    chatInput.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+
+    sendBtnLabel.textContent  = (currentLanguage === 'ar') ? 'إرسال' : t.send;
     sendBtn.setAttribute('aria-label', t.send + ' message');
     voiceBtn.setAttribute('aria-label', isListening ? t.voiceStop : t.voiceStart);
-    escalateLabel.textContent = t.escalate;
+    escalateLabel.textContent = (currentLanguage === 'ar') ? 'مساعدة' : t.escalate;
     escalateBtn.setAttribute('aria-label', t.escalate + ' — escalate to a human agent');
     closeBtn.setAttribute('aria-label',    t.closeLabel);
     minimizeBtn.setAttribute('aria-label', t.minimiseLabel);
-    if (modalTitle) modalTitle.textContent = t.modalTitle;
-    if (modalDesc) modalDesc.textContent = t.modalDesc;
-    if (modalCancel) modalCancel.textContent = t.modalCancel;
-    if (modalConfirm) modalConfirm.textContent = t.modalConfirm;
-    localStorage.setItem(LANG_KEY, lang);
-    if (recognition) recognition.lang = isAmharic ? 'am-ET' : 'en-US';
+
+    if (modalTitle) modalTitle.textContent = (currentLanguage === 'ar') ? 'هل ترغب في مشاركة شاشتك مع مرشد بشري؟' : t.modalTitle;
+    if (modalDesc) modalDesc.textContent = (currentLanguage === 'ar') ? 'للحصول على مساعدة مخصصة، سيشاهد وكيل الدعم شاشتك. يمكنك إيقاف المشاركة في أي وقت.' : t.modalDesc;
+    if (modalCancel) modalCancel.textContent = (currentLanguage === 'ar') ? 'إلغاء' : t.modalCancel;
+    if (modalConfirm) modalConfirm.textContent = (currentLanguage === 'ar') ? 'مشاركة واتصال' : t.modalConfirm;
+
+    localStorage.setItem(LANG_KEY, currentLanguage);
+    if (recognition) recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
   }
 
   applyLanguage();
 
-  /* ── Language toggle ─────────────────────────────────────── */
-  langToggleBtn.addEventListener('click', function () {
-    isAmharic = !isAmharic;
-    applyLanguage();
-    speakFocus(isAmharic ? 'ቋንቋ ወደ አማርኛ ተቀይሯል' : 'Language switched to English');
-  });
+  /* ── Language Selector Listener ──────────────────────────── */
+  if (langSelect) {
+    langSelect.addEventListener('change', function () {
+      currentLanguage = langSelect.value;
+      applyLanguage();
+      const speakMap = {
+        'en': 'Language set to English',
+        'am': 'ቋንቋ ወደ አማርኛ ተቀይሯል',
+        'om': 'Afaan Oromootti jijjiirameera',
+        'ti': 'ቋንቋ ናብ ትግርኛ ተቐይሩ',
+        'so': 'Luuqadda waxaa loo beddelay Soomaali',
+        'ar': 'تم تغيير اللغة إلى العربية',
+        'sw': 'Lugha imebadilishwa kuwa Kiswahili',
+        'fr': 'Langue changée en français',
+        'auto': 'Auto-detection enabled'
+      };
+      speakFocus(speakMap[currentLanguage] || 'Language updated');
+    });
+  }
 
   /* ── Voice guidance toggle ───────────────────────────────── */
   voiceGuideBtn.addEventListener('click', function () {
@@ -526,6 +592,12 @@
     bubble.className = 'message-bubble';
     bubble.textContent = content;
 
+    // RTL dynamic formatting for Arabic
+    if (/[\u0600-\u06FF]/.test(content)) {
+      bubble.setAttribute('dir', 'rtl');
+      bubble.classList.add('rtl-msg');
+    }
+
     const ts = document.createElement('time');
     ts.className = 'message-timestamp sr-only-ts';
     ts.setAttribute('datetime', new Date().toISOString());
@@ -620,7 +692,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message:     text,
-          language:    isAmharic ? 'am' : 'en',
+          language:    currentLanguage,
           session_id:  sessionId,
           history:     history.slice(-10),
           simple_mode: simpleModeEnabled
@@ -676,7 +748,7 @@
     recognition = new SR();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = isAmharic ? 'am-ET' : 'en-US';
+    recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
 
     recognition.addEventListener('result', function (e) {
       const transcript = e.results[0][0].transcript;
@@ -701,7 +773,7 @@
       if (isListening) {
         recognition.stop();
       } else {
-        recognition.lang = isAmharic ? 'am-ET' : 'en-US';
+        recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
         recognition.start();
         isListening = true;
         voiceBtn.setAttribute('aria-pressed', 'true');

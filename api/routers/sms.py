@@ -21,6 +21,7 @@ from fastapi import APIRouter, Form, Request, Response
 
 from config import get_settings
 from models import SMSInbound
+from routers.chat import _detect_language
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -47,7 +48,7 @@ def truncate_sms(text: str, page: int = 1) -> str:
 
 
 _STRIP_PREFIXES = re.compile(
-    r"^(HELP|JOB|KAZI|CHAT|HABARI|INFO|MSAADA|START|STOP|YES|NO)\s*",
+    r"^(HELP|JOB|KAZI|HOJII|SHAQO|ስራሕ|ስራ|وظيفة|عمل|EMPLOI|CHAT|HABARI|INFO|MSAADA|START|STOP|YES|NO)\s*",
     re.IGNORECASE,
 )
 
@@ -63,7 +64,7 @@ def _strip_prefix(text: str) -> tuple[str, Optional[str]]:
     return text.strip(), None
 
 
-def _job_summary() -> str:
+def _job_summary(language: str = "en") -> str:
     """Return a compact job listing that fits in one SMS."""
     import json
     from pathlib import Path
@@ -73,29 +74,40 @@ def _job_summary() -> str:
         with open(jobs_path, "r", encoding="utf-8") as fh:
             jobs = json.load(fh)
     except Exception:
-        return "No jobs available. Visit our website for more info."
+        no_jobs = {
+            "en": "No jobs available. Visit our website for more info.",
+            "am": "ምንም ክፍት ሥራ የለም። ለተጨማሪ መረጃ ድረ-ገጻችንን ይጎብኙ።",
+            "om": "Hojiin hin jiru. Odeeffannoof weebsaayitii keenya daawwadhaa.",
+            "ti": "ስራሕ የለን። ንተወሳኺ ሓበሬታ ወብሳይትና ተወከሱ።",
+            "so": "Shaqo ma jirto. Booqo mareegtayada wixii macluumaad dheeraad ah.",
+            "ar": "لا توجد وظائف متاحة حاليًا. زر موقعنا لمزيد من التفاصيل.",
+            "sw": "Hakuna kazi zinazopatikana. Tembelea tovuti yetu kwa maelezo zaidi.",
+            "fr": "Aucun emploi disponible. Visitez notre site pour plus d'infos.",
+        }
+        return no_jobs.get(language, no_jobs["en"])
+
+    headers = {
+        "en": "JOBS",
+        "am": "ሥራዎች",
+        "om": "HOJIIWWAN",
+        "ti": "ስራሓት",
+        "so": "SHAQOOYINKA",
+        "ar": "الوظائف",
+        "sw": "KAZI",
+        "fr": "EMPLOIS",
+    }
+    header = headers.get(language, "JOBS")
 
     # Sort newest first, take top 3
     jobs_sorted = sorted(jobs, key=lambda j: j.get("posted_at", ""), reverse=True)[:3]
-    lines = ["JOBS:"]
+    lines = [f"{header}:"]
     for j in jobs_sorted:
         line = f"{j.get('title', 'Role')} @ {j.get('company', 'Co')} ({j.get('type', '')})"
-        lines.append(line[:50])  # keep each line short
+        lines.append(line[:45])  # keep each line short
 
-    lines.append("Reply HELP for support.")
+    lines.append("HELP")
     summary = " | ".join(lines)
     return summary[:SMS_MAX]
-
-
-# ── Language detection ────────────────────────────────────────────────────────
-
-def _detect_language(text: str) -> str:
-    try:
-        from langdetect import detect, LangDetectException
-        code = detect(text)
-        return "am" if code == "am" else "en"
-    except Exception:
-        return "en"
 
 
 # ── Chat via API logic (reuses chat router logic directly) ───────────────────
@@ -124,11 +136,17 @@ async def _chat_reply(text: str, language: str) -> str:
         reply = reply_tuple[0] if isinstance(reply_tuple, tuple) else str(reply_tuple)
     except Exception as exc:
         logger.error("AI provider error in SMS handler: %s", exc)
-        reply = (
-            "Sorry, I could not answer right now. Try again later."
-            if language == "en"
-            else "ይቅርታ፣ ምላሽ አልሰጠሁም። ቆይተው ይሞክሩ።"
-        )
+        fallbacks = {
+            "en": "Sorry, I could not answer right now. Try again later.",
+            "am": "ይቅርታ፣ ምላሽ አልሰጠሁም። ቆይተው ይሞክሩ።",
+            "om": "Dhiifama, yeroo ammaa deebii kennuu hin dandeenye.",
+            "ti": "ይቕሬታ፣ ሕጂ መልሲ ክህብ ኣይከኣልኩን። ጸኒሕኩም ፈትኑ።",
+            "so": "Waan ka xumahay, hadda jawaab ma bixin karo.",
+            "ar": "عذرًا، تعذر الرد الآن. يُرجى المحاولة لاحقًا.",
+            "sw": "Samahani, sikuweza kutoa jibu kwa sasa.",
+            "fr": "Désolé, impossible de répondre pour le moment.",
+        }
+        reply = fallbacks.get(language, fallbacks["en"])
 
     # Truncate to one SMS
     return truncate_sms(reply, page=1)
@@ -178,8 +196,8 @@ async def sms_inbound(request: Request):
     stripped, prefix = _strip_prefix(inbound.text)
 
     # Route based on keyword prefix
-    if prefix in ("JOB", "KAZI"):
-        reply = _job_summary()
+    if prefix in ("JOB", "KAZI", "HOJII", "SHAQO", "ስራ", "ስራሕ", "وظيفة", "عمل", "EMPLOI"):
+        reply = _job_summary(language)
     else:
         reply = await _chat_reply(stripped or inbound.text, language)
 

@@ -161,6 +161,7 @@ async function testAccessibilityEngine() {
   }
 
   console.log('\n✅ ALL PHASE 1, 2, 3, AND 4 ACCESSIBILITY AUDITS PASSED WITH 0 VIOLATIONS.');
+  process.exit(0);
 }
 
 testAccessibilityEngine().catch(err => {
