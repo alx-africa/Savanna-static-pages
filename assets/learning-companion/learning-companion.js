@@ -1,0 +1,418 @@
+(() => {
+  'use strict';
+
+  if (customElements.get('alx-learning-companion')) return;
+
+  const stylesheet = new URL('learning-companion.css', document.currentScript.src).href;
+  const headings = { simplify: 'Simple explanation', translate: 'Amharic translation',
+    describe: 'Visual descriptions' };
+
+  function renderExplanation(output, text, parentLevel = 3) {
+    let list;
+    for (const raw of text.split(/\r?\n/u)) {
+      const line = raw.trim();
+      if (!line) { list = null; continue; }
+      const item = /^([-*]|\d+[.)])\s+(.+)/u.exec(line);
+      if (item) {
+        const tag = /^\d/u.test(item[1]) ? 'ol' : 'ul';
+        if (list?.localName !== tag) {
+          list = document.createElement(tag);
+          if (tag === 'ol') list.start = parseInt(item[1], 10);
+          output.append(list);
+        }
+        const li = document.createElement('li');
+        li.textContent = item[2];
+        list.append(li);
+      } else {
+        list = null;
+        const heading = /^(#{1,6})\s+(.+)/u.exec(line);
+        const block = document.createElement(heading ? 'h' + Math.min(6, parentLevel + heading[1].length) : 'p');
+        block.textContent = heading ? heading[2] : line;
+        output.append(block);
+      }
+    }
+  }
+
+  function lessonText(extracted) {
+    if (!extracted) return '';
+    // Serialize only the extractor's detached fragment. Preserve inline words and block breaks.
+    const walker = document.createTreeWalker(extracted.content, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) walker.currentNode.data = walker.currentNode.data.replace(/\s+/gu, ' ');
+    for (const block of extracted.content.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,br,div,figure,figcaption,blockquote')) {
+      block.before('\n');
+      block.after('\n');
+    }
+    const body = extracted.content.textContent.split('\n').map(line => line.trim()).filter(Boolean).join('\n');
+    return body ? [extracted.title, body].filter(Boolean).join('\n\n') : '';
+  }
+
+  class LearningCompanion extends HTMLElement {
+    constructor() {
+      super();
+      const root = this.attachShadow({ mode: 'open' });
+      root.innerHTML = `
+        <button type="button" id="toggle" aria-haspopup="dialog" aria-expanded="false" aria-controls="panel">
+          <span class="mark" aria-hidden="true"></span> Inklu <span class="launcher-label">Companion</span>
+        </button>
+        <dialog id="panel" aria-labelledby="brand" aria-describedby="lesson-title">
+          <header>
+            <div class="brand-row">
+              <div class="brand"><span class="mark" aria-hidden="true"></span><h2 id="brand">Inklu</h2></div>
+              <button type="button" id="close" aria-label="Close Inklu" autofocus><span aria-hidden="true">×</span></button>
+            </div>
+            <p class="tagline">Learning without barriers</p>
+            <div class="lesson"><span class="eyebrow">Current lesson</span><p id="lesson-title"></p></div>
+          </header>
+          <div class="workspace">
+            <p class="intro">Choose how you’d like to explore this lesson.</p>
+            <div class="actions" role="group" aria-label="Lesson actions">
+              <button type="button" data-action="simplify" aria-controls="reading">Explain Simply</button>
+              <button type="button" data-action="translate" aria-controls="reading">Translate</button>
+              <button type="button" data-action="describe" aria-controls="reading">Describe Visuals</button>
+            </div>
+            <section id="reading" aria-labelledby="reading-title" hidden>
+              <h3 id="reading-title">Lesson support</h3>
+              <p id="reading-note" hidden></p>
+              <div id="explanation" role="document" aria-labelledby="reading-title" tabindex="0" lang="en" hidden></div>
+              <ol id="translation" aria-label="Translated passages" hidden></ol>
+              <button type="button" id="describe-images" aria-controls="visuals" hidden>Describe images</button>
+              <div id="visuals" role="document" aria-labelledby="reading-title" tabindex="0" lang="en" hidden></div>
+            </section>
+            <p class="sr-only" id="translation-status" role="status" aria-atomic="true"></p>
+            <details hidden>
+              <summary>Extracted lesson content (debug preview)</summary>
+              <p id="preview-status" role="status" aria-atomic="true"></p>
+              <div id="preview"></div>
+            </details>
+          </div>
+          <span id="tab-end" tabindex="0" class="sr-only"></span>
+        </dialog>`;
+
+      if (window.InkluAmharicAudio) this.speech = new window.InkluAmharicAudio(root.getElementById('translation'),
+        () => this.apiUrl('speech/listen'));
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = stylesheet;
+      root.prepend(link);
+
+      const toggle = root.getElementById('toggle');
+      const panel = root.getElementById('panel');
+      const details = root.querySelector('details');
+      details.hidden = new URLSearchParams(location.search).get('inkluDebug') !== '1';
+      this.requests = new Map();
+      this.outcomes = new Map();
+      root.getElementById('describe-images').addEventListener('click', () => this.describeImages());
+      for (const button of root.querySelectorAll('.actions button')) {
+        button.setAttribute('aria-pressed', 'false');
+        button.addEventListener('click', () => this.choose(button.dataset.action));
+      }
+      this.previewObserver = new MutationObserver((records) => {
+        const lesson = this.findLesson();
+        if (lesson !== this.previewLesson || records.some(({ target }) =>
+          lesson && (lesson.contains(target) || target.contains(lesson)))) {
+          this.refreshLesson(lesson);
+        }
+      });
+      details.addEventListener('toggle', () => this.watchLesson());
+      toggle.addEventListener('click', () => {
+        panel.showModal();
+        toggle.setAttribute('aria-expanded', 'true');
+        this.watchLesson();
+      });
+      root.getElementById('close').addEventListener('click', () => panel.close());
+      panel.addEventListener('close', () => {
+        if (panel.open) return;
+        if (this.requests.has('describe')) {
+          this.requests.get('describe').abort();
+          this.requests.delete('describe');
+          if (this.active === 'describe') {
+            root.getElementById('reading').removeAttribute('aria-busy');
+            this.notify('Select Describe images to continue.');
+          }
+        }
+        this.speech?.deactivate();
+        toggle.setAttribute('aria-expanded', 'false');
+        this.watchLesson();
+        if (this.isConnected) toggle.focus({ preventScroll: true });
+      });
+      // Keep Close first and this boundary last. The browser determines every
+      // stop between them, including links, form fields and nested components.
+      const close = root.getElementById('close');
+      const end = root.getElementById('tab-end');
+      let wrappingBack = false;
+      end.addEventListener('focus', () => {
+        if (!wrappingBack) close.focus();
+      });
+      close.addEventListener('keydown', event => {
+        if (event.key !== 'Tab' || !event.shiftKey || event.defaultPrevented) return;
+        wrappingBack = true;
+        end.focus({ preventScroll: true });
+        wrappingBack = false;
+        // Let the native Shift+Tab move from the boundary to the last control.
+      });
+    }
+
+    findLesson() {
+      return window.InkluLessonContent?.findLesson(this, this.hostConfig);
+    }
+
+    apiUrl(route) {
+      const base = new URL(this.getAttribute('api-base') ?? '/api/', location.href);
+      const localHttp = base.protocol === 'http:' && (base.origin === location.origin ||
+        ['localhost', '127.0.0.1', '[::1]'].includes(base.hostname));
+      if (!['http:', 'https:'].includes(location.protocol) || (base.protocol !== 'https:' && !localHttp) ||
+          base.username || base.password || base.search || base.hash) throw new Error('Invalid API base');
+      base.pathname = base.pathname.replace(/\/?$/, '/') + route;
+      return base.href;
+    }
+
+    connectedCallback() {
+      this.hostConfig = window.InkluLessonContent?.hostFor(this);
+      this.watchLesson();
+    }
+
+    disconnectedCallback() {
+      this.previewObserver.disconnect();
+      this.clearReading();
+    }
+
+    watchLesson() {
+      this.previewObserver.disconnect();
+      if (!this.isConnected || !this.shadowRoot.getElementById('panel').open) return;
+
+      this.refreshLesson(this.findLesson());
+      this.previewObserver.observe(this.ownerDocument.documentElement, {
+        subtree: true, childList: true, characterData: true, attributes: true,
+      });
+    }
+
+    refreshLesson(lesson) {
+      const extracted = window.InkluLessonContent?.extractLesson(lesson, this.hostConfig);
+      this.shadowRoot.getElementById('lesson-title').textContent = extracted?.title || 'Lesson unavailable';
+      if (this.shadowRoot.querySelector('details').open) this.renderPreview(lesson);
+      const source = lessonText(extracted);
+      const images = extracted?.visuals ?? [];
+      if (this.source !== undefined && (lesson !== this.previewLesson || source !== this.source ||
+          JSON.stringify(images) !== JSON.stringify(this.images))) {
+        this.clearReading('The lesson changed. Choose an action for the new lesson.');
+      }
+      this.source = source;
+      this.images = images;
+      this.previewLesson = lesson;
+    }
+
+    clearReading(message = '') {
+      for (const request of this.requests.values()) request.abort();
+      this.requests.clear();
+      this.outcomes.clear();
+      const root = this.shadowRoot;
+      if (root.getElementById('reading').contains(root.activeElement)) {
+        root.querySelector('.actions [aria-pressed="true"]')?.focus();
+      }
+      this.active = null;
+      this.source = undefined;
+      this.speech?.setTranslation('');
+      for (const button of root.querySelectorAll('.actions button')) button.setAttribute('aria-pressed', 'false');
+      for (const id of ['translation', 'explanation', 'visuals']) root.getElementById(id).replaceChildren();
+      root.getElementById('describe-images').textContent = 'Describe images';
+      root.getElementById('reading').hidden = true;
+      root.getElementById('reading').removeAttribute('aria-busy');
+      this.notify(message);
+    }
+
+    notify(message, visible = true) {
+      const root = this.shadowRoot;
+      if (visible) {
+        const note = root.getElementById('reading-note');
+        note.textContent = message;
+        note.hidden = !message;
+      }
+      const status = root.getElementById('translation-status');
+      const announcement = root.getElementById('panel').open ? message : '';
+      if (status.textContent !== announcement) status.textContent = announcement;
+    }
+
+    choose(action) {
+      const root = this.shadowRoot;
+      const reading = root.getElementById('reading');
+      const passages = root.getElementById('translation');
+      const note = root.getElementById('reading-note');
+      if (this.active !== action) this.speech?.deactivate();
+      this.active = action;
+      for (const button of root.querySelectorAll('.actions button')) {
+        button.setAttribute('aria-pressed', String(button.dataset.action === action));
+      }
+      reading.hidden = false;
+      root.getElementById('reading-title').textContent = headings[action];
+      passages.hidden = action !== 'translate';
+      root.getElementById('explanation').hidden = action !== 'simplify' || !this.outcomes.has('simplify');
+      const visuals = root.getElementById('visuals');
+      visuals.hidden = action !== 'describe' || !visuals.childElementCount;
+      root.getElementById('describe-images').hidden = action !== 'describe' || !this.images.some(image => image.asset);
+      note.hidden = true;
+      reading.removeAttribute('aria-busy');
+      if (action === 'describe') {
+        if (this.requests.has(action)) {
+          reading.setAttribute('aria-busy', 'true');
+          this.notify('Describing lesson images…');
+        } else if (this.outcomes.has(action)) this.notify('', false);
+        else if (!this.images.length) this.notify('This lesson has no images to describe.');
+        else if (!this.images.some(image => image.asset)) this.notify('This lesson has no supported local images.');
+        else this.notify('Generate AI descriptions for the images in this lesson.');
+        return;
+      }
+      if (this.requests.has(action)) {
+        reading.setAttribute('aria-busy', 'true');
+        this.notify(this.loadingMessage(action));
+        return;
+      }
+      if (this.outcomes.has(action)) {
+        this.notify(action === 'simplify' ? '' : this.outcomes.get(action), false);
+        return;
+      }
+      this.requestText(action);
+    }
+
+    async describeImages() {
+      if (this.requests.has('describe')) return;
+      const root = this.shadowRoot;
+      const visuals = root.getElementById('visuals');
+      if (this.outcomes.has('describe')) {
+        visuals.focus();
+        return;
+      }
+      const reading = root.getElementById('reading');
+      const controller = new AbortController();
+      this.requests.set('describe', controller);
+      reading.setAttribute('aria-busy', 'true');
+      this.notify('Describing lesson images…');
+      try {
+        // Resume at the first unfinished image after a learner-initiated retry.
+        for (let i = visuals.childElementCount; i < this.images.length; i++) {
+          const { asset, context } = this.images[i];
+          let description = 'This image is unavailable for description.';
+          if (asset) {
+            const response = await fetch(this.apiUrl('describe'), { method: 'POST', redirect: 'error',
+              headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asset, context }),
+              signal: AbortSignal.any([controller.signal, AbortSignal.timeout(75000)]) });
+            if (!response.ok) throw new Error();
+            description = (await response.json()).description;
+            if (typeof description !== 'string' || !description.trim()) throw new Error();
+          }
+          if (controller.signal.aborted) return;
+          const section = document.createElement('section');
+          const heading = document.createElement('h4');
+          heading.textContent = 'Image ' + (i + 1);
+          section.append(heading);
+          renderExplanation(section, description, 4);
+          visuals.append(section);
+          visuals.hidden = this.active !== 'describe';
+        }
+        this.outcomes.set('describe', 'Image descriptions ready.');
+        root.getElementById('describe-images').textContent = 'Read descriptions';
+        this.notify('Image descriptions ready.', this.active === 'describe');
+      } catch {
+        if (!controller.signal.aborted) this.notify('Could not describe the image. Select Describe images to try again.', this.active === 'describe');
+      } finally {
+        if (this.requests.get('describe') === controller) {
+          this.requests.delete('describe');
+          if (this.active === 'describe') reading.removeAttribute('aria-busy');
+        }
+      }
+    }
+
+    loadingMessage(action) {
+      return action === 'translate' ? 'Translating the lesson into Amharic…' : 'Preparing a simple explanation…';
+    }
+
+    async requestText(action) {
+      const root = this.shadowRoot;
+      const translating = action === 'translate';
+      const subject = translating ? 'Translation' : 'Explanation';
+      if (!this.source) {
+        this.notify(translating ? 'No lesson text is available to translate.' : 'No lesson text is available to explain.');
+        return;
+      }
+      if (!['http:', 'https:'].includes(location.protocol)) {
+        this.notify('Open this lesson over HTTP or HTTPS to use this action.');
+        return;
+      }
+      const controller = new AbortController();
+      this.requests.set(action, controller);
+      const reading = root.getElementById('reading');
+      reading.setAttribute('aria-busy', 'true');
+      this.notify(this.loadingMessage(action));
+      const timer = setTimeout(() => controller.abort(), 90000);
+      let message;
+      try {
+        const response = await fetch(this.apiUrl(action), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: this.source }), signal: controller.signal, redirect: 'error',
+        });
+        if (!response.ok) {
+          const messages = {
+            413: 'This lesson is too long for one request.',
+            429: 'Too many requests. Wait a minute and try again.',
+            503: subject + ' is unavailable. Try again later.',
+            504: subject + ' timed out. You can try again.',
+          };
+          message = messages[response.status] || subject + ' failed. You can try again.';
+          return;
+        }
+        const result = await response.json();
+        if (this.requests.get(action) !== controller) return;
+        const text = translating ? result.translation : result.explanation;
+        if (typeof text !== 'string' || !text.trim()) throw new Error();
+        if (translating) {
+          if (this.speech) this.speech.setTranslation(text);
+          else {
+            for (const paragraph of text.split(/\n+/u)) {
+              const item = document.createElement('li');
+              item.lang = 'am';
+              item.textContent = paragraph;
+              root.getElementById('translation').append(item);
+            }
+          }
+        } else {
+          const explanation = root.getElementById('explanation');
+          renderExplanation(explanation, text);
+          explanation.hidden = this.active !== action;
+        }
+        message = translating ? 'Amharic translation ready.' : 'Simple explanation ready.';
+        this.outcomes.set(action, message);
+      } catch {
+        message = controller.signal.aborted ? subject + ' timed out. You can try again.' :
+          subject + ' failed. You can try again.';
+      } finally {
+        clearTimeout(timer);
+        if (this.requests.get(action) === controller) {
+          this.requests.delete(action);
+          if (this.active === action) reading.removeAttribute('aria-busy');
+          const readingThis = this.active === action;
+          if (readingThis && this.outcomes.has(action)) root.getElementById('reading-note').hidden = true;
+          this.notify(message, readingThis && !this.outcomes.has(action));
+        }
+      }
+    }
+
+    renderPreview(lesson) {
+      const extracted = window.InkluLessonContent?.extractLesson(lesson, this.hostConfig);
+      const preview = this.shadowRoot.getElementById('preview');
+      const next = preview.cloneNode(false);
+      const title = document.createElement('h2');
+      title.textContent = extracted?.title || 'Lesson title unavailable';
+      next.append(title);
+      const hasContent = Boolean(extracted?.content.textContent.trim());
+      if (hasContent) next.append(extracted.content);
+      const status = this.shadowRoot.getElementById('preview-status');
+      const message = hasContent ? 'Preview updated for ' + (extracted.title || 'the untitled lesson') + '.' :
+        'No lesson body is available to preview.';
+      if (preview.isEqualNode(next) && status.textContent) return;
+      preview.replaceChildren(...Array.from(next.childNodes));
+      // Keep the long reading surface outside the live region.
+      status.textContent = message;
+    }
+  }
+
+  customElements.define('alx-learning-companion', LearningCompanion);
+})();

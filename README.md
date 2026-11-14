@@ -55,4 +55,108 @@ the accessibility tree and no id appears twice):
 
 Everything else is inert.
 
+## Inklu — Learning without barriers
 
+Module owners can find the shared Git baseline, proposed lesson identity fields
+and planned service endpoints in the [team integration contracts](docs/team-integration.md).
+
+Open the floating **Inklu Companion** button on the lesson page. Its desktop drawer
+becomes a full-screen reader on small screens. Choose **Explain Simply** for a
+beginner-friendly English explanation, **Translate** for Amharic, or **Describe Visuals**
+then **Describe images** for AI descriptions of the lesson artwork. Inklu sends each
+distinct local PNG and a short excerpt of nearby lesson text to Addis AI. After translating, choose **Generate Audio**
+on the passage you want to hear. [Backend setup and testing instructions](backend/README.md#live-lesson-translation)
+
+To embed the companion, copy `assets/learning-companion/`, load `lesson-content.js`,
+`amharic-audio.js`, and `learning-companion.js` in order as classic scripts, and place `<alx-learning-companion></alx-learning-companion>`
+at the desired location. The widget loads its neighboring stylesheet into its shadow root.
+The debug preview and Amharic translation both read the current lesson through the extractor.
+By default translation sends the title and body to the same-origin `POST /api/translate` endpoint.
+After translation, choose **Generate Audio** on a passage. Inklu plays a saved clip or
+generates one within the allowance configured on the server. See the
+[speech controls and testing guide](backend/README.md#amharic-audio).
+
+### Install on another lesson site
+
+1. Use Node.js 22.9 or later. From this repository run `npm.cmd ci --prefix backend`,
+   then `npm.cmd start --prefix backend`. Open the [standalone HTML lesson](http://127.0.0.1:3000/pages/generic-lesson.html?inkluDebug=1).
+   Open Inklu and expand the debug preview to verify the title and reading order without a provider key.
+   For live generation set `ADDIS_API_KEY` in the backend's ignored `.env` file and restart.
+2. Copy the companion directory to your site's public assets and load the three scripts
+   in the order shown in [the example page](pages/generic-lesson.html). Keep the CSS next to
+   `learning-companion.js`. No Savanna stylesheet or global application script is required.
+3. Place this element in persistent page markup. Set selectors before connecting it.
+
+   ```html
+   <alx-learning-companion lesson-selector="article.current"
+     title-selector="h2.lesson-name" content-selector=".reading"
+     image-base="/course/images/" api-base="/inklu/api/"></alx-learning-companion>
+   ```
+
+   The nearest matching ancestor takes precedence over the first document match. The title
+   and body selectors refer to descendants of that root. With a custom lesson selector,
+   omitting the content selector reads the root itself. Missing or invalid selectors yield
+   empty results. Use semantic navigation and controls or set `exclude-selector` for additional host-specific exclusions.
+4. Route the chosen API prefix to the backend's `/api/` routes. For a separate API origin,
+   use an absolute HTTPS `api-base` and configure the server as described in the
+   [deployment audit](docs/portability.md). For image descriptions, publish the PNGs
+   under the lesson site's `image-base` and install identical files in the API image directory.
+
+### Lesson extraction
+
+`SavannaLessonContent.extractLesson(lessonElement)` returns a title string and a detached
+`DocumentFragment` in reading order. By default it looks for `#curriculum_navigation_content`,
+reads its first visible `h1`, and walks the outermost `.formatted-content` or `.savanna-styles`
+wrappers. This keeps headings, loose introductory prose, callouts, paragraphs, lists and captions.
+Link text stays readable. Image labels come from `aria-label` or `alt`. Missing alt text gets
+a marker, while an explicit empty alt identifies a decorative image.
+
+Navigation, buttons, forms, progress indicators, footers, hidden subtrees and the companion
+are excluded. The preview reads authored DOM text. Embedded media, text drawn inside images,
+and descriptions supplied only through external ARIA references are outside its scope.
+
+While the panel and preview are open, a mutation observer refreshes the preview when the
+lesson changes, including when its content container is replaced. The mount must persist or
+be included in the replacement page. Opening the preview again reads the latest content.
+
+### Developer preview
+
+Append `?inkluDebug=1` to a lesson or fixture URL to enable the **Extracted lesson
+content** disclosure inside the drawer. Close the drawer to change lessons in
+`tests/lesson-content.html`, then reopen it to inspect the new content. The
+production UI hides this disclosure by default.
+
+### Keyboard and screen reader checks
+
+1. Tab to **Inklu Companion** and press Enter or Space. The modal
+   announces its name and current lesson. Initial focus is on **Close Inklu**.
+2. Tab through the three actions and use Enter or Space to choose one. Results
+   appear below the actions. While Explain Simply is loading, choose Describe Visuals.
+   Check that completion is announced once and focus stays on Describe Visuals.
+   Return to Explain Simply and Tab past the actions to the explanation. In NVDA
+   Browse Mode, use H to move between headings, Down Arrow to read line by line,
+   and Say All to read continuously through the paragraphs and lists.
+3. After approving live spending, activate **Translate**. Tab to **Generate Audio for passage 1** and press Space.
+   The clip plays when ready. Tab to **Pause**, then Shift+Tab to **Play or resume**.
+   **Stop** returns to the beginning. An audio error is announced without moving focus.
+4. Escape or **Close Inklu** restores focus to the launcher. Reopening the same
+   lesson retains the translation. Choosing another action or closing the drawer cancels
+   pending playback and stops playback.
+
+### Offline browser tests
+
+Install backend dependencies once, then run the separate UI test package from the
+repository root. The tests use an installed Chrome browser. To use another Chromium
+binary, set `INKLU_CHROMIUM` to its full path. The browser tests use a keyless server
+and mocked API responses.
+
+```powershell
+npm.cmd ci --prefix backend
+npm.cmd test --prefix backend
+npm.cmd ci --prefix tests/browser
+npm.cmd test --prefix tests/browser
+```
+
+The desktop and mobile captures in `docs/screenshots/inklu/` use sample Amharic text
+and a mock audio clip. To regenerate them, set `INKLU_SCREENSHOTS` to the absolute
+output directory before running the browser tests.
