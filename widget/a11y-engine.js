@@ -94,6 +94,12 @@
       stepBadge: 'Step',
       plainKeyTakeaway: 'Key Takeaway',
       plainActionSteps: 'Action Steps',
+      // Phase 5: Vision & AI Image Description
+      btnDescribeImg: '👁️ Describe Image (Alt+I)',
+      imgDescTitle: 'AI Visual Description (Screen Reader Ready)',
+      imgDescReadAloud: '🔊 Read Aloud',
+      imgDescClose: 'Close Description',
+      imgDescAnnounce: 'Reading visual description aloud...',
     },
     am: {
       triggerLabel: 'የተደራሽነት ምርጫዎች እና የማስተካከያ ቅንብሮች',
@@ -151,6 +157,12 @@
       stepBadge: 'ደረጃ',
       plainKeyTakeaway: 'ዋናው ነጥብ',
       plainActionSteps: 'ቀጣይ እርምጃዎች',
+      // Phase 5: Vision & AI Image Description
+      btnDescribeImg: '👁️ ምስል አብራራ (Alt+I)',
+      imgDescTitle: 'የምስል ዝርዝር ማብራሪያ (ለስክሪን አንባቢ)',
+      imgDescReadAloud: '🔊 በድምፅ አድምጥ',
+      imgDescClose: 'ማብራሪያውን ዝጋ',
+      imgDescAnnounce: 'የምስሉ ማብራሪያ በድምፅ እየተነበበ ነው...',
     }
   };
 
@@ -505,6 +517,104 @@
      ═════════════════════════════════════════════════════════════════════════ */
 
   /* ── 8. Blind & Non-Visual: Semantic Curriculum Status & Image Alt ──────── */
+  const CLIENT_IMAGE_DESCRIPTIONS = {
+    'va-content-banner': {
+      en: "A wide graphical banner for 'VA Foundations & Professional Identity'. Illustrated in royal purple and deep navy gradients, it displays modern digital workspace icons: a calendar showing organized appointments, an email envelope with notification badge, and cloud collaboration arrows, symbolizing asynchronous remote executive assistance.",
+      am: "የ'ቨርቹዋል ረዳት መሰረታዊ ዕውቀት እና የሙያ ማንነት' ትምህርት ሰፊ የባነር ምስል። በጥልቅ ሰማያዊ እና ወይን-ጠጅ ቀለሞች የተዋቀረ ሲሆን፣ የቀን መቁጠሪያ፣ የኢሜይል መልዕክት ልውውጥ እና የደመና ምርታማነት ምልክቶችን ያሳያል።",
+      elements: ['Widescreen Banner', 'Calendar Scheduling', 'Email & Notifications', 'Cloud Productivity']
+    },
+    '1lhlc1k4xrfvwdftjczeasorpklmy3dax': {
+      en: "Close-up professional portrait of Evon, an African female Virtual Assistant with natural afro hair and a warm, confident expression, working at an organized remote workspace with laptop and notebook.",
+      am: "የኢቮን የቅርብ ሙያዊ ፎቶግራፍ፤ በራስ መተማመን የተሞላች አፍሪካዊት ሴት ቨርቹዋል ረዳት። ተፈጥሯዊ የአፍሮ ጸጉር አሠራር እና ፈገግታ ያላት ሲሆን፣ በላፕቶፕ እና ማስታወሻ ደብተር በተደራጀ ጽዱ የሥራ ጠረጴዛ ላይ ተቀምጣ ትታያለች።",
+      elements: ['African Female Professional', 'Natural Afro Hair', 'Laptop Workspace', 'Remote Independence']
+    },
+    'tools-gpt-grammarly': {
+      en: "Educational diagram comparing AI tools: OpenAI ChatGPT for drafting and research, alongside Grammarly for clarity, tone, and grammar refinement.",
+      am: "ለቨርቹዋል ረዳቶች አስፈላጊ የሆኑትን የAI መሣሪያዎች የሚያስተዋውቅ ዲያግራም፡ ChatGPT ለረቂቅ ጽሁፍ ዝግጅት፣ Grammarly ደግሞ ለሰዋሰው ማስተካከያ እና የቃላት ግልጽነት።",
+      elements: ['ChatGPT Logo', 'Grammarly Logo', 'AI Drafting', 'Grammar Refinement']
+    },
+    'graduation-badge-alx': {
+      en: "Circular graduation milestone achievement medallion in gold and navy blue, showing a mortarboard cap and stating 'Reach 70% to be eligible for graduation'.",
+      am: "በወርቃማ እና ሰማያዊ ቀለሞች የተሠራ ክብ የምረቃ ሜዳልያ ምልክት፤ የምረቃ ቆብ ምስል የያዘ ሲሆን፣ 'ለምረቃ ብቁ ለመሆን 70% ይድረሱ' የሚል መመሪያ ይዟል።",
+      elements: ['Graduation Medallion', '70% Threshold', 'Mortarboard Cap', 'Certification']
+    }
+  };
+
+  function speakVisualDescription(text) {
+    if (!('speechSynthesis' in window)) return;
+    try {
+      if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = (currentLang === 'am') ? 'am-ET' : 'en-US';
+      utt.rate = 1.0;
+      window.speechSynthesis.speak(utt);
+    } catch (_) {}
+  }
+
+  function describeImage(img) {
+    if (!img) return;
+    const parent = img.parentElement;
+    const existing = parent.querySelector('.sa11y-image-desc-card');
+    if (existing) {
+      existing.remove();
+      return;
+    }
+
+    const src = (img.getAttribute('src') || '').toLowerCase();
+    const alt = (img.getAttribute('alt') || '').toLowerCase();
+    const filename = src.split('/').pop() || '';
+
+    // Match client cache or fallback
+    let matched = null;
+    for (const [key, data] of Object.entries(CLIENT_IMAGE_DESCRIPTIONS)) {
+      if (src.includes(key) || alt.includes(key)) {
+        matched = data;
+        break;
+      }
+    }
+
+    const lang = currentLang;
+    const descText = matched 
+      ? (matched[lang] || matched.en)
+      : (lang === 'am' ? `የትምህርት ኮርስ ይዘትን የሚያሳይ ምስል፡ ${alt || filename}` : `Educational lesson graphic depicting ${alt || filename}`);
+    const elements = (matched && matched.elements) || ['Educational Diagram', 'Curriculum Graphic'];
+
+    const card = document.createElement('div');
+    card.className = 'sa11y-image-desc-card';
+    card.setAttribute('role', 'region');
+    card.setAttribute('aria-label', i18n[lang].imgDescTitle);
+    card.tabIndex = -1;
+
+    const tagsHtml = elements.map(el => `<span class="sa11y-image-desc-tag">${el}</span>`).join('');
+
+    card.innerHTML = `
+      <div class="sa11y-image-desc-header">
+        <span>👁️ ${i18n[lang].imgDescTitle}</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary sa11y-desc-close-btn" aria-label="${i18n[lang].imgDescClose}">✕</button>
+      </div>
+      <div class="sa11y-image-desc-tags">${tagsHtml}</div>
+      <p class="sa11y-image-desc-text">${descText}</p>
+      <div class="sa11y-image-desc-actions">
+        <button type="button" class="btn btn-sm btn-success sa11y-desc-speak-btn">${i18n[lang].imgDescReadAloud}</button>
+      </div>
+    `;
+
+    // Insert card after image or its describe button
+    const btn = parent.querySelector('.sa11y-describe-img-btn');
+    if (btn) {
+      btn.insertAdjacentElement('afterend', card);
+    } else {
+      img.insertAdjacentElement('afterend', card);
+    }
+
+    card.querySelector('.sa11y-desc-close-btn').addEventListener('click', () => card.remove());
+    card.querySelector('.sa11y-desc-speak-btn').addEventListener('click', () => speakVisualDescription(descText));
+
+    // Announce via screen reader live region & auto read aloud
+    announce(descText);
+    speakVisualDescription(descText);
+  }
+
   function adaptBlindAndScreenReader(enable) {
     // 1. Enrich Curriculum Navigation Items
     const navItems = document.querySelectorAll('.list-group-item');
@@ -530,13 +640,19 @@
       item.appendChild(badge);
     });
 
-    // 2. Enhance Uninformative Image Alt Tags
+    // 2. Enhance Uninformative Image Alt Tags & Inject AI Image Inspector Buttons
     const images = document.querySelectorAll('img');
     images.forEach(img => {
-      const src = img.getAttribute('src') || '';
-      const alt = (img.getAttribute('alt') || '').trim();
+      const parent = img.parentElement;
+      const existingBtn = parent ? parent.querySelector('.sa11y-describe-img-btn') : null;
+      if (existingBtn) existingBtn.remove();
+      const existingCard = parent ? parent.querySelector('.sa11y-image-desc-card') : null;
+      if (existingCard) existingCard.remove();
 
       if (!enable) return;
+
+      const src = img.getAttribute('src') || '';
+      const alt = (img.getAttribute('alt') || '').trim();
 
       if (alt === 'VA-Content-Banner' || src.includes('VA-Content-Banner')) {
         img.setAttribute('alt', currentLang === 'am' 
@@ -546,6 +662,23 @@
         img.setAttribute('alt', currentLang === 'am'
           ? 'የቨርቹዋል አሲስታንት ባለሙያ ምስል'
           : 'Photograph of Evon, Virtual Assistant specialist at work');
+      }
+
+      // Allow keyboard focus on curriculum images
+      img.tabIndex = 0;
+
+      // Inject accessible "Describe Image (Alt+I)" button for content images
+      if (src && !src.includes('arrow') && !src.includes('logo') && !src.includes('icon')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sa11y-describe-img-btn';
+        btn.setAttribute('aria-label', (currentLang === 'am') 
+          ? `የምስሉን ዝርዝር መግለጫ አድምጥ፡ ${img.getAttribute('alt') || ''}` 
+          : `Hear visual description of image: ${img.getAttribute('alt') || ''}`);
+        btn.innerHTML = `👁️ ${i18n[currentLang].btnDescribeImg}`;
+        btn.addEventListener('click', () => describeImage(img));
+
+        img.insertAdjacentElement('afterend', btn);
       }
     });
   }
@@ -777,6 +910,12 @@
     if (key === 'r') {
       e.preventDefault();
       toggleReadingRuler();
+    } else if (key === 'i') {
+      e.preventDefault();
+      const focusedImg = (document.activeElement && document.activeElement.tagName === 'IMG')
+        ? document.activeElement
+        : document.querySelector('#curriculum_navigation_content img, main img, article img, img');
+      if (focusedImg) describeImage(focusedImg);
     } else if (key === 'j') {
       e.preventDefault();
       navigateNextLesson();
@@ -810,6 +949,21 @@
       }
     }
   }
+
+  // Global Alt + I shortcut for blind users to describe images at any time
+  window.addEventListener('keydown', (e) => {
+    if (e.altKey && (e.key === 'i' || e.key === 'I')) {
+      e.preventDefault();
+      const focusedImg = (document.activeElement && document.activeElement.tagName === 'IMG')
+        ? document.activeElement
+        : document.querySelector('#curriculum_navigation_content img, main img, article img, img');
+      if (focusedImg) {
+        describeImage(focusedImg);
+      } else {
+        announce(currentLang === 'am' ? 'በዚህ ገጽ ላይ ምንም ምስል አልተገኘም' : 'No images found on this page');
+      }
+    }
+  });
 
   /* ── 13. Switch-Device Auto-Scan Engine ─────────────────────────────────── */
   function getScannableElements() {
@@ -1161,6 +1315,7 @@
                 <tr><td><kbd>S</kbd></td><td>${t.shortcutScan}</td></tr>
                 <tr><td><kbd>V</kbd></td><td>${t.shortcutVoice}</td></tr>
                 <tr><td><kbd>R</kbd></td><td>${t.rulerToggle}</td></tr>
+                <tr><td><kbd>Alt + I / I</kbd></td><td>${currentLang === 'am' ? 'የምስሉን ዝርዝር መግለጫ አድምጥ (AI Image Inspector)' : 'Describe Image with AI (Screen Reader Ready)'}</td></tr>
                 <tr><td><kbd>?</kbd></td><td>${t.shortcutHelp}</td></tr>
                 <tr><td><kbd>Space / Enter</kbd></td><td>${currentLang === 'am' ? 'በስካነር ውስጥ ንቁ የሆነውን መምረጥ' : 'Select active element during Auto-Scan'}</td></tr>
                 <tr><td><kbd>Esc</kbd></td><td>${t.shortcutEsc}</td></tr>

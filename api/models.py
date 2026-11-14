@@ -133,6 +133,24 @@ class SMSInbound(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+# ─── Vision / Image Description ──────────────────────────────────────────────
+
+class DescribeImageRequest(BaseModel):
+    url: Optional[str] = None
+    filename: Optional[str] = None
+    language: SupportedLanguage | str = "auto"
+    context: Optional[str] = None
+
+
+class DescribeImageResponse(BaseModel):
+    id: str
+    description: str
+    language: str
+    source: str
+    visual_elements: list[str] = []
+    ethiopian_date: Optional[str] = None
+
+
 # ─── Health ──────────────────────────────────────────────────────────────────
 
 class HealthResponse(BaseModel):

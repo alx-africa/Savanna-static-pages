@@ -70,5 +70,41 @@
     "answer": "ወደ ኮንሴፕቱ ገጽ ስር ወርደው 'Mark as complete' የሚለውን ቁልፍ ይጫኑ። እድገትዎ ይቀመጣል።",
     "source": "Concept Page",
     "language": "am"
+  },
+  {
+    "question": "Describe the banner image in the VA lesson",
+    "answer": "The lesson banner for 'VA Foundations & Professional Identity' is illustrated in purple and deep navy gradients. It depicts modern digital workspace icons: a calendar for scheduling, an email envelope for communication, and cloud tools representing remote executive assistance.",
+    "source": "Image: VA-Content-Banner.png",
+    "language": "en"
+  },
+  {
+    "question": "Describe the photograph of Evon",
+    "answer": "The image shows a professional close-up portrait of Evon, an empowered African female Virtual Assistant with natural afro hair and a warm, confident expression, seated at an organized workspace with laptop and notebook.",
+    "source": "Image: 1lhlc1k4XRfVWDFTjczeaSoRpKlMY3dAX.png",
+    "language": "en"
+  },
+  {
+    "question": "በትምህርቱ ላይ ያለውን ባነር ምስል ግለጽልኝ (Describe the VA banner)",
+    "answer": "የ'ቨርቹዋል ረዳት መሰረታዊ ዕውቀት እና የሙያ ማንነት' ትምህርት ባነር ምስል በጥልቅ ሰማያዊ እና ወይን-ጠጅ ቀለሞች የተዋቀረ ሲሆን፣ የቀን መቁጠሪያ፣ የኢሜይል መልዕክት እና የደመና ምርታማነት ምልክቶችን በደማቅ ሁኔታ ያሳያል።",
+    "source": "Image: VA-Content-Banner.png",
+    "language": "am"
+  },
+  {
+    "question": "የኢቮንን ፎቶግራፍ ግለጽልኝ (Describe Evon photo)",
+    "answer": "ፎቶግራፉ በራስ መተማመን የተሞላች አፍሪካዊት ሴት ቨርቹዋል ረዳት ኢቮንን ያሳያል። ተፈጥሯዊ የአፍሮ ጸጉር አሠራር ያላት ሲሆን፣ በላፕቶፕ እና ማስታወሻ ደብተር በተደራጀ ጽዱ የሥራ ጠረጴዛ ላይ ተቀምጣ ትታያለች።",
+    "source": "Image: 1lhlc1k4XRfVWDFTjczeaSoRpKlMY3dAX.png",
+    "language": "am"
+  },
+  {
+    "question": "صف لي صورة البانر في الدورة (Describe banner image in Arabic)",
+    "answer": "بانر دورة 'أساسيات المساعد الافتراضي والهوية المهنية' مصمم بتدرجات الأرجواني والأزرق الداكن، ويحتوي على أيقونات تمثل مساحة العمل الرقمية: تقويم مواعيد، مظروف بريد إلكتروني، وأدوات إنتاجية سحابية.",
+    "source": "Image: VA-Content-Banner.png",
+    "language": "ar"
+  },
+  {
+    "question": "Ibsa fakkii baanarii barnootaa (Describe banner image in Oromo)",
+    "answer": "Baanarii qabiyyee barnootaa 'Bu'uuraalee Gargaaraa Dijitaalaa' bifa cuquliisa gadi fagoo fi dhiilgaan kan tolfame yoo ta'u, kalandarii sagantaa hojii, ergaa imeelii fi meeshaalee tajaajila koodii fageenyaa agarsiisa.",
+    "source": "Image: VA-Content-Banner.png",
+    "language": "om"
   }
 ]

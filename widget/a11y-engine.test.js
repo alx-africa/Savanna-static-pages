@@ -34,6 +34,7 @@ async function testAccessibilityEngine() {
         <h1>VA Foundations &amp; Professional Identity</h1>
         <div id="curriculum_navigation_content">
           <p>This is a test lesson for accessibility evaluation, cognitive plain-language simplification, and motor controls. It contains comprehensive educational descriptions to test adaptive learning features.</p>
+          <p><img src="../assets/img/VA-Content-Banner.png" alt="VA-Content-Banner" width="600" height="200" /></p>
         </div>
         <div class="list-group">
           <div class="list-group-item active">Lesson 1: Introduction</div>
@@ -124,7 +125,17 @@ async function testAccessibilityEngine() {
   if (!simplifyCard) throw new Error('Phase 4 Plain-language summary card not rendered.');
   console.log('✔ Phase 4 Plain-language summary card rendered with audio readout option.');
 
-  // 5. Run axe-core audit on the fully adapted page
+  // 5. Phase 5: Vision & Image Accessibility for Blind Learners
+  const describeBtn = window.document.querySelector('.sa11y-describe-img-btn');
+  if (!describeBtn) throw new Error('Phase 5 Describe Image button not injected.');
+  console.log('✔ Phase 5 Describe Image button injected for screen reader users.');
+
+  describeBtn.click();
+  const descCard = window.document.querySelector('.sa11y-image-desc-card');
+  if (!descCard) throw new Error('Phase 5 AI Image Description card not rendered.');
+  console.log('✔ Phase 5 AI Image Description card rendered with pedagogical description.');
+
+  // 6. Run axe-core audit on the fully adapted page
   axe.configure({
     rules: [
       { id: 'color-contrast', enabled: false }, // jsdom does not compute full RGB styles
@@ -160,7 +171,7 @@ async function testAccessibilityEngine() {
     process.exit(1);
   }
 
-  console.log('\n✅ ALL PHASE 1, 2, 3, AND 4 ACCESSIBILITY AUDITS PASSED WITH 0 VIOLATIONS.');
+  console.log('\n✅ ALL PHASE 1, 2, 3, 4, AND 5 ACCESSIBILITY AUDITS PASSED WITH 0 VIOLATIONS.');
   process.exit(0);
 }
 
