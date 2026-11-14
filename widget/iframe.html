@@ -459,7 +459,7 @@
     try {
       window.speechSynthesis.cancel();
       const utt = new SpeechSynthesisUtterance(text);
-      utt.lang = isAmharic ? 'am-ET' : 'en-US';
+      utt.lang = BCP47_MAP[currentLanguage] || (isAmharic ? 'am-ET' : 'en-US');
       utt.rate = 1.05;
       window.speechSynthesis.speak(utt);
     } catch (_) {}
@@ -719,7 +719,7 @@
       /* TTS */
       if (window.speechSynthesis && reply) {
         const utt = new SpeechSynthesisUtterance(reply);
-        utt.lang = isAmharic ? 'am-ET' : 'en-US';
+        utt.lang = BCP47_MAP[currentLanguage] || (isAmharic ? 'am-ET' : 'en-US');
         window.speechSynthesis.speak(utt);
       }
 
