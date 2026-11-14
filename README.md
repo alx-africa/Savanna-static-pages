@@ -8,6 +8,52 @@ server needed.
 
 ## What is here
 
+## Accessible sign-up component
+
+Partners can drop the registration widget into any page. It uses light DOM so host
+styles can override `--primary-color` and other variables:
+
+```html
+<link rel="stylesheet" href="/signup-widget.css" />
+<script src="/signup-widget.js" defer></script>
+<alx-signup lang="en"></alx-signup>
+```
+
+Set `lang="am"` for Amharic labels. The widget saves unfinished input to
+`localStorage`, announces validation errors, supports password managers, and
+submits to `POST /api/v1/auth/register`. See [swagger.json](swagger.json) for
+the OpenAPI contract and [prisma/schema.prisma](prisma/schema.prisma) for the
+relational model.
+
+## ALX accessibility module structure
+
+The requested drop-in module is integrated into this repository without removing
+the original Savanna captures:
+
+```text
+prisma/schema.prisma          User, Profile, and JobMatch relations
+server/server.js              Express entry point and static serving
+server/routes/                 Auth, profile, and career routes
+server/controllers/            Validation and Prisma controllers
+server/docs/swagger.json       OpenAPI documentation
+public/index.html              Partner-site demo
+public/sw.js                   Offline app shell
+public/manifest.json           Installable PWA metadata
+public/css/widget-theme.css    Host-overridable accessible theme
+public/js/                     Signup, profile, and offline adapters
+assets/ and pages/              Existing Savanna learner/profile data
+```
+
+Copy `.env.example` to `.env`, set `DATABASE_URL` and `JWT_SECRET`, then run:
+
+```powershell
+npm run prisma:generate
+npm start
+```
+
+The demo is served at `http://localhost:4173/`; existing captures remain
+available under `/pages/` and `/assets/`.
+
 | Page | Learner / course | What it shows |
 |------|------------------|----------------|
 | `pages/homepage-v1-paced.html` | Björn Sibanda — **WR 100: Fundamentals of Effective Communication**, cohort F26-SEM-16W (31 Aug – 20 Dec 2026), week 10 of 15 | Courses dropdown (3 courses), week strip with **every week preloaded**, "continue where you left off", immediate deliverables, period progress, overall score (59.56%, "slightly behind"), upcoming events |

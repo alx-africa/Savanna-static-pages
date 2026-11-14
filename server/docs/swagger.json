@@ -1,0 +1,37 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "ALX Accessible Auth and Profile API", "version": "1.0.0" },
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "summary": "Create an account",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } } } },
+        "responses": { "201": { "description": "Account created" }, "400": { "description": "Invalid input" }, "409": { "description": "Email already registered" } }
+      }
+    },
+    "/api/v1/profile/{id}": {
+      "get": { "summary": "Read a profile", "parameters": [{ "$ref": "#/components/parameters/id" }], "responses": { "200": { "description": "Profile" }, "404": { "description": "Not found" } } },
+      "patch": { "summary": "Update a profile", "parameters": [{ "$ref": "#/components/parameters/id" }], "responses": { "200": { "description": "Updated profile" } } }
+    },
+    "/api/v1/profile/{id}/jobs": {
+      "get": { "summary": "List career matches", "parameters": [{ "$ref": "#/components/parameters/id" }], "responses": { "200": { "description": "Job matches" } } }
+    }
+  },
+  "components": {
+    "parameters": { "id": { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } },
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["name", "email", "phone", "alternativeIdType", "idReference", "password"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 120 },
+          "email": { "type": "string", "format": "email", "maxLength": 254 },
+          "phone": { "type": "string", "maxLength": 30 },
+          "alternativeIdType": { "type": "string", "maxLength": 40 },
+          "idReference": { "type": "string", "maxLength": 100 },
+          "password": { "type": "string", "minLength": 8, "maxLength": 200, "format": "password" }
+        }
+      }
+    }
+  }
+}

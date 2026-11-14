@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  name              String
+  email             String   @unique
+  alternativeIdType String
+  idReference       String
+  phone             String
+  passwordHash      String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  profile           Profile?
+  jobMatches        JobMatch[]
+
+  @@index([phone])
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  name        String?
+  location    String?
+  bio         String?
+  skills      String?
+  accessibilityNeeds String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JobMatch {
+  id             String   @id @default(cuid())
+  userId         String
+  title          String
+  organisation   String
+  location       String?
+  supportTypes   String
+  description    String?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

@@ -2,3 +2,5 @@
 .DS_Store
 _tooling
 *.zip
+node_modules/
+.env

@@ -1,0 +1,7 @@
+# Project Context: ALX Digital Bridge Hackathon (Track 1) — Accessible Auth & Onboarding
+- **My Scope**: I am building the Sign-Up & Login module (`<alx-onboard>`), Backend Auth & Free AI Assistant (`/api/v1/auth`), Offline Service Worker (`sw.js`), OpenAPI docs, and Automated WCAG 2.2 AA tests. My teammates are building `<alx-profile>` and the Career Gateway.
+- **Teammate Handshake**: On successful registration or login (online or offline), `<alx-onboard>` MUST save the JWT/session to `localStorage.getItem('alx_auth_token')` and dispatch `window.dispatchEvent(new CustomEvent('alx-auth-success', { detail: user }))` so `<alx-profile>` and the Career Gateway automatically receive the user payload.
+- **Tech Stack**:
+  - Frontend: 100% Zero-dependency Vanilla JS Web Component (`<alx-onboard>`) with open Shadow DOM (`delegatesFocus: true`), native HTML5/CSS3, Service Worker + IndexedDB/localStorage offline sync. NO React or external CSS frameworks.
+  - Backend: Node.js, Express, Prisma ORM (PostgreSQL/SQLite compatible), built-in `crypto.scryptSync` PIN hashing, OpenAPI 3.0 (`/api/v1/docs`).
+  - AI Integration (Zero Lock-in): Pluggable Free AI service (`ai-helper.js`) supporting free Google Gemini API (`gemini-2.5-flash`) or Groq API, with an automatic 100% local offline parser fallback so it works with zero API keys and zero cost. Nothing leaves the host server without explicit user consent.
