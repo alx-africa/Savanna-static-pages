@@ -41,6 +41,36 @@ _NEXT_STEPS = {
         "የተደራሽነት አስተባባሪ በ2 የሥራ ቀናት ውስጥ ያነጋግርዎታል",
         "የቃለ-ምልልሱ ዝርዝሮችዎን ዝግጁ ያድርጉ",
     ],
+    "om": [
+        "Gaaffiin keessan nu ga'eera",
+        "Qindeessaan dandeettii guyyoota hojii 2 keessatti isin qunnama",
+        "Odeeffannoo qormaata keessanii qopheeffadhaa",
+    ],
+    "ti": [
+        "ሕቶኹም ተቐቢልናዮ ኣለና",
+        "ኣተሓባባሪ ተበጻሕነት ኣብ ውሽጢ 2 ናይ ስራሕ መዓልታት ከዘራርበኩም እዩ",
+        "ዝርዝር ቃለ-መሕትትኩም ድሉው ግበሩ",
+    ],
+    "so": [
+        "Codsigaaga waa la helay",
+        "Isku-duwaha naafada ayaa kula soo xiriiri doona 2 maalmood oo shaqo gudahood",
+        "Fadlan diyaarso faahfaahinta waraysigaaga",
+    ],
+    "ar": [
+        "تم استلام طلبك بنجاح",
+        "سيتواصل معك منسق التيسيرات وسهولة الوصول خلال يومي عمل",
+        "يرجى تجهيز تفاصيل المقابلة الخاصة بك",
+    ],
+    "sw": [
+        "Ombi lako limepokelewa",
+        "Mratibu wa ufikiaji atawasiliana nawe ndani ya siku 2 za kazi",
+        "Tafadhali weka maelezo yako ya mahojiano tayari",
+    ],
+    "fr": [
+        "Votre demande a été bien reçue",
+        "Un coordinateur d'accessibilité vous contactera sous 2 jours ouvrables",
+        "Veuillez préparer les détails de votre entretien",
+    ],
 }
 
 _CONFIRM_MSG = {
@@ -51,6 +81,30 @@ _CONFIRM_MSG = {
     "am": (
         "አመሰግናለሁ፣ {name}። የተደራሽነት ጥያቄዎ ({ref}) ተቀብሏል። "
         "በ{email} በ2 የሥራ ቀናት ውስጥ እናናግርዎታለን።"
+    ),
+    "om": (
+        "Galatoomaa, {name}. Gaaffiin mijeeffannaa keessanii ({ref}) dhiyaateera. "
+        "Guyyoota hojii 2 keessatti karaa {email} isin qunnamna."
+    ),
+    "ti": (
+        "የቐንየልና፣ {name}። ናይ ተበጻሕነት ሕቶኹም ({ref}) ተቐቢልናዮ ኣለና። "
+        "ኣብ ውሽጢ 2 ናይ ስራሕ መዓልታት ብ {email} ክንረኽበኩም ኢና።"
+    ),
+    "so": (
+        "Mahadsanid, {name}. Codsigaaga wax-ka-beddelka ({ref}) waa la helay. "
+        "Waxaan kugula soo xiriiri doonnaa {email} 2 maalmood oo shaqo gudahood."
+    ),
+    "ar": (
+        "شكرًا لك، {name}. تم استلام طلب التيسيرات الخاص بك ({ref}). "
+        "سنتواصل معك عبر {email} خلال يومي عمل."
+    ),
+    "sw": (
+        "Asante, {name}. Ombi lako la huduma maalum ({ref}) limepokelewa. "
+        "Tutawasiliana nawe kupitia {email} ndani ya siku 2 za kazi."
+    ),
+    "fr": (
+        "Merci, {name}. Votre demande d'aménagements ({ref}) a été reçue. "
+        "Nous vous contacterons à {email} sous 2 jours ouvrables."
     ),
 }
 
@@ -116,9 +170,9 @@ async def _notify_operator(ref: str, body: AccommodationRequest) -> None:
 async def accommodate(body: AccommodationRequest) -> AccommodationResponse:
     """
     Record an accommodation request and notify the accessibility coordinator.
-    Responds in the requested language (EN or AM).
+    Responds in the requested language (8 supported languages: en, am, om, ti, so, ar, sw, fr).
     """
-    lang = body.language if body.language in ("en", "am") else "en"
+    lang = body.language if body.language in _CONFIRM_MSG else "en"
     ref = _generate_reference()
 
     await _notify_operator(ref, body)
@@ -126,7 +180,7 @@ async def accommodate(body: AccommodationRequest) -> AccommodationResponse:
     message = _CONFIRM_MSG[lang].format(name=body.name, ref=ref, email=body.email)
     next_steps = _NEXT_STEPS[lang]
     eth_date = gregorian_to_ethiopian(datetime.now())
-    eth_str = eth_date.format_am() if lang == "am" else eth_date.format_en()
+    eth_str = eth_date.format_am() if lang in ("am", "ti") else eth_date.format_en()
 
     return AccommodationResponse(
         reference=ref,

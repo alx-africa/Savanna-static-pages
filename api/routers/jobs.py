@@ -58,11 +58,11 @@ def _get_redis() -> Optional[aioredis.Redis]:
 async def list_jobs(
     keyword: Optional[str] = Query(None, description="Filter by keyword in title, description, or skills"),
     type: Optional[str] = Query(None, description="Filter by job type (full-time, part-time, contract, remote)"),
+    language: Optional[str] = Query(None, description="Preferred language for localized job cards (am, om, ti, so, ar, sw, fr, en)"),
 ) -> list[Job]:
     """
-    Return all jobs from jobs.json.  Supports optional `keyword` and `type`
-    query-string filters.  Keyword matching is case-insensitive and checks the
-    job title, description, and skills list.
+    Return all jobs from jobs.json. Supports optional `keyword`, `type`, and `language`
+    query-string filters. Keyword matching checks English and localized translations.
     """
     raw_jobs = _load_jobs()
     jobs: list[Job] = []
@@ -72,21 +72,48 @@ async def list_jobs(
         except Exception as exc:
             logger.warning("Skipping malformed job entry: %s", exc)
 
-    # Apply keyword filter
+    # Apply keyword filter across English and localized translations
     if keyword:
         kw = keyword.lower()
-        jobs = [
-            j for j in jobs
-            if kw in j.title.lower()
-            or kw in j.description.lower()
-            or any(kw in s.lower() for s in j.skills)
-            or kw in j.company.lower()
-            or kw in j.location.lower()
-        ]
+        filtered = []
+        for j in jobs:
+            match = (
+                kw in j.title.lower()
+                or kw in j.description.lower()
+                or any(kw in s.lower() for s in j.skills)
+                or kw in j.company.lower()
+                or kw in j.location.lower()
+            )
+            # Check translations for keyword match
+            if not match and j.translations:
+                for lang_data in j.translations.values():
+                    if (
+                        kw in lang_data.get("title", "").lower()
+                        or kw in lang_data.get("description", "").lower()
+                    ):
+                        match = True
+                        break
+            if match:
+                filtered.append(j)
+        jobs = filtered
 
     # Apply type filter
     if type:
         jobs = [j for j in jobs if j.type.lower() == type.lower()]
+
+    # If language requested, adapt title and description if translation exists
+    if language and language != "en":
+        adapted_jobs: list[Job] = []
+        for j in jobs:
+            trans = j.translations.get(language)
+            if trans:
+                job_dict = j.model_dump()
+                job_dict["title"] = trans.get("title", j.title)
+                job_dict["description"] = trans.get("description", j.description)
+                adapted_jobs.append(Job.model_validate(job_dict))
+            else:
+                adapted_jobs.append(j)
+        jobs = adapted_jobs
 
     # Return newest first
     jobs.sort(key=lambda j: j.posted_at, reverse=True)
@@ -94,12 +121,22 @@ async def list_jobs(
 
 
 @router.get("/{job_id}", response_model=Job, summary="Get a single job by ID")
-async def get_job(job_id: str) -> Job:
-    """Return a specific job entry by its ID."""
+async def get_job(
+    job_id: str,
+    language: Optional[str] = Query(None, description="Preferred language for job details"),
+) -> Job:
+    """Return a specific job entry by its ID, with optional language adaptation."""
     raw_jobs = _load_jobs()
     for raw in raw_jobs:
         if raw.get("id") == job_id:
-            return Job.model_validate(raw)
+            job = Job.model_validate(raw)
+            if language and language != "en" and job.translations.get(language):
+                trans = job.translations[language]
+                job_dict = job.model_dump()
+                job_dict["title"] = trans.get("title", job.title)
+                job_dict["description"] = trans.get("description", job.description)
+                return Job.model_validate(job_dict)
+            return job
     raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
 
 

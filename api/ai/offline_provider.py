@@ -90,11 +90,18 @@ def _load_faq() -> list[dict]:
     return _DEFAULT_FAQ
 
 
-def _keyword_score(query: str, entry: dict) -> int:
-    """Simple keyword overlap score between the query and a FAQ entry."""
-    query_tokens = set(query.lower().split())
+def _keyword_score(query: str, entry: dict, target_lang: str) -> int:
+    """Keyword overlap score with token cleaning and language affinity boost."""
+    import re
+    query_tokens = set(re.findall(r"[\w']+", query.lower()))
+    if not query_tokens:
+        return 0
     target = (entry.get("question", "") + " " + entry.get("answer", "")).lower()
-    return sum(1 for token in query_tokens if token in target)
+    target_tokens = set(re.findall(r"[\w']+", target))
+    base_score = len(query_tokens & target_tokens)
+    if base_score > 0 and entry.get("language") == target_lang:
+        base_score += 4  # Strong bonus for matching language
+    return base_score
 
 
 class OfflineProvider(AIProvider):
@@ -136,7 +143,7 @@ class OfflineProvider(AIProvider):
         best_entry: dict | None = None
         best_score = -1
         for entry in self._faq:
-            score = _keyword_score(message, entry)
+            score = _keyword_score(message, entry, language)
             if score > best_score:
                 best_score = score
                 best_entry = entry

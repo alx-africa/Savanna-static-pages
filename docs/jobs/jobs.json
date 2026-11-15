@@ -8,7 +8,37 @@
     "description": "Provide executive-level support including calendar management, email correspondence, travel booking, and report preparation. Strong written English required. Amharic a plus.",
     "skills": ["Calendar management", "Email", "Microsoft Office", "Communication"],
     "posted_at": "2026-11-10T08:00:00Z",
-    "url": "https://example.com/jobs/job-001"
+    "url": "https://example.com/jobs/job-001",
+    "translations": {
+      "am": {
+        "title": "ቨርቹዋል ረዳት — የአመራር ድጋፍ",
+        "description": "የቀን መቁጠሪያ ማስተዳደር፣ የኢሜይል ልውውጥ፣ የጉዞ ቦታ ማስያዝ እና ሪፖርት ዝግጅትን ጨምሮ ከፍተኛ የአመራር ድጋፍ መስጠት።"
+      },
+      "om": {
+        "title": "Gargaaraa Dijitaalaa — Deeggarsa Hojii-raawwachiiftuu",
+        "description": "Kalandarii bulchuu, imeelii barreessuu fi qophii imalaa dabalatee deeggarsa sadarkaa olaanaa kennuu."
+      },
+      "ti": {
+        "title": "ቨርቹዋል ሓጋዚ — ናይ ኣመራርሓ ደገፍ",
+        "description": "ቀንዲ ናይ ኣመራርሓ ደገፍ፣ ናይ ቀጠሮ ምምሕዳርን ናይ ኢሜይል ርክብን ሪፖርት ምድላውን የጠቓልል።"
+      },
+      "ar": {
+        "title": "مساعد افتراضي — دعم تنفيذي",
+        "description": "تقديم دعم تنفيذي رفيع المستوى يشمل إدارة التقويم والمراسلات وترتيبات السفر وإعداد التقارير."
+      },
+      "so": {
+        "title": "Kaaliyaha Virtual-ka ah — Taageerada Fulinta",
+        "description": "Bixinta taageerada heerka sare ee maamulka jadwalka, emayllada, iyo diyaarinta safarka iyo warbixinnada."
+      },
+      "sw": {
+        "title": "Msaidizi Halisi — Usaidizi wa Utendaji",
+        "description": "Kutoa usaidizi wa kiwango cha juu ikijumuisha usimamizi wa kalenda, barua pepe, na maandalizi ya ripoti."
+      },
+      "fr": {
+        "title": "Assistant Virtuel — Support Exécutif",
+        "description": "Fournir un soutien de niveau exécutif incluant la gestion d'agenda, la correspondance par courriel et la préparation de rapports."
+      }
+    }
   },
   {
     "id": "job-002",
@@ -19,7 +49,37 @@
     "description": "Handle customer inquiries via chat, email, and phone in both English and Amharic. Resolve issues using the company knowledge base. Training provided.",
     "skills": ["Customer service", "Amharic", "English", "CRM tools"],
     "posted_at": "2026-11-11T08:00:00Z",
-    "url": "https://example.com/jobs/job-002"
+    "url": "https://example.com/jobs/job-002",
+    "translations": {
+      "am": {
+        "title": "የደንበኞች አገልግሎት ባለሙያ (ሁለት ቋንቋ እንግሊዝኛ/አማርኛ)",
+        "description": "በቻት፣ በኢሜይል እና በስልክ በእንግሊዝኛ እና በአማርኛ የደንበኞች ጥያቄዎችን ማስተናገድ እና መፍትሄ መስጠት።"
+      },
+      "om": {
+        "title": "Ogeessa Deeggarsa Maamiltootaa (Afaan Ingilizii/Afaan Oromoo)",
+        "description": "Gaaffilee maamiltootaa karaa chaatii, imeelii fi bilbilaan simachuu fi furmaata kennuu."
+      },
+      "ti": {
+        "title": "ክኢላ ደገፍ ዓማዊል (እንግሊዝኛ/ትግርኛ)",
+        "description": "ሕቶታት ዓማዊል ብቻት፣ ብኢሜይልን ብተሌፎንን ምእንጋድን ምፍታሕን።"
+      },
+      "ar": {
+        "title": "أخصائي دعم العملاء (ثنائي اللغة)",
+        "description": "معالجة استفسارات العملاء عبر الدردشة والبريد الإلكتروني والهاتف باللغتين وحل المشكلات."
+      },
+      "so": {
+        "title": "Khabiirka Taageerada Macmiilka",
+        "description": "Ka jawaabista su'aalaha macaamiisha ee chat-ka, iimaylka, iyo taleefanka."
+      },
+      "sw": {
+        "title": "Mtaalamu wa Huduma kwa Wateja (Lugha Mbili)",
+        "description": "Kushughulikia maswali ya wateja kupitia gumzo, barua pepe, na simu."
+      },
+      "fr": {
+        "title": "Spécialiste du Support Client (Bilingue)",
+        "description": "Gérer les demandes des clients par chat, courriel et téléphone en anglais et français."
+      }
+    }
   },
   {
     "id": "job-003",
@@ -30,7 +90,37 @@
     "description": "Conduct online research, compile data into spreadsheets, verify records, and produce summary reports. 20 hrs/week. Entry-level welcome.",
     "skills": ["Google Sheets", "Research", "Attention to detail", "Data entry"],
     "posted_at": "2026-11-09T08:00:00Z",
-    "url": "https://example.com/jobs/job-003"
+    "url": "https://example.com/jobs/job-003",
+    "translations": {
+      "am": {
+        "title": "የመረጃ ምዝገባ እና ምርምር ቨርቹዋል ረዳት",
+        "description": "የመስመር ላይ ምርምር ማካሄድ፣ መረጃዎችን በሰንጠረዥ ማቀናጀት እና አጫጭር ሪፖርቶችን ማዘጋጀት። በሳምንት 20 ሰዓታት።"
+      },
+      "om": {
+        "title": "Gargaaraa Galmee Daataa fi Qorannoo",
+        "description": "Qorannoo toora interneetii gaggeessuu, ragaalee gurmeessuu fi gabaasa qopheessuu. Torbanitti sa'aatii 20."
+      },
+      "ti": {
+        "title": "ምእታው ዳታን ምርምርን ቨርቹዋል ሓጋዚ",
+        "description": "ናይ ኢንተርነት ምርምር ምግባር፣ ዳታ ምውዳብን ሓጸርቲ ጸብጻባት ምድላውን። ኣብ ሰሙን 20 ሰዓት።"
+      },
+      "ar": {
+        "title": "مساعد افتراضي لإدخال البيانات والبحث",
+        "description": "إجراء أبحاث عبر الإنترنت، وجمع البيانات في جداول البيانات، وإعداد تقارير ملخصة. 20 ساعة/أسبوع."
+      },
+      "so": {
+        "title": "Kaaliyaha Gelinta Xogta iyo Cilmi-baarista",
+        "description": "Samaynta cilmi-baaris internetka ah, diyaarinta xogta xaashiyaha, iyo samaynta warbixinnada. 20 saac/todobaad."
+      },
+      "sw": {
+        "title": "Msaidizi Halisi wa Kuingiza Data na Utafiti",
+        "description": "Kufanya utafiti mtandaoni, kukusanya data kwenye lahajedwali, na kuandaa ripoti. Saa 20/wiki."
+      },
+      "fr": {
+        "title": "Assistant Virtuel Saisie de Données et Recherche",
+        "description": "Mener des recherches en ligne, compiler des données dans des feuilles de calcul et produire des rapports de synthèse. 20h/semaine."
+      }
+    }
   },
   {
     "id": "job-004",
@@ -41,7 +131,37 @@
     "description": "Create and schedule content for LinkedIn, Instagram, and Facebook. Monitor engagement metrics, write captions, and produce monthly analytics reports.",
     "skills": ["Social media", "Canva", "Copywriting", "Analytics"],
     "posted_at": "2026-11-12T08:00:00Z",
-    "url": "https://example.com/jobs/job-004"
+    "url": "https://example.com/jobs/job-004",
+    "translations": {
+      "am": {
+        "title": "የማህበራዊ ሚዲያ አስተዳዳሪ (የትርፍ ጊዜ፣ የርቀት)",
+        "description": "ለሊንክድኢን፣ ኢንስታግራም እና ፌስቡክ ይዘቶችን ማዘጋጀት፣ ተሳትፎን መከታተል እና ወርሃዊ የትንታኔ ሪፖርቶችን ማቅረብ።"
+      },
+      "om": {
+        "title": "Hogganaa Miidiyaa Hawaasaa (Yeroo Hir'uu, Fageenya)",
+        "description": "Qabiyyee miidiyaa hawaasaa qopheessuu, maxxansuu fi gabaasa ji'aa dhiyeessuu."
+      },
+      "ti": {
+        "title": "ኣካያዲ ማሕበራዊ ሚድያ (ናይ ትርፊ ግዜ፣ ርሑቕ)",
+        "description": "ትሕዝቶታት ማሕበራዊ ሚድያ ምድላው፣ ምዝርጋሕን ወርሓዊ ናይ ትንተና ጸብጻብ ምቕራብን።"
+      },
+      "ar": {
+        "title": "مدير وسائل التواصل الاجتماعي (دوام جزئي، عن بُعد)",
+        "description": "إنشاء وجدولة المحتوى، ومراقبة مقاييس التفاعل، وإعداد تقارير التحليلات الشهرية."
+      },
+      "so": {
+        "title": "Maamulaha Baraha Bulshada (Qayb-waqti, Fog)",
+        "description": "Abuuritaanka iyo jadwalka nuxurka baraha bulshada iyo soo saarista warbixinnada bishii."
+      },
+      "sw": {
+        "title": "Meneja wa Mitandao ya Kijamii (Muda wa Sehemu, Mbali)",
+        "description": "Kuunda na kuratibu maudhui ya mitandao ya kijamii na kutoa ripoti za kila mwezi."
+      },
+      "fr": {
+        "title": "Gestionnaire de Médias Sociaux (Temps Partiel, Télétravail)",
+        "description": "Créer et planifier du contenu pour les réseaux sociaux, suivre les statistiques et produire des rapports mensuels."
+      }
+    }
   },
   {
     "id": "job-005",
@@ -52,7 +172,37 @@
     "description": "Use AI tools (ChatGPT, Grammarly) to draft and edit blog posts, product descriptions, and educational content. Must be able to review AI output critically.",
     "skills": ["Writing", "AI tools", "Editing", "SEO basics"],
     "posted_at": "2026-11-13T08:00:00Z",
-    "url": "https://example.com/jobs/job-005"
+    "url": "https://example.com/jobs/job-005",
+    "translations": {
+      "am": {
+        "title": "በAI የታገዘ የይዘት ጸሐፊ",
+        "description": "የብሎግ ጽሑፎችን እና ትምህርታዊ ይዘቶችን ለማርቀቅ እና ለማስተካከል የAI መሳሪያዎችን መጠቀም።"
+      },
+      "om": {
+        "title": "Barreessaa Qabiyyee AI Gargaaramu",
+        "description": "Meeshaalee AI fayyadamuun barreeffamoota blagii fi barnootaa qopheessuu fi gulaaluu."
+      },
+      "ti": {
+        "title": "ብAI ዝተሓገዘ ጸሓፊ ትሕዝቶ",
+        "description": "ብAI መሳርሒታት ተጠቒምካ ዓንቀጻትን ትምህርታዊ ጽሑፋትን ምድላውን ምእራምን።"
+      },
+      "ar": {
+        "title": "كاتب محتوى بمساعدة الذكاء الاصطناعي",
+        "description": "استخدام أدوات الذكاء الاصطناعي لصياغة وتحرير المقالات والمحتوى التعليمي بدقة."
+      },
+      "so": {
+        "title": "Qoraaga Nuxurka ee AI Caawiyo",
+        "description": "Isticmaalka aaladaha AI si loo qoro loona saxo maqaallada iyo nuxurka waxbarashada."
+      },
+      "sw": {
+        "title": "Mwandishi wa Maudhui Anayetumia AI",
+        "description": "Kutumia zana za AI kuandaa na kuhariri machapisho ya blogu na maudhui ya kielimu."
+      },
+      "fr": {
+        "title": "Rédacteur de Contenu Assisté par IA",
+        "description": "Utiliser des outils d'IA pour rédiger et éditer des articles de blog et du contenu éducatif."
+      }
+    }
   },
   {
     "id": "job-006",
@@ -63,7 +213,37 @@
     "description": "Coordinate cross-functional teams, track project milestones in Asana, prepare status reports, and facilitate weekly standups. 1-year experience preferred.",
     "skills": ["Project management", "Asana", "Communication", "Leadership"],
     "posted_at": "2026-11-08T08:00:00Z",
-    "url": "https://example.com/jobs/job-006"
+    "url": "https://example.com/jobs/job-006",
+    "translations": {
+      "am": {
+        "title": "የፕሮጀክት አስተባባሪ — የትምህርት ቴክኖሎጂ",
+        "description": "ቡድኖችን ማስተባበር፣ የፕሮጀክት ደረጃዎችን መከታተል እና ሳምንታዊ ስብሰባዎችን ማመቻቸት።"
+      },
+      "om": {
+        "title": "Qindeessaa Pirojektii — EdTech",
+        "description": "Garee adda addaa qindeessuu, adeemsa pirojektii hordofuu fi walga'iiwwan torbanii mijeessuu."
+      },
+      "ti": {
+        "title": "ኣተሓባባሪ ፕሮጀክት — ኤድቴክ",
+        "description": "ጉጅለታት ምትሕብባር፣ ምዕባለ ፕሮጀክት ምክትታልን ሰሙናዊ ኣኼባታት ምምችቻውን።"
+      },
+      "ar": {
+        "title": "منسق مشروع — تكنولوجيا التعليم",
+        "description": "تنسيق فرق العمل، وتتبع مراحل المشروع، وإعداد تقارير الحالة وتيسير الاجتماعات الأسبوعية."
+      },
+      "so": {
+        "title": "Isku-duwaha Mashruuca — EdTech",
+        "description": "Isku-dubbaridka kooxaha, la socodka heerarka mashruuca, iyo fududaynta shirarka toddobaadlaha ah."
+      },
+      "sw": {
+        "title": "Mratibu wa Mradi — EdTech Startup",
+        "description": "Kuratibu timu, kufuatilia hatua za mradi, na kuwezesha mikutano ya kila wiki."
+      },
+      "fr": {
+        "title": "Coordinateur de Projet — Startup EdTech",
+        "description": "Coordonner les équipes pluridisciplinaires, suivre les étapes de projet et animer les réunions hebdomadaires."
+      }
+    }
   },
   {
     "id": "job-007",
@@ -74,7 +254,37 @@
     "description": "Record financial transactions, reconcile accounts, generate invoices, and prepare basic P&L statements using QuickBooks. Accounting background preferred.",
     "skills": ["QuickBooks", "Bookkeeping", "Excel", "Invoicing"],
     "posted_at": "2026-11-07T08:00:00Z",
-    "url": "https://example.com/jobs/job-007"
+    "url": "https://example.com/jobs/job-007",
+    "translations": {
+      "am": {
+        "title": "የሂሳብ መዝገብ አያያዝ ቨርቹዋል ረዳት",
+        "description": "የፋይናንስ ግብይቶችን መመዝገብ፣ ሂሳቦችን ማስታረቅ እና ደረሰኞችን በQuickBooks ማዘጋጀት።"
+      },
+      "om": {
+        "title": "Gargaaraa Qabiinsa Hiriira Baajataa",
+        "description": "Sochii faayinaansii galmeessuu, herreega wal-bira qabuu fi nagahee qopheessuu."
+      },
+      "ti": {
+        "title": "ምሓዝ መዛግብቲ ሒሳብ ቨርቹዋል ሓጋዚ",
+        "description": "ናይ ፋይናንስ ምንቅስቓስ ምምዝጋብ፣ ሒሳብ ምትዕራቕን ደረሰኝ ምድላውን።"
+      },
+      "ar": {
+        "title": "مساعد افتراضي لمسك الدفاتر والمحاسبة",
+        "description": "تسجيل المعاملات المالية، وتسوية الحسابات، وإصدار الفواتير باستخدام QuickBooks."
+      },
+      "so": {
+        "title": "Kaaliyaha Haynta Xisaabaadka",
+        "description": "Diiwaangelinta macaamilka maaliyadeed, xisaab-xidhka, iyo soo saarista qaansheegyada."
+      },
+      "sw": {
+        "title": "Msaidizi Halisi wa Utunzaji Hesabu",
+        "description": "Kurekodi miamala ya kifedha, kusawazisha akaunti, na kuandaa ankara kwa kutumia QuickBooks."
+      },
+      "fr": {
+        "title": "Assistant Virtuel Tenue de Livres Comptables",
+        "description": "Enregistrer les transactions financières, rapprocher les comptes et générer des factures via QuickBooks."
+      }
+    }
   },
   {
     "id": "job-008",
@@ -85,7 +295,37 @@
     "description": "List products, manage inventory data, handle order fulfilment inquiries, write product descriptions, and liaise with suppliers.",
     "skills": ["E-commerce", "Product listing", "Inventory", "Customer service"],
     "posted_at": "2026-11-11T08:00:00Z",
-    "url": "https://example.com/jobs/job-008"
+    "url": "https://example.com/jobs/job-008",
+    "translations": {
+      "am": {
+        "title": "የኢ-ኮሜርስ ኦፕሬሽን ረዳት",
+        "description": "ምርቶችን መመዝገብ፣ የእቃ ክምችት መረጃን ማስተዳደር እና የትዕዛዝ ጥያቄዎችን ማስተናገድ።"
+      },
+      "om": {
+        "title": "Gargaaraa Hojii Daldala Dijitaalaa",
+        "description": "Oomishaalee toora irratti galmeessuu, kuusaa bulchuu fi ajajawwan maamiltootaa hordofuu."
+      },
+      "ti": {
+        "title": "ናይ ኢ-ኮሜርስ ስርሓት ሓጋዚ",
+        "description": "ምህርትታት ምምዝጋብ፣ ክምችት ምምሕዳርን ትእዛዛት ምምላእን።"
+      },
+      "ar": {
+        "title": "مساعد عمليات التجارة الإلكترونية",
+        "description": "إدراج المنتجات، وإدارة بيانات المخزون، ومعالجة استفسارات تنفيذ الطلبات والتواصل مع الموردين."
+      },
+      "so": {
+        "title": "Kaaliyaha Hawlgallada Ganacsiga Internetka",
+        "description": "Diiwaangelinta alaabta, maareynta xogta kaydka, iyo ka jawaabista dalabaadka macaamiisha."
+      },
+      "sw": {
+        "title": "Msaidizi wa Uendeshaji wa Biashara ya Mtandaoni",
+        "description": "Kuorodhesha bidhaa, kudhibiti orodha ya bidhaa, na kushughulikia maagizo."
+      },
+      "fr": {
+        "title": "Assistant Opérations E-commerce",
+        "description": "Lister les produits, gérer l'inventaire, traiter les commandes et assurer le suivi avec les fournisseurs."
+      }
+    }
   },
   {
     "id": "job-009",
@@ -96,7 +336,37 @@
     "description": "Transcribe audio recordings and translate documents between English and Amharic. Medical and legal glossaries provided. Per-word rate.",
     "skills": ["Amharic", "English", "Transcription", "Translation"],
     "posted_at": "2026-11-10T08:00:00Z",
-    "url": "https://example.com/jobs/job-009"
+    "url": "https://example.com/jobs/job-009",
+    "translations": {
+      "am": {
+        "title": "የድምፅ ግልባጭ እና የትርጉም ባለሙያ (እንግሊዝኛ ↔ አማርኛ)",
+        "description": "የድምፅ ቅጂዎችን መገልበጥ እና ሰነዶችን በእንግሊዝኛ እና በአማርኛ መካከል መተርጎም።"
+      },
+      "om": {
+        "title": "Ogeessa Sagalee Barreesuu fi Hiikkaa Afaanii",
+        "description": "Waraabbii sagalee gara barreeffamaatti jijjiiruu fi dookumentoota hiikuu."
+      },
+      "ti": {
+        "title": "ክኢላ ቅዳሕ ድምጽን ትርጉምን (እንግሊዝኛ ↔ ትግርኛ)",
+        "description": "ናይ ድምጺ ቅዳሓት ናብ ጽሑፍ ምቕያርን ሰነዳት ምትርጓምን።"
+      },
+      "ar": {
+        "title": "أخصائي تفريغ صوتي وترجمة",
+        "description": "تفريغ التسجيلات الصوتية وترجمة الوثائق باحترافية."
+      },
+      "so": {
+        "title": "Khabiirka Qoraalka Codka iyo Turjumaada",
+        "description": "Qorista codadka la duubay iyo turjumida dukumentiyada."
+      },
+      "sw": {
+        "title": "Mtaalamu wa Unukuzi na Tafsiri",
+        "description": "Kunukuu rekodi za sauti na kutafsiri hati kwa ufasaha."
+      },
+      "fr": {
+        "title": "Spécialiste en Transcription et Traduction",
+        "description": "Transcrire des enregistrements audio et traduire des documents avec précision terminologique."
+      }
+    }
   },
   {
     "id": "job-010",
@@ -107,6 +377,36 @@
     "description": "Post job ads, screen CVs, schedule interviews, maintain applicant tracking system, and draft offer letters. HRIS experience a plus.",
     "skills": ["HR", "Recruitment", "ATS", "Communication"],
     "posted_at": "2026-11-13T08:00:00Z",
-    "url": "https://example.com/jobs/job-010"
+    "url": "https://example.com/jobs/job-010",
+    "translations": {
+      "am": {
+        "title": "የሰው ሀብት እና ቅጥር አስተባባሪ (የርቀት)",
+        "description": "የስራ ማስታወቂያዎችን ማውጣት፣ ሲቪዎችን መገምገም፣ ቃለ-መጠይቆችን ማመቻቸት እና የስራ ቅጥር ደብዳቤዎችን ማዘጋጀት።"
+      },
+      "om": {
+        "title": "Qindeessaa Qabeenya Namaa fi Qaxarrii (Fageenya)",
+        "description": "Beeksisa hojii baasuu, CV qorachuu, qormaata afaanii mijeessuu fi xalayaa qaxarrii qopheessuu."
+      },
+      "ti": {
+        "title": "ኣተሓባባሪ ዓቕሚ ሰብን ቅጥርን (ርሑቕ)",
+        "description": "መወዓውዒ ስራሕ ምውጻእ፣ ሲቪ ምምርማር፣ ቃለ-መሕትት ምምችቻውን ናይ ቆጺርካ ምቕባል ደብዳቤ ምድላውን።"
+      },
+      "ar": {
+        "title": "منسق الموارد البشرية والتوظيف (عن بُعد)",
+        "description": "نشر إعلانات الوظائف، وفرز السير الذاتية، وجدولة المقابلات، وصياغة خطابات العروض الوظيفية."
+      },
+      "so": {
+        "title": "Isku-duwaha Shaqaalaha iyo Qorista (Fog)",
+        "description": "Daabacaadda xayaysiisyada shaqada, hubinta CV-yada, iyo qabanqaabada waraysiyada."
+      },
+      "sw": {
+        "title": "Mratibu wa Rasilimali Watu na Uajiri (Mbali)",
+        "description": "Kutangaza nafasi za kazi, kuchunguza CV, kuratibu mahojiano, na kuandaa barua za ajira."
+      },
+      "fr": {
+        "title": "Coordinateur RH et Recrutement (Télétravail)",
+        "description": "Publier les offres d'emploi, sélectionner les CV, planifier les entretiens et rédiger les lettres d'offre."
+      }
+    }
   }
 ]
