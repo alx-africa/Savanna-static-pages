@@ -833,7 +833,13 @@
       item.appendChild(badge);
     });
 
-    // 2. Enhance Uninformative Image Alt Tags & Inject AI Image Inspector Buttons
+    // 2. Neutralize invisible heading anchor links from trapping keyboard tab
+    const emptyAnchors = document.querySelectorAll('a.anchor[aria-hidden="true"], a[aria-hidden="true"]');
+    emptyAnchors.forEach(a => {
+      a.setAttribute('tabindex', '-1');
+    });
+
+    // 3. Enhance Uninformative Image Alt Tags & Inject AI Image Inspector Affordance
     const images = Array.from(document.querySelectorAll('img'));
     const bgVisuals = Array.from(document.querySelectorAll('.logo, a.logo-container, [style*="background-image: url"], [style*="background-image:url"]'));
     const allVisualElements = [...images, ...bgVisuals];
@@ -841,16 +847,14 @@
     allVisualElements.forEach(img => {
       const isImg = img.tagName === 'IMG';
       const parent = img.parentElement;
-      const existingBtn = parent ? parent.querySelector('.sa11y-describe-img-btn') : null;
-      if (existingBtn) existingBtn.remove();
-      const existingCard = parent ? parent.querySelector('.sa11y-image-desc-card') : null;
-      if (existingCard) existingCard.remove();
 
       if (!enable) {
         if (isImg) {
           img.removeAttribute('tabindex');
           img.removeAttribute('role');
         }
+        const existingBtn = parent ? parent.querySelector('.sa11y-describe-img-btn') : null;
+        if (existingBtn) existingBtn.remove();
         return;
       }
 
@@ -896,7 +900,7 @@
 
       const linkParent = img.tagName === 'A' ? img : img.closest('a');
 
-      // Ensure proper accessible labeling
+      // Ensure proper accessible labeling on parent links
       if (linkParent && linkParent !== img) {
         const ariaLbl = img.getAttribute('aria-label') || img.getAttribute('alt') || '';
         if (ariaLbl && !linkParent.getAttribute('aria-label')) {
@@ -936,18 +940,31 @@
       }
 
       // Inject accessible "Describe Image (Alt+I)" button for content images
-      // (Place button outside any parent link to guarantee 0 nested-interactive violations)
+      // (Set tabindex="-1" so mouse users can click while keyboard Tab navigation passes smoothly to the next element)
       if (src && !src.includes('dropdown-arrow') && !src.includes('green-x') && !src.includes('white-x') && !src.includes('navy-x')) {
         const insertionTarget = linkParent || img;
-        const existingAfter = insertionTarget.nextElementSibling;
-        if (!existingAfter || !existingAfter.classList.contains('sa11y-describe-img-btn')) {
+        const parentContainer = insertionTarget.parentElement;
+        let existingBtn = parentContainer ? parentContainer.querySelector('.sa11y-describe-img-btn') : null;
+        if (!existingBtn && insertionTarget.nextElementSibling && insertionTarget.nextElementSibling.classList.contains('sa11y-describe-img-btn')) {
+          existingBtn = insertionTarget.nextElementSibling;
+        }
+
+        const ariaLbl = img.getAttribute('aria-label') || img.getAttribute('alt') || '';
+        const btnLabel = (currentLang === 'am') 
+          ? `የምስሉን ዝርዝር መግለጫ አድምጥ፡ ${ariaLbl}` 
+          : `Hear visual description of image: ${ariaLbl}`;
+
+        if (existingBtn) {
+          // Idempotent: update labels without re-creating or thrashing DOM
+          existingBtn.setAttribute('tabindex', '-1');
+          existingBtn.setAttribute('aria-label', btnLabel);
+          existingBtn.innerHTML = `👁️ ${i18n[currentLang].btnDescribeImg}`;
+        } else {
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'sa11y-describe-img-btn';
-          const ariaLbl = img.getAttribute('aria-label') || img.getAttribute('alt') || '';
-          btn.setAttribute('aria-label', (currentLang === 'am') 
-            ? `የምስሉን ዝርዝር መግለጫ አድምጥ፡ ${ariaLbl}` 
-            : `Hear visual description of image: ${ariaLbl}`);
+          btn.setAttribute('tabindex', '-1'); // Do not block or intercept sequential Tab passing
+          btn.setAttribute('aria-label', btnLabel);
           btn.innerHTML = `👁️ ${i18n[currentLang].btnDescribeImg}`;
           btn.addEventListener('click', () => describeImage(img));
 
@@ -1933,11 +1950,23 @@
 
   // Watch for dynamic DOM changes (module swaps, accordion changes)
   let mutationTimeout = null;
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver((mutations) => {
+    // Ignore internal accessibility DOM updates to prevent infinite loops
+    const isInternal = mutations.every(m => {
+      const t = m.target;
+      return t && (
+        t.id === 'savanna-a11y-announcer' ||
+        t.id === 'sa11y-live-region' ||
+        (t.classList && (t.classList.contains('sa11y-describe-img-btn') || t.classList.contains('sa11y-image-desc-card') || t.classList.contains('sa11y-status-sr'))) ||
+        (t.closest && t.closest('.sa11y-image-desc-card, #sa11y-live-region, #savanna-a11y-announcer, #sa11y-motor-toolbar, #sa11y-reading-ruler'))
+      );
+    });
+    if (isInternal) return;
+
     if (mutationTimeout) clearTimeout(mutationTimeout);
     mutationTimeout = setTimeout(() => {
       adaptBlindAndScreenReader(true);
-    }, 100);
+    }, 150);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
