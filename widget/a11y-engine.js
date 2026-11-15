@@ -1022,6 +1022,39 @@
     }
   }
 
+  function syncSkipLink(lang) {
+    if (typeof document === 'undefined') return;
+    const skipLabels = {
+      en: 'Skip to main content',
+      am: 'ወደ ዋናው ይዘት ዝለል',
+      om: 'Gara qabiyyee ijoo darbi',
+      ti: 'ናብቲ ቀንዲ ትሕዝቶ ሕለፍ',
+      so: 'U gudub nuxurka guud',
+      ar: 'الانتقال إلى المحتوى الرئيسي',
+      sw: 'Ruka hadi maudhui kuu',
+      fr: 'Passer au contenu principal'
+    };
+    const label = skipLabels[lang] || skipLabels.en;
+
+    let skipLink = document.querySelector('a[href="#content"], a.visually-hidden-focusable, a.sa11y-skip-link');
+    if (skipLink) {
+      skipLink.textContent = label;
+      skipLink.setAttribute('aria-label', label);
+    } else {
+      const mainEl = document.querySelector('main, #content, [role="main"]');
+      if (mainEl && !document.querySelector('.sa11y-skip-link') && document.body) {
+        skipLink = document.createElement('a');
+        skipLink.href = mainEl.id ? `#${mainEl.id}` : '#content';
+        if (!mainEl.id) mainEl.id = 'content';
+        skipLink.className = 'sa11y-skip-link visually-hidden-focusable';
+        skipLink.style.cssText = 'position:absolute;top:0;left:0;padding:12px 18px;background:#0056b3;color:#fff;z-index:99999;font-weight:700;text-decoration:none;border-radius:0 0 6px 0;';
+        skipLink.textContent = label;
+        skipLink.setAttribute('aria-label', label);
+        document.body.insertBefore(skipLink, document.body.firstChild);
+      }
+    }
+  }
+
   function translateHostPage(lang) {
     if (!lang || !ALL_LANGUAGES.includes(lang)) lang = 'en';
 
@@ -1030,6 +1063,8 @@
       document.documentElement.lang = lang;
       document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
     }
+
+    syncSkipLink(lang);
 
     if (!document.body) return;
 
@@ -1353,7 +1388,7 @@
       shortcutScan: 'Toggle single-switch automatic element scanner',
       shortcutVoice: 'Toggle hands-free voice recognition',
       shortcutHelp: 'Toggle this shortcut guide',
-      shortcutEsc: 'Cancel scanning or close open dialogs',
+      shortcutEsc: 'Silence audio, cancel scanning or close open dialogs',
       voiceCmdList: 'Voice Commands: "next", "back", "complete", "scroll down", "scroll up", "read", "stop", "help"',
       // Phase 4: Cognitive & Reading i18n
       btnSimplify: '✨ Simplify Section',
@@ -1441,7 +1476,7 @@
       shortcutScan: 'የስዊች አውቶማቲክ ስካነርን ማብራት / ማጥፋት',
       shortcutVoice: 'እጅ-አልባ የድምፅ ትዕዛዝን ማብራት / ማጥፋት',
       shortcutHelp: 'ይህን የመመሪያ መስኮት መክፈት / መዝጋት',
-      shortcutEsc: 'ስካነርን ማቆም ወይም ንቁ መስኮትን መዝጋት',
+      shortcutEsc: 'ድምፅን ወዲያውኑ ማቆም፣ ስካነርን ማቆም ወይም ንቁ መስኮትን መዝጋት',
       voiceCmdList: 'የድምፅ ትዕዛዞች፡ "ቀጣይ", "ተመለስ", "ጨርስ", "ወደ ታች", "ወደ ላይ", "አንብብ", "አቁም", "እርዳታ"',
       // Phase 4: Cognitive & Reading i18n
       btnSimplify: '✨ ቀላል ማብራሪያ',
@@ -3678,13 +3713,19 @@
       if (isReadingRulerActive) {
         toggleReadingRuler(false);
       }
+      if (activeA11yAudio) {
+        activeA11yAudio.pause();
+        activeA11yAudio = null;
+      }
       if (window.speechSynthesis && window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
       }
     }
   }
 
-  // Global Alt + I shortcut for blind users to describe images at any time
+  // Global shortcuts for blind and keyboard users:
+  // - Alt + I: Describe focused or main lesson image
+  // - Escape: Universal silence to immediately halt any playing speech/audio
   window.addEventListener('keydown', (e) => {
     if (e.altKey && (e.key === 'i' || e.key === 'I')) {
       e.preventDefault();
@@ -3695,6 +3736,15 @@
         describeImage(focusedImg);
       } else {
         announce(currentLang === 'am' ? 'በዚህ ገጽ ላይ ምንም ምስል አልተገኘም' : 'No images found on this page');
+      }
+    } else if (e.key === 'Escape') {
+      // Universal silence: immediately halt any active TTS audio or Web Speech
+      if (activeA11yAudio) {
+        activeA11yAudio.pause();
+        activeA11yAudio = null;
+      }
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
       }
     }
   });
@@ -4089,7 +4139,10 @@
     return backdrop;
   }
 
+  let shortcutsTriggerElement = null;
+
   function openShortcutsModal() {
+    shortcutsTriggerElement = document.activeElement;
     if (!shortcutsModalEl) shortcutsModalEl = buildShortcutsModal();
     isShortcutsOpen = true;
     shortcutsModalEl.removeAttribute('hidden');
@@ -4101,10 +4154,13 @@
     if (!shortcutsModalEl) return;
     isShortcutsOpen = false;
     shortcutsModalEl.setAttribute('hidden', '');
-    if (motorBarEl) {
+    if (shortcutsTriggerElement && typeof shortcutsTriggerElement.focus === 'function') {
+      shortcutsTriggerElement.focus();
+    } else if (motorBarEl) {
       const btn = motorBarEl.querySelector('#sa11y-btn-shortcuts');
       if (btn) btn.focus();
     }
+    shortcutsTriggerElement = null;
   }
 
   /* ── 17. Motor Adaptation Controller ────────────────────────────────────── */
