@@ -484,22 +484,30 @@ details[open] summary::before { transform: rotate(90deg); }
   gap: 0.5rem;
 }
 
-/* Visually styled label as placeholder */
+/* Accessible input label (visually hidden to prevent overlapping with native placeholder) */
 .input-label-wrapper {
   position: relative;
 }
 .input-label {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
   position: absolute;
-  inset-block-start: 0.6rem;
-  inset-inline-start: 0.75rem;
-  font-size: 0.875rem;
-  color: var(--c-text-muted);
-  pointer-events: none;
-  transition: opacity var(--transition-fast);
+  white-space: nowrap;
+  width: 1px;
 }
-.input-label.hidden { opacity: 0; }
+.input-label.hidden {
+  display: none;
+}
 @media (prefers-reduced-motion: reduce) {
   .input-label { transition: none; }
+}
+
+#chat-input::placeholder {
+  color: var(--c-text-muted);
+  opacity: 1; /* Override Firefox lower opacity default */
+  font-size: 0.875rem;
 }
 
 #chat-input {
