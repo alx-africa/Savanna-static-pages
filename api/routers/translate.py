@@ -19,10 +19,12 @@ Features:
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -53,8 +55,13 @@ CACHE_FILE = Path(__file__).resolve().parent.parent.parent / "docs" / "translati
 TRANSLATION_CACHE: dict[str, str] = {}
 
 
+def _normalize_text(text: str) -> str:
+    """Normalize internal and external whitespace for robust cache key matching."""
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def _get_cache_key(target_lang: str, text: str) -> str:
-    cleaned = text.strip()
+    cleaned = _normalize_text(text)
     h = hashlib.sha256(cleaned.encode("utf-8")).hexdigest()[:16]
     return f"{target_lang}:{h}"
 
@@ -110,7 +117,7 @@ async def _translate_with_gemini(
     api_key: str,
     model: str = "gemini-3.5-flash-lite"
 ) -> dict[str, str]:
-    """Translate an array of texts using Google Gemini with structured JSON output."""
+    """Translate an array of texts using Google Gemini with structured JSON output and pedagogical guidance."""
     lang_name = LANGUAGE_NAMES.get(target_lang, target_lang)
     target_model = model or "gemini-3.5-flash-lite"
     if "gemini-3.5-flash" in target_model and not target_model.endswith("-lite"):
@@ -119,12 +126,14 @@ async def _translate_with_gemini(
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{target_model}:generateContent?key={api_key}"
 
     prompt = (
-        f"You are a professional, culturally authentic localization engine. "
-        f"Translate the following JSON array of web content strings from {source_lang} into {lang_name}.\n"
-        f"Rules:\n"
-        f"1. Preserve numbers, acronyms, and formatting intact.\n"
-        f"2. Ensure natural, fluent educational tone in {lang_name}.\n"
-        f"3. Return ONLY a valid JSON object where keys are the EXACT original strings and values are the translated strings.\n\n"
+        f"You are an expert pedagogical localization engine for African digital professionals learning modern tech careers (ALX / Holberton).\n"
+        f"Translate the following JSON array of course content and UI strings from {source_lang} into {lang_name}.\n\n"
+        f"CRITICAL PEDAGOGICAL REQUIREMENTS:\n"
+        f"1. Contextual & Natural Clarity: Translate the real semantic meaning of the sentence rather than literal word-for-word replacement. Ensure the phrasing sounds completely natural, intuitive, and engaging to an educated native speaker of {lang_name}.\n"
+        f"2. Terminology Balance: Keep core tech acronyms and recognizable industry designations clear (e.g. AI, Virtual Assistant, VA, DevOps, Kubernetes) where standard in professional practice, while explaining the concepts clearly in {lang_name}.\n"
+        f"3. Sentence Flow & Grammar: Where strings are clauses, bullet points, or callouts of an educational lesson, ensure grammatical alignment so they fit smoothly into the broader lesson context.\n"
+        f"4. Formatting: Preserve numbers, bullet markers, and emojis intact.\n"
+        f"5. Output: Return ONLY a valid JSON object mapping each EXACT original string key to its intuitive translated string value.\n\n"
         f"Strings to translate:\n"
         f"{json.dumps(texts, ensure_ascii=False)}"
     )
@@ -137,33 +146,61 @@ async def _translate_with_gemini(
         }
     }
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        res = await client.post(url, json=payload)
-        if res.status_code == 404:
-            # Fallback to gemini-3.5-flash-lite
-            fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={api_key}"
-            res = await client.post(fallback_url, json=payload)
-
-        if res.status_code != 200:
-            logger.error("Gemini translation error %d: %s", res.status_code, res.text)
-            return {}
-
-        data = res.json()
-        candidates = data.get("candidates", [])
-        if not candidates:
-            return {}
-
-        content_parts = candidates[0].get("content", {}).get("parts", [])
-        if not content_parts:
-            return {}
-
-        raw_json = content_parts[0].get("text", "{}")
+    max_retries = 3
+    for attempt in range(max_retries):
         try:
-            parsed = json.loads(raw_json)
-            if isinstance(parsed, dict):
-                return {str(k): str(v) for k, v in parsed.items()}
-        except json.JSONDecodeError as exc:
-            logger.warning("Failed to parse Gemini translation JSON: %s. Raw: %s", exc, raw_json)
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                res = await client.post(url, json=payload)
+                if res.status_code == 404:
+                    fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={api_key}"
+                    res = await client.post(fallback_url, json=payload)
+
+                if res.status_code in (503, 429) and attempt < max_retries - 1:
+                    logger.warning("Gemini %d on attempt %d, retrying after backoff...", res.status_code, attempt + 1)
+                    await asyncio.sleep(2.5 * (attempt + 1))
+                    continue
+
+                if res.status_code != 200:
+                    logger.error("Gemini translation error %d: %s", res.status_code, res.text)
+                    return {}
+
+                data = res.json()
+                candidates = data.get("candidates", [])
+                if not candidates:
+                    return {}
+
+                content_parts = candidates[0].get("content", {}).get("parts", [])
+                if not content_parts:
+                    return {}
+
+                raw_json = content_parts[0].get("text", "{}")
+                try:
+                    parsed = json.loads(raw_json)
+                    if isinstance(parsed, dict):
+                        return {str(k): str(v) for k, v in parsed.items()}
+                except Exception as exc:
+                    logger.warning("Standard json.loads failed (%s), attempting regex key-value extraction...", exc)
+                    # Resilient fallback regex parser for LLM JSON output with minor syntax quirks
+                    matches = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"', raw_json)
+                    if matches:
+                        recovered: dict[str, str] = {}
+                        for k, v in matches:
+                            try:
+                                k_clean = bytes(k, "utf-8").decode("unicode_escape")
+                                v_clean = bytes(v, "utf-8").decode("unicode_escape")
+                                recovered[k_clean] = v_clean
+                            except Exception:
+                                recovered[k] = v
+                        if recovered:
+                            logger.info("Recovered %d translations via regex fallback parser.", len(recovered))
+                            return recovered
+                return {}
+        except Exception as exc:
+            if attempt < max_retries - 1:
+                logger.warning("Gemini network error on attempt %d: %s, retrying...", attempt + 1, exc)
+                await asyncio.sleep(2.5 * (attempt + 1))
+            else:
+                logger.error("Gemini translation failed after %d attempts: %s", max_retries, exc)
 
     return {}
 
@@ -268,34 +305,42 @@ async def batch_translate(req: BatchTranslateRequest) -> BatchTranslateResponse:
         new_translations: dict[str, str] = {}
 
         if settings.gemini_api_key:
-            active_provider = f"gemini ({settings.gemini_model or 'gemini-3.5-flash'})"
-            for chunk in chunks:
-                try:
-                    res_dict = await _translate_with_gemini(
-                        texts=chunk,
-                        target_lang=target,
-                        source_lang=source,
-                        api_key=settings.gemini_api_key.strip(),
-                        model=settings.gemini_model or "gemini-3.5-flash",
-                    )
+            active_provider = f"gemini ({settings.gemini_model or 'gemini-3.5-flash-lite'})"
+            tasks = [
+                _translate_with_gemini(
+                    texts=chunk,
+                    target_lang=target,
+                    source_lang=source,
+                    api_key=settings.gemini_api_key.strip(),
+                    model=settings.gemini_model or "gemini-3.5-flash-lite",
+                )
+                for chunk in chunks
+            ]
+            results_list = await asyncio.gather(*tasks, return_exceptions=True)
+            for res_dict in results_list:
+                if isinstance(res_dict, dict):
                     new_translations.update(res_dict)
-                except Exception as exc:
-                    logger.warning("Gemini batch translation error: %s", exc)
+                elif isinstance(res_dict, Exception):
+                    logger.warning("Gemini chunk translation exception: %s", res_dict)
 
         elif settings.openai_api_key:
             active_provider = "openai"
-            for chunk in chunks:
-                try:
-                    res_dict = await _translate_with_openai(
-                        texts=chunk,
-                        target_lang=target,
-                        source_lang=source,
-                        api_key=settings.openai_api_key.strip(),
-                        model=settings.openai_model,
-                    )
+            tasks = [
+                _translate_with_openai(
+                    texts=chunk,
+                    target_lang=target,
+                    source_lang=source,
+                    api_key=settings.openai_api_key.strip(),
+                    model=settings.openai_model,
+                )
+                for chunk in chunks
+            ]
+            results_list = await asyncio.gather(*tasks, return_exceptions=True)
+            for res_dict in results_list:
+                if isinstance(res_dict, dict):
                     new_translations.update(res_dict)
-                except Exception as exc:
-                    logger.warning("OpenAI batch translation error: %s", exc)
+                elif isinstance(res_dict, Exception):
+                    logger.warning("OpenAI chunk translation exception: %s", res_dict)
         else:
             active_provider = "fallback-identity"
 
@@ -308,13 +353,23 @@ async def batch_translate(req: BatchTranslateRequest) -> BatchTranslateResponse:
         if translated_count > 0:
             _save_persistent_cache()
 
+        # Build normalized lookup map from new_translations for flexible key matching
+        normalized_new = {_normalize_text(k): v for k, v in new_translations.items()}
+
         # Fill results
         for s in req.strings:
             cleaned = s.strip()
             if s not in results:
                 ck = _get_cache_key(target, cleaned)
-                # If translation exists in cache, use it; otherwise fallback to original string
-                results[s] = TRANSLATION_CACHE.get(ck, s)
+                norm_s = _normalize_text(cleaned)
+                if ck in TRANSLATION_CACHE:
+                    results[s] = TRANSLATION_CACHE[ck]
+                elif norm_s in normalized_new:
+                    results[s] = normalized_new[norm_s]
+                elif cleaned in new_translations:
+                    results[s] = new_translations[cleaned]
+                else:
+                    results[s] = s
 
     return BatchTranslateResponse(
         translations=results,

@@ -657,10 +657,16 @@
   const DYN_TRANS_PREFIX = 'savanna_dyn_trans_';
   const dynamicTransCache = {}; // In-memory dynamic translation cache: { am: { "Hello": "ሰላም" }, ... }
   const pendingBatchStrings = {}; // Pending unseen strings per language: { am: Set(), ... }
+  const attemptedBatchStrings = {}; // Strings already dispatched to avoid duplicate network hammering
   const inFlightTranslations = {}; // In-flight request guards per language: { am: true, ... }
   let translateDebounceTimer = null;
 
+  function normalizeText(t) {
+    return (t || '').replace(/\s+/g, ' ').trim();
+  }
+
   function getDynamicTrans(lang, text) {
+    if (!text) return null;
     if (!dynamicTransCache[lang]) {
       dynamicTransCache[lang] = {};
       try {
@@ -670,14 +676,23 @@
         }
       } catch (_) {}
     }
-    return dynamicTransCache[lang][text];
+    const cache = dynamicTransCache[lang];
+    if (cache[text]) return cache[text];
+    const norm = normalizeText(text);
+    if (cache[norm]) return cache[norm];
+    return null;
   }
 
   function setDynamicTransBatch(lang, map) {
     if (!dynamicTransCache[lang]) {
       dynamicTransCache[lang] = {};
     }
-    Object.assign(dynamicTransCache[lang], map);
+    for (const [k, v] of Object.entries(map || {})) {
+      if (k && v) {
+        dynamicTransCache[lang][k] = v;
+        dynamicTransCache[lang][normalizeText(k)] = v;
+      }
+    }
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem(DYN_TRANS_PREFIX + lang, JSON.stringify(dynamicTransCache[lang]));
@@ -711,7 +726,7 @@
     }
     translateDebounceTimer = setTimeout(() => {
       dispatchBatchTranslation(lang);
-    }, 70);
+    }, 50);
   }
 
   async function dispatchBatchTranslation(lang) {
@@ -719,12 +734,19 @@
     if (!pendingBatchStrings[lang] || pendingBatchStrings[lang].size === 0) return;
     if (inFlightTranslations[lang]) return;
 
-    const stringsToTranslate = Array.from(pendingBatchStrings[lang]).slice(0, 100);
-    stringsToTranslate.forEach(s => pendingBatchStrings[lang].delete(s));
+    // Process in batches of up to 75 strings per request for maximum parallel backend speed
+    const allPending = Array.from(pendingBatchStrings[lang]);
+    const stringsToTranslate = allPending.slice(0, 75);
+    if (!attemptedBatchStrings[lang]) attemptedBatchStrings[lang] = new Set();
+    stringsToTranslate.forEach(s => {
+      pendingBatchStrings[lang].delete(s);
+      attemptedBatchStrings[lang].add(s);
+    });
 
     if (stringsToTranslate.length === 0) return;
 
     inFlightTranslations[lang] = true;
+    let dispatchedInBatch = false;
     const url = getTranslateApiUrl();
 
     try {
@@ -749,8 +771,13 @@
               if (typeof window !== 'undefined') {
                 const Evt = window.CustomEvent || (typeof CustomEvent !== 'undefined' ? CustomEvent : null);
                 if (Evt) {
+                  dispatchedInBatch = true;
                   window.dispatchEvent(new Evt('savanna:page_translated', {
-                    detail: { lang, count: Object.keys(data.translations).length }
+                    detail: {
+                      lang,
+                      count: Object.keys(data.translations).length,
+                      remaining: pendingBatchStrings[lang] ? pendingBatchStrings[lang].size : 0
+                    }
                   }));
                 }
               }
@@ -762,8 +789,24 @@
       // Graceful offline/network fallback
     } finally {
       inFlightTranslations[lang] = false;
-      if (pendingBatchStrings[lang] && pendingBatchStrings[lang].size > 0) {
-        scheduleBatchTranslation(lang);
+      // Continue draining pending queue until 100% of course content and host page is translated
+      if (pendingBatchStrings[lang] && pendingBatchStrings[lang].size > 0 && currentLang === lang) {
+        setTimeout(() => {
+          dispatchBatchTranslation(lang);
+        }, 40);
+      } else if (!dispatchedInBatch && currentLang === lang && (!pendingBatchStrings[lang] || pendingBatchStrings[lang].size === 0)) {
+        if (typeof window !== 'undefined') {
+          const Evt = window.CustomEvent || (typeof CustomEvent !== 'undefined' ? CustomEvent : null);
+          if (Evt) {
+            window.dispatchEvent(new Evt('savanna:page_translated', {
+              detail: {
+                lang,
+                count: 0,
+                remaining: 0
+              }
+            }));
+          }
+        }
       }
     }
   }
@@ -808,6 +851,17 @@
       textNodes.push(walker.currentNode);
     }
 
+    // Prioritize text nodes inside course curriculum containers so the core educational content is translated first
+    textNodes.sort((a, b) => {
+      const aParent = a.parentElement;
+      const bParent = b.parentElement;
+      const aInCourse = aParent && aParent.closest('#curriculum_navigation_content, .formatted-content, .savanna-styles, main#content, article');
+      const bInCourse = bParent && bParent.closest('#curriculum_navigation_content, .formatted-content, .savanna-styles, main#content, article');
+      if (aInCourse && !bInCourse) return -1;
+      if (!aInCourse && bInCourse) return 1;
+      return 0;
+    });
+
     for (const node of textNodes) {
       if (!originalTextMap.has(node)) {
         originalTextMap.set(node, node.nodeValue);
@@ -822,14 +876,19 @@
       const trimmed = orig.trim();
       const leadingWs = orig.match(/^\s*/)[0];
       const trailingWs = orig.match(/\s*$/)[0];
+      const normTrimmed = normalizeText(trimmed);
 
       // Exact match in static dictionary
       if (DOM_TRANSLATIONS[trimmed] && DOM_TRANSLATIONS[trimmed][lang]) {
         node.nodeValue = leadingWs + DOM_TRANSLATIONS[trimmed][lang] + trailingWs;
         continue;
       }
+      if (DOM_TRANSLATIONS[normTrimmed] && DOM_TRANSLATIONS[normTrimmed][lang]) {
+        node.nodeValue = leadingWs + DOM_TRANSLATIONS[normTrimmed][lang] + trailingWs;
+        continue;
+      }
 
-      // Exact match in dynamic translation cache
+      // Match in dynamic translation cache (exact or normalized)
       const cached = getDynamicTrans(lang, trimmed);
       if (cached) {
         node.nodeValue = leadingWs + cached + trailingWs;
@@ -890,8 +949,10 @@
 
       // Not found in static dictionary or cache: Queue for dynamic batch translation
       if (/[a-zA-Z\u00C0-\u024F]/.test(trimmed)) {
-        if (!pendingBatchStrings[lang]) pendingBatchStrings[lang] = new Set();
-        pendingBatchStrings[lang].add(trimmed);
+        if (!attemptedBatchStrings[lang] || !attemptedBatchStrings[lang].has(trimmed)) {
+          if (!pendingBatchStrings[lang]) pendingBatchStrings[lang] = new Set();
+          pendingBatchStrings[lang].add(trimmed);
+        }
       }
     }
 
@@ -915,8 +976,10 @@
         } else if (getDynamicTrans(lang, origAria)) {
           el.setAttribute('aria-label', getDynamicTrans(lang, origAria));
         } else if (/[a-zA-Z\u00C0-\u024F]/.test(origAria)) {
-          if (!pendingBatchStrings[lang]) pendingBatchStrings[lang] = new Set();
-          pendingBatchStrings[lang].add(origAria);
+          if (!attemptedBatchStrings[lang] || !attemptedBatchStrings[lang].has(origAria)) {
+            if (!pendingBatchStrings[lang]) pendingBatchStrings[lang] = new Set();
+            pendingBatchStrings[lang].add(origAria);
+          }
         }
       }
 
@@ -930,14 +993,32 @@
         } else if (getDynamicTrans(lang, origPh)) {
           el.setAttribute('placeholder', getDynamicTrans(lang, origPh));
         } else if (/[a-zA-Z\u00C0-\u024F]/.test(origPh)) {
-          if (!pendingBatchStrings[lang]) pendingBatchStrings[lang] = new Set();
-          pendingBatchStrings[lang].add(origPh);
+          if (!attemptedBatchStrings[lang] || !attemptedBatchStrings[lang].has(origPh)) {
+            if (!pendingBatchStrings[lang]) pendingBatchStrings[lang] = new Set();
+            pendingBatchStrings[lang].add(origPh);
+          }
         }
       }
     });
 
-    if (lang !== 'en' && pendingBatchStrings[lang] && pendingBatchStrings[lang].size > 0) {
-      scheduleBatchTranslation(lang);
+    if (lang !== 'en') {
+      if (pendingBatchStrings[lang] && pendingBatchStrings[lang].size > 0) {
+        scheduleBatchTranslation(lang);
+      } else if (!inFlightTranslations[lang]) {
+        // All strings already translated from cache or static dict! Dispatch completion immediately
+        if (typeof window !== 'undefined') {
+          const Evt = window.CustomEvent || (typeof CustomEvent !== 'undefined' ? CustomEvent : null);
+          if (Evt) {
+            window.dispatchEvent(new Evt('savanna:page_translated', {
+              detail: {
+                lang,
+                count: 0,
+                remaining: 0
+              }
+            }));
+          }
+        }
+      }
     }
   }
 
@@ -2604,23 +2685,31 @@
     const navItems = document.querySelectorAll('.list-group-item');
     navItems.forEach(item => {
       const existing = item.querySelector('.sa11y-status-sr');
-      if (existing) existing.remove();
+      if (!enable) {
+        if (existing) existing.remove();
+        return;
+      }
 
-      if (!enable) return;
+      let expectedText = (currentLang === 'am') ? ' (ሁኔታ፡ አልተጀመረም)' : ' (Status: Not started)';
+      if (item.classList.contains('active')) {
+        item.setAttribute('aria-current', 'page');
+        expectedText = (currentLang === 'am') ? ' (የአሁኑ ንቁ ትምህርት)' : ' (Current active lesson)';
+      } else if (item.querySelector('.fa-circle-check.text-success')) {
+        expectedText = (currentLang === 'am') ? ' (ሁኔታ፡ ተጠናቋል)' : ' (Status: Completed)';
+      } else if (item.querySelector('.fa-circle.text-warning')) {
+        expectedText = (currentLang === 'am') ? ' (ሁኔታ፡ ያልተጠናቀቀ ግምገማ)' : ' (Status: Incomplete review check)';
+      }
+
+      if (existing) {
+        if (existing.textContent !== expectedText) {
+          existing.textContent = expectedText;
+        }
+        return;
+      }
 
       const badge = document.createElement('span');
       badge.className = 'sa11y-sr-only sa11y-status-sr';
-
-      if (item.classList.contains('active')) {
-        item.setAttribute('aria-current', 'page');
-        badge.textContent = (currentLang === 'am') ? ' (የአሁኑ ንቁ ትምህርት)' : ' (Current active lesson)';
-      } else if (item.querySelector('.fa-circle-check.text-success')) {
-        badge.textContent = (currentLang === 'am') ? ' (ሁኔታ፡ ተጠናቋል)' : ' (Status: Completed)';
-      } else if (item.querySelector('.fa-circle.text-warning')) {
-        badge.textContent = (currentLang === 'am') ? ' (ሁኔታ፡ ያልተጠናቀቀ ግምገማ)' : ' (Status: Incomplete review check)';
-      } else {
-        badge.textContent = (currentLang === 'am') ? ' (ሁኔታ፡ አልተጀመረም)' : ' (Status: Not started)';
-      }
+      badge.textContent = expectedText;
       item.appendChild(badge);
     });
 
@@ -3868,14 +3957,18 @@
   let mutationTimeout = null;
   const observer = new MutationObserver((mutations) => {
     // Ignore internal accessibility DOM updates to prevent infinite loops
+    const isInternalNode = (n) => n && n.nodeType === 1 && (
+      (n.id && (n.id.startsWith('savanna-') || n.id.startsWith('sa11y-'))) ||
+      (n.classList && (n.classList.contains('sa11y-describe-img-btn') || n.classList.contains('sa11y-image-desc-card') || n.classList.contains('sa11y-status-sr'))) ||
+      (n.closest && n.closest('.sa11y-image-desc-card, #sa11y-live-region, #savanna-a11y-announcer, #sa11y-motor-toolbar, #sa11y-reading-ruler'))
+    );
+
     const isInternal = mutations.every(m => {
       const t = m.target;
-      return t && (
-        t.id === 'savanna-a11y-announcer' ||
-        t.id === 'sa11y-live-region' ||
-        (t.classList && (t.classList.contains('sa11y-describe-img-btn') || t.classList.contains('sa11y-image-desc-card') || t.classList.contains('sa11y-status-sr'))) ||
-        (t.closest && t.closest('.sa11y-image-desc-card, #sa11y-live-region, #savanna-a11y-announcer, #sa11y-motor-toolbar, #sa11y-reading-ruler'))
-      );
+      if (isInternalNode(t)) return true;
+      const allAddedInternal = Array.from(m.addedNodes).every(isInternalNode);
+      const allRemovedInternal = Array.from(m.removedNodes).every(isInternalNode);
+      return (m.addedNodes.length > 0 || m.removedNodes.length > 0) && allAddedInternal && allRemovedInternal;
     });
     if (isInternal) return;
 
@@ -3883,7 +3976,7 @@
     mutationTimeout = setTimeout(() => {
       adaptBlindAndScreenReader(true);
       if (currentLang && currentLang !== 'en') translateHostPage(currentLang);
-    }, 150);
+    }, 250);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
