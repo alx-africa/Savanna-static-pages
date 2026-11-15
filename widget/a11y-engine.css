@@ -990,6 +990,26 @@ img[tabindex="0"]:focus-visible {
   box-shadow: 0 0 0 6px #000000 !important;
 }
 
+/* Accessible Reading Outline for Educational Text Elements & Paragraphs */
+[data-sa11y-text="true"]:focus-visible,
+.sa11y-text-focused {
+  outline: 3px solid var(--sa11y-primary, #0284c7) !important;
+  outline-offset: 4px !important;
+  background-color: rgba(2, 132, 199, 0.08) !important;
+  border-radius: 6px;
+  scroll-margin-top: 110px;
+  scroll-margin-bottom: 110px;
+  transition: background-color 0.15s ease-in-out, outline 0.15s ease-in-out;
+}
+
+[data-sa11y-contrast="high"] [data-sa11y-text="true"]:focus-visible,
+[data-sa11y-contrast="high"] .sa11y-text-focused {
+  outline: 3px solid #facc15 !important;
+  outline-offset: 4px !important;
+  background-color: rgba(250, 204, 21, 0.2) !important;
+  color: #ffffff !important;
+}
+
 .sa11y-img-wrapper {
   position: relative;
   display: inline-block;

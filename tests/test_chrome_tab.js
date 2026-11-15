@@ -50,7 +50,7 @@ async function main() {
     });
   }
 
-  // Evaluate script to dismiss onboarding modal if open
+  // Dismiss modal if open
   await send('Runtime.evaluate', {
     expression: `
       localStorage.setItem('savanna_a11y_profile', JSON.stringify({ configured: true, skipped: true }));
@@ -74,106 +74,41 @@ async function main() {
     `,
     returnByValue: true
   });
-  console.log('1. Initial focus state:', JSON.stringify(focusRes));
+  console.log('0. Initial focus state:', JSON.stringify(focusRes.result.value));
 
-  // Send Tab key event via CDP
-  console.log('\n2. Sending Tab key press via CDP...');
-  await send('Input.dispatchKeyEvent', {
-    type: 'rawKeyDown',
-    windowsVirtualKeyCode: 9,
-    nativeVirtualKeyCode: 9,
-    key: 'Tab',
-    code: 'Tab'
-  });
-  await send('Input.dispatchKeyEvent', {
-    type: 'keyUp',
-    windowsVirtualKeyCode: 9,
-    nativeVirtualKeyCode: 9,
-    key: 'Tab',
-    code: 'Tab'
-  });
+  // Sequentially press Tab 8 times and log each focused element
+  for (let i = 1; i <= 8; i++) {
+    await send('Input.dispatchKeyEvent', {
+      type: 'rawKeyDown',
+      windowsVirtualKeyCode: 9,
+      nativeVirtualKeyCode: 9,
+      key: 'Tab',
+      code: 'Tab'
+    });
+    await send('Input.dispatchKeyEvent', {
+      type: 'keyUp',
+      windowsVirtualKeyCode: 9,
+      nativeVirtualKeyCode: 9,
+      key: 'Tab',
+      code: 'Tab'
+    });
 
-  await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 200));
 
-  const afterTab1 = await send('Runtime.evaluate', {
-    expression: `
-      ({
-        activeTag: document.activeElement ? document.activeElement.tagName : 'NONE',
-        className: document.activeElement ? document.activeElement.className : '',
-        id: document.activeElement ? document.activeElement.id : '',
-        text: document.activeElement ? (document.activeElement.innerText || document.activeElement.getAttribute('aria-label') || '').slice(0, 50) : '',
-        src: document.activeElement ? document.activeElement.getAttribute('src') : null
-      });
-    `,
-    returnByValue: true
-  });
-  console.log('After Tab 1:', JSON.stringify(afterTab1));
-
-  // Send another Tab key event
-  console.log('\n3. Sending second Tab key press via CDP...');
-  await send('Input.dispatchKeyEvent', {
-    type: 'rawKeyDown',
-    windowsVirtualKeyCode: 9,
-    nativeVirtualKeyCode: 9,
-    key: 'Tab',
-    code: 'Tab'
-  });
-  await send('Input.dispatchKeyEvent', {
-    type: 'keyUp',
-    windowsVirtualKeyCode: 9,
-    nativeVirtualKeyCode: 9,
-    key: 'Tab',
-    code: 'Tab'
-  });
-
-  await new Promise(r => setTimeout(r, 200));
-
-  const afterTab2 = await send('Runtime.evaluate', {
-    expression: `
-      ({
-        activeTag: document.activeElement ? document.activeElement.tagName : 'NONE',
-        className: document.activeElement ? document.activeElement.className : '',
-        id: document.activeElement ? document.activeElement.id : '',
-        text: document.activeElement ? (document.activeElement.innerText || document.activeElement.getAttribute('aria-label') || '').slice(0, 50) : '',
-        src: document.activeElement ? document.activeElement.getAttribute('src') : null
-      });
-    `,
-    returnByValue: true
-  });
-  console.log('After Tab 2:', JSON.stringify(afterTab2));
-
-  // Send third Tab key event
-  console.log('\n4. Sending third Tab key press via CDP...');
-  await send('Input.dispatchKeyEvent', {
-    type: 'rawKeyDown',
-    windowsVirtualKeyCode: 9,
-    nativeVirtualKeyCode: 9,
-    key: 'Tab',
-    code: 'Tab'
-  });
-  await send('Input.dispatchKeyEvent', {
-    type: 'keyUp',
-    windowsVirtualKeyCode: 9,
-    nativeVirtualKeyCode: 9,
-    key: 'Tab',
-    code: 'Tab'
-  });
-
-  await new Promise(r => setTimeout(r, 200));
-
-  const afterTab3 = await send('Runtime.evaluate', {
-    expression: `
-      ({
-        activeTag: document.activeElement ? document.activeElement.tagName : 'NONE',
-        className: document.activeElement ? document.activeElement.className : '',
-        id: document.activeElement ? document.activeElement.id : '',
-        text: document.activeElement ? (document.activeElement.innerText || document.activeElement.getAttribute('aria-label') || '').slice(0, 50) : '',
-        src: document.activeElement ? document.activeElement.getAttribute('src') : null
-      });
-    `,
-    returnByValue: true
-  });
-  console.log('After Tab 3:', JSON.stringify(afterTab3));
+    const state = await send('Runtime.evaluate', {
+      expression: `
+        ({
+          step: ${i},
+          activeTag: document.activeElement ? document.activeElement.tagName : 'NONE',
+          className: document.activeElement ? document.activeElement.className : '',
+          text: document.activeElement ? (document.activeElement.innerText || document.activeElement.getAttribute('aria-label') || '').slice(0, 80).replace(/\\n/g, ' ') : '',
+          src: document.activeElement ? document.activeElement.getAttribute('src') : null
+        });
+      `,
+      returnByValue: true
+    });
+    console.log(`Step ${i} -> <${state.result.value.activeTag}>: "${state.result.value.text}" ${state.result.value.src ? `[src: ${state.result.value.src}]` : ''}`);
+  }
 
   ws.close();
   chrome.kill();

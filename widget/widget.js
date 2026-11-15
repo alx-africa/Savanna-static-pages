@@ -216,16 +216,22 @@
 
   function getHostElementDescription(el) {
     if (!el || el === document.body || el === document.documentElement) return null;
+    if (el.dataset && (el.dataset.sa11yBound || el.dataset.sa11yTextBound)) return null;
+
     let label = el.getAttribute('aria-label') || '';
     if (!label && el.placeholder) label = el.placeholder;
-    if (!label && el.innerText && el.innerText.trim().length > 0 && el.innerText.trim().length < 80) {
+    if (!label && el.innerText && el.innerText.trim().length > 0) {
       label = el.innerText.trim();
     }
     let role = el.getAttribute('role');
     if (!role) {
-      if (el.tagName === 'BUTTON') role = 'button';
-      else if (el.tagName === 'A') role = 'link';
-      else if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') role = 'edit text';
+      const tag = el.tagName;
+      if (tag === 'BUTTON') role = 'button';
+      else if (tag === 'A') role = 'link';
+      else if (tag === 'INPUT' || tag === 'TEXTAREA') role = 'edit text';
+      else if (tag === 'P') role = 'paragraph';
+      else if (/^H[1-6]$/.test(tag)) role = 'heading level ' + tag[1];
+      else if (tag === 'LI') role = 'list item';
     }
     const states = [];
     if (el.hasAttribute('aria-expanded')) {

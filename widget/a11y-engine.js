@@ -808,6 +808,27 @@
     }
   }
 
+  function handleTextFocusArrival(node) {
+    if (!node) return;
+    node.classList.add('sa11y-text-focused');
+
+    let rawText = (node.innerText || node.textContent || '').trim();
+    if (!rawText) return;
+
+    let prefix = '';
+    const tag = node.tagName.toLowerCase();
+    if (/^h[1-6]$/.test(tag)) {
+      const level = tag[1];
+      prefix = (currentLang === 'am') ? `ርዕስ ${level}፡ ` : `Heading level ${level}: `;
+    } else if (node.classList.contains('callout') || node.closest('.callout')) {
+      prefix = (currentLang === 'am') ? `ማሳሰቢያ፡ ` : `Important note: `;
+    }
+
+    const fullSpeechText = `${prefix}${rawText}`;
+    announce(fullSpeechText);
+    speakVisualDescription(fullSpeechText);
+  }
+
   function adaptBlindAndScreenReader(enable) {
     // 1. Enrich Curriculum Navigation Items
     const navItems = document.querySelectorAll('.list-group-item');
@@ -970,6 +991,117 @@
 
           insertionTarget.insertAdjacentElement('afterend', btn);
         }
+      }
+    });
+
+    // 4. Enrich Educational Content Paragraphs & Headings for Sequential Reading
+    const contentRoots = document.querySelectorAll(
+      '#curriculum_navigation_content, .formatted-content, .savanna-styles, article, main'
+    );
+
+    // Normalize any bare inline text nodes (e.g. <mark> and raw text directly in container) into proper paragraphs
+    contentRoots.forEach(root => {
+      const inlineTags = new Set(['#TEXT', 'MARK', 'SPAN', 'STRONG', 'EM', 'B', 'I', 'CODE', 'BR']);
+      const children = Array.from(root.childNodes);
+      let currentRun = [];
+
+      function flushRun() {
+        if (currentRun.length === 0) return;
+        const textLength = currentRun.reduce((acc, n) => acc + (n.textContent || '').trim().length, 0);
+        if (textLength > 15) {
+          const p = document.createElement('p');
+          p.className = 'sa11y-wrapped-p';
+          root.insertBefore(p, currentRun[0]);
+          currentRun.forEach(n => p.appendChild(n));
+        }
+        currentRun = [];
+      }
+
+      children.forEach(node => {
+        const name = node.nodeName.toUpperCase();
+        if (inlineTags.has(name)) {
+          currentRun.push(node);
+        } else {
+          flushRun();
+        }
+      });
+      flushRun();
+    });
+    
+    const textSelectors = 'h1, h2, h3, h4, h5, p, .callout, blockquote, li';
+    const textNodes = [];
+
+    contentRoots.forEach(root => {
+      const candidates = root.querySelectorAll(textSelectors);
+      candidates.forEach(el => {
+        // Skip elements inside a11y UI containers
+        if (el.closest('.sa11y-image-desc-card, #sa11y-lesson-transcript, #sa11y-motor-toolbar, #sa11y-shortcuts-backdrop, .sa11y-simplified-card')) {
+          return;
+        }
+        // Skip p that only wraps img or is empty
+        if (el.tagName === 'P') {
+          if (el.querySelector('img') && !el.textContent.trim()) return;
+          if (!el.textContent.trim()) return;
+        }
+        // Avoid duplicate paragraphs if parent or ancestor is already a callout or li
+        if (el.closest('.callout') && !el.classList.contains('callout')) {
+          return;
+        }
+        if (el.tagName === 'LI' && el.closest('h1, h2, h3, h4, h5')) {
+          return;
+        }
+        if (el.tagName === 'P' && el.parentElement && el.parentElement.tagName === 'LI') {
+          return;
+        }
+        textNodes.push(el);
+      });
+    });
+
+    textNodes.forEach(node => {
+      if (!enable) {
+        node.removeAttribute('tabindex');
+        node.removeAttribute('data-sa11y-text');
+        node.classList.remove('sa11y-text-focused');
+        return;
+      }
+
+      if (!node.hasAttribute('tabindex')) {
+        node.tabIndex = 0;
+        node.setAttribute('data-sa11y-text', 'true');
+      }
+
+      if (!node.dataset.sa11yTextBound) {
+        node.dataset.sa11yTextBound = 'true';
+
+        node.addEventListener('focus', function () {
+          handleTextFocusArrival(this);
+        });
+
+        node.addEventListener('blur', function () {
+          this.classList.remove('sa11y-text-focused');
+          if (window.speechSynthesis && window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+          }
+        });
+
+        node.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleTextFocusArrival(this);
+          } else if (e.key === 'ArrowDown') {
+            const idx = textNodes.indexOf(this);
+            if (idx >= 0 && idx < textNodes.length - 1) {
+              e.preventDefault();
+              textNodes[idx + 1].focus();
+            }
+          } else if (e.key === 'ArrowUp') {
+            const idx = textNodes.indexOf(this);
+            if (idx > 0) {
+              e.preventDefault();
+              textNodes[idx - 1].focus();
+            }
+          }
+        });
       }
     });
   }
