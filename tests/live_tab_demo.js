@@ -36,13 +36,14 @@ async function runLiveSimulation() {
   if (!window.URL.createObjectURL) {
     window.URL.createObjectURL = (blob) => 'blob:mock-audio-' + Math.random();
   }
-  if (!window.Audio) {
-    window.Audio = function(url) {
-      this.src = url;
-      this.play = async () => {};
-      this.pause = () => {};
-    };
-  }
+  window.HTMLMediaElement.prototype.play = async function() {
+    setTimeout(() => {
+      if (typeof this.onended === 'function') this.onended();
+    }, 20);
+  };
+  window.HTMLMediaElement.prototype.pause = function() {
+    if (typeof this.onpause === 'function') this.onpause();
+  };
 
   // Mock Web Speech API to observe what the learner hears
   window.SpeechSynthesisUtterance = function(text) {

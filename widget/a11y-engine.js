@@ -2697,11 +2697,14 @@
         const hasVoice = voices.some(v => v.lang && v.lang.toLowerCase().startsWith(prefix));
         if (hasVoice) {
           if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
-          const utt = new SpeechSynthesisUtterance(text);
-          utt.lang = bcp47;
-          utt.rate = 1.0;
-          window.speechSynthesis.speak(utt);
-          return;
+          return new Promise(resolve => {
+            const utt = new SpeechSynthesisUtterance(text);
+            utt.lang = bcp47;
+            utt.rate = 1.0;
+            utt.onend = () => resolve();
+            utt.onerror = () => resolve();
+            window.speechSynthesis.speak(utt);
+          });
         }
       } catch (_) {}
     }
@@ -2737,12 +2740,30 @@
         }
       }
       if (audioUrl) {
-        activeA11yAudio = new Audio(audioUrl);
-        activeA11yAudio.onended = function () {
-          activeA11yAudio = null;
-        };
-        const p = activeA11yAudio.play();
-        if (p && typeof p.catch === 'function') p.catch(() => {});
+        return new Promise(resolve => {
+          activeA11yAudio = new Audio(audioUrl);
+          let finished = false;
+          const finish = () => {
+            if (!finished) {
+              finished = true;
+              if (activeA11yAudio) {
+                activeA11yAudio = null;
+              }
+              resolve();
+            }
+          };
+          activeA11yAudio.onended = finish;
+          activeA11yAudio.onerror = finish;
+          activeA11yAudio.onpause = () => {
+            finish();
+          };
+          const p = activeA11yAudio.play();
+          if (p && typeof p.catch === 'function') {
+            p.catch(finish);
+          }
+          // Safety timeout in case audio play event does not trigger in mock test environments
+          setTimeout(finish, 8000);
+        });
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
@@ -2754,6 +2775,12 @@
   function extractElementVisualDetails(targetEl) {
     if (!targetEl) return { src: '', alt: '', filename: '' };
     let src = (targetEl.getAttribute('src') || '').toLowerCase();
+    if (!src) {
+      const childImg = targetEl.querySelector('img');
+      if (childImg && childImg.getAttribute('src')) {
+        src = (childImg.getAttribute('src') || '').toLowerCase();
+      }
+    }
     if (!src) {
       // Check style background-image or child element with background-image
       const bg = targetEl.style.backgroundImage || 
@@ -2923,20 +2950,28 @@
       return;
     }
 
-    // 2. Announce initial arrival cue to screen reader live region without interrupting audio
+    // 2. Announce initial arrival cue so the learner knows AI is processing
     const initialCue = i18n[lang].imgArrivalAnnouncement;
     announce(initialCue);
+    const arrivalSpeechPromise = speakVisualDescription(initialCue);
 
     const { src, alt, filename } = extractElementVisualDetails(img);
 
-    function onDescriptionReady(description) {
+    async function onDescriptionReady(description) {
       img.dataset.aiDescription = description;
       const initialLabel = img.getAttribute('alt') || img.getAttribute('aria-label') || 'Graphic';
       img.setAttribute('aria-label', `${initialLabel}. AI Description: ${description}`);
       img.setAttribute('aria-description', description);
 
+      // Wait for the arrival notification ("This image is being processed by AI...") to finish naturally without cutting off
+      try {
+        await arrivalSpeechPromise;
+      } catch (_) {}
+
       // Only speak if the blind user is still focused on this image
-      if (document.activeElement === img || img.contains(document.activeElement)) {
+      const isStillFocused = (document.activeElement === img || img.contains(document.activeElement) ||
+        (img.closest && img.closest('a') && img.closest('a') === document.activeElement));
+      if (isStillFocused) {
         announce(description);
         speakVisualDescription(description);
       }
@@ -3183,6 +3218,13 @@
         focusTarget.addEventListener('blur', function () {
           if (window.speechSynthesis && window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
+          }
+          if (activeA11yAudio) {
+            activeA11yAudio.pause();
+            activeA11yAudio = null;
+          }
+          if (activeA11yAbort) {
+            activeA11yAbort.abort();
           }
         });
         focusTarget.style.cursor = 'pointer';
