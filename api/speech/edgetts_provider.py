@@ -55,40 +55,13 @@ _DEFAULT_EDGE_VOICES: dict[str, str] = {
 }
 
 
-# Standard 26-letter Latin Alphabet Grapheme Names in Ethiopic phonetics (Alphabet G2P).
-# This is an algorithmic phonetic table (A-Z), NOT a dictionary of words.
-LATIN_LETTER_PHONETICS: dict[str, str] = {
-    "A": "ኤ", "B": "ቢ", "C": "ሲ", "D": "ዲ", "E": "ኢ", "F": "ኤፍ",
-    "G": "ጂ", "H": "ኤች", "I": "አይ", "J": "ጄ", "K": "ኬ", "L": "ኤል",
-    "M": "ኤም", "N": "ኤን", "O": "ኦ", "P": "ፒ", "Q": "ኪው", "R": "አር",
-    "S": "ኤስ", "T": "ቲ", "U": "ዩ", "V": "ቪ", "W": "ደብሊው", "X": "ኤክስ",
-    "Y": "ዋይ", "Z": "ዜድ"
-}
-
-# Algorithmic English phoneme-to-syllable rewrite rules for arbitrary unseen words
-PHONEME_SYLLABLE_RULES: list[tuple[str, str]] = [
-    ("tion", "ሽን"), ("sion", "ሽን"), ("ment", "መንት"), ("ing", "ኢንግ"),
-    ("ch", "ች"), ("sh", "ሽ"), ("th", "ስ"), ("ph", "ፍ"), ("wh", "ው"),
-    ("qu", "ክው"), ("ck", "ክ"), ("ee", "ኢ"), ("ea", "ኢ"), ("oo", "ኡ"),
-    ("ou", "አው"), ("ai", "ኤ"), ("ay", "ኤ"), ("b", "ብ"), ("c", "ክ"),
-    ("d", "ድ"), ("f", "ፍ"), ("g", "ግ"), ("h", "ህ"), ("j", "ጅ"),
-    ("k", "ክ"), ("l", "ል"), ("m", "ም"), ("n", "ን"), ("p", "ፕ"),
-    ("r", "ር"), ("s", "ስ"), ("t", "ት"), ("v", "ቭ"), ("w", "ው"),
-    ("x", "ክስ"), ("y", "ይ"), ("z", "ዝ"), ("a", "አ"), ("e", "ኤ"),
-    ("i", "ኢ"), ("o", "ኦ"), ("u", "ኡ")
-]
-
-
 def _prepare_natural_speech_utterance(text: str, lang: str, default_voice: str) -> tuple[str, str]:
     """
-    Scalable, zero-delay speech preparation without hardcoded word dictionaries.
+    Scalable, zero-delay voice routing for Edge-TTS.
     
     1. Pure English utterances route cleanly to en-US-JennyNeural with native pronunciation.
-    2. Pure Amharic utterances route directly to am-ET-MekdesNeural.
-    3. Mixed bilingual utterances (Ethiopic text containing embedded English words or acronyms):
-       - All-caps acronyms (AI, API, URL, HTML, etc.) are algorithmically expanded via 26-letter G2P.
-       - Arbitrary English words are algorithmically mapped via phonological syllable rules.
-       - Synthesizes in a single continuous stream with Mekdes to eliminate audio-gap delays.
+    2. Amharic utterances route directly to am-ET-MekdesNeural in a single continuous stream
+       without artificial delays or WebSocket switching gaps.
     """
     clean_text = text.strip()
     if not clean_text:
@@ -104,28 +77,8 @@ def _prepare_natural_speech_utterance(text: str, lang: str, default_voice: str) 
     if has_latin and not has_ethiopic:
         return clean_text, "en-US-JennyNeural"
 
-    # Case 2: Pure Ethiopic utterance -> speak directly with Amharic voice
-    if not has_latin:
-        return clean_text, default_voice
-
-    # Case 3: Mixed bilingual sentence (Ethiopic containing untranslated Latin words/acronyms)
-    # 1. Expand all-caps acronyms (e.g. AI -> ኤአይ, API -> ኤፒአይ, HTML -> ኤችቲኤምኤል)
-    def _expand_acronym(m: re.Match[str]) -> str:
-        token = m.group(0)
-        return "".join(LATIN_LETTER_PHONETICS.get(char, char) for char in token)
-
-    result = re.sub(r"\b[A-Z]{2,6}\b", _expand_acronym, clean_text)
-
-    # 2. Algorithmic phoneme transliteration for arbitrary unseen Latin words
-    def _transliterate_unseen_word(m: re.Match[str]) -> str:
-        w = m.group(0).lower()
-        out = w
-        for en_sub, am_sub in PHONEME_SYLLABLE_RULES:
-            out = out.replace(en_sub, am_sub)
-        return out
-
-    result = re.sub(r"[a-zA-Z]+", _transliterate_unseen_word, result)
-    return result, default_voice
+    # Case 2: Ethiopic text -> speak in a single continuous stream with Amharic voice
+    return clean_text, default_voice
 
 
 class EdgeTTSProvider(BaseTTSProvider):

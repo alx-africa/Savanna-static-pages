@@ -140,7 +140,6 @@ class TestEdgeTTSProvider(unittest.IsolatedAsyncioTestCase):
             await provider.synthesize("Tigrigna test", language="ti")
 
     def test_prepare_natural_speech_utterance(self):
-        import re
         from speech.edgetts_provider import _prepare_natural_speech_utterance
 
         # 1. Pure Latin in Amharic session routes directly to JennyNeural
@@ -153,20 +152,10 @@ class TestEdgeTTSProvider(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(voice, "am-ET-MekdesNeural")
         self.assertEqual(synth_text, "ሰላም እንደምን አላችሁ")
 
-        # 3. Mixed bilingual with acronyms algorithmically expands via 26-letter Latin G2P (zero hardcoding)
+        # 3. Mixed bilingual in Amharic session synthesizes smoothly in single continuous stream with Mekdes
         synth_text, voice = _prepare_natural_speech_utterance("የ AI እና API ኮርስ", "am", "am-ET-MekdesNeural")
         self.assertEqual(voice, "am-ET-MekdesNeural")
-        self.assertIn("ኤአይ", synth_text)
-        self.assertIn("ኤፒአይ", synth_text)
-        self.assertNotIn("AI", synth_text)
-        self.assertNotIn("API", synth_text)
-
-        # 4. Mixed bilingual with arbitrary English words algorithmically rewritten into Ethiopic syllables
-        synth_text, voice = _prepare_natural_speech_utterance("ይህ testing ትምህርት ነው።", "am", "am-ET-MekdesNeural")
-        self.assertEqual(voice, "am-ET-MekdesNeural")
-        self.assertNotIn("testing", synth_text)
-        # Verify no Latin letters remain in the synthesized text so Mekdes doesn't skip or pause
-        self.assertFalse(bool(re.search(r"[a-zA-Z]", synth_text)))
+        self.assertEqual(synth_text, "የ AI እና API ኮርስ")
 
 
 class TestSpeechServiceCoordinator(unittest.IsolatedAsyncioTestCase):

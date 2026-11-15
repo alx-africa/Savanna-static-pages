@@ -890,6 +890,18 @@ def _encode_image_to_base64(path: Path) -> str:
     return f"data:{mime};base64,{encoded}"
 
 
+_LANG_NAMES = {
+    "en": "English",
+    "am": "Amharic (አማርኛ)",
+    "om": "Afaan Oromoo (Oromo)",
+    "ti": "Tigrinya (ትግርኛ)",
+    "so": "Somali (Soomaali)",
+    "ar": "Arabic (العربية)",
+    "sw": "Kiswahili (Swahili)",
+    "fr": "French (Français)",
+}
+
+
 async def analyze_image_with_ai(
     filename: Optional[str],
     url: Optional[str],
@@ -904,7 +916,84 @@ async def analyze_image_with_ai(
     lang = language if language in ("en", "am", "om", "ti", "so", "ar", "sw", "fr") else "en"
     target_name = f"{filename or ''} {url or ''}".lower()
 
-    # 1. Check for live OpenAI Vision API if key configured
+    # 1. Live Google Gemini Multimodal Vision API (Scalable zero-hardcoded vision)
+    if settings.gemini_api_key:
+        local_path = _find_image_file_on_disk(filename or url or "")
+        img_bytes = None
+        mime_type = "image/png"
+
+        if local_path and local_path.exists():
+            try:
+                with open(local_path, "rb") as fh:
+                    img_bytes = fh.read()
+                ext = local_path.suffix.lower().replace(".", "")
+                if ext in ("jpg", "jpeg"):
+                    mime_type = "image/jpeg"
+                elif ext == "webp":
+                    mime_type = "image/webp"
+            except Exception as e:
+                logger.warning("Could not read local image %s: %s", local_path, e)
+        elif url and url.startswith(("http://", "https://")):
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    resp = await client.get(url)
+                    if resp.status_code == 200:
+                        img_bytes = resp.content
+                        ct = resp.headers.get("content-type", "image/png").split(";")[0]
+                        mime_type = ct if ct.startswith("image/") else "image/png"
+            except Exception as e:
+                logger.warning("Could not download remote image %s: %s", url, e)
+
+        lang_name = _LANG_NAMES.get(lang, "Amharic")
+        situation = context or "This user is visually impaired or blind and navigating via screen reader."
+        system_prompt = (
+            f"{situation}\n"
+            f"You are an expert accessibility vision engine for blind and low-vision learners.\n"
+            f"Provide a structured, pedagogical visual breakdown in {lang_name} ({lang}) language.\n"
+            f"Return a JSON object with exactly these keys:\n"
+            f"- primary_subject: (1-2 sentences on main visual subject in {lang_name})\n"
+            f"- visual_elements: (list of 3-5 specific visual icons, objects, or text labels detected in {lang_name})\n"
+            f"- pedagogical_context: (2 sentences on why this visual matters for learning/understanding in {lang_name})\n"
+            f"- composition_and_palette: (1-2 sentences on layout, colors in {lang_name})\n"
+            f"- summary: (natural, fluid audio description that a blind person hears when arriving on this element in {lang_name})"
+        )
+
+        parts: list[dict[str, Any]] = [{"text": system_prompt}]
+        if img_bytes:
+            img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+            parts.append({
+                "inline_data": {
+                    "mime_type": mime_type if mime_type in ("image/png", "image/jpeg", "image/webp") else "image/png",
+                    "data": img_b64
+                }
+            })
+        else:
+            parts.append({"text": f"Image target: {filename or url or 'Visual graphic'}"})
+
+        gemini_model = settings.gemini_model or "gemini-3.5-flash-lite"
+        endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{gemini_model}:generateContent"
+        params = {"key": settings.gemini_api_key}
+        payload = {
+            "contents": [{"role": "user", "parts": parts}],
+            "generationConfig": {
+                "response_mime_type": "application/json",
+                "temperature": 0.2
+            }
+        }
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                res = await client.post(endpoint, params=params, json=payload)
+            if res.status_code == 200:
+                raw_json = res.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                parsed = json.loads(raw_json)
+                if isinstance(parsed, dict) and "summary" in parsed:
+                    return parsed, f"gemini-vision ({gemini_model})"
+        except Exception as exc:
+            logger.warning("Live Gemini Vision call failed, checking next provider: %s", exc)
+
+    # 2. Check for live OpenAI Vision API if key configured
     if settings.openai_api_key:
         local_path = _find_image_file_on_disk(filename or url or "")
         data_uri = None

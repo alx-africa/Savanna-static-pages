@@ -33,6 +33,17 @@ async function runLiveSimulation() {
 
   const { window } = dom;
 
+  if (!window.URL.createObjectURL) {
+    window.URL.createObjectURL = (blob) => 'blob:mock-audio-' + Math.random();
+  }
+  if (!window.Audio) {
+    window.Audio = function(url) {
+      this.src = url;
+      this.play = async () => {};
+      this.pause = () => {};
+    };
+  }
+
   // Mock Web Speech API to observe what the learner hears
   window.SpeechSynthesisUtterance = function(text) {
     this.text = text;
@@ -66,7 +77,8 @@ async function runLiveSimulation() {
             ok: res.statusCode >= 200 && res.statusCode < 300,
             status: res.statusCode,
             json: async () => JSON.parse(data),
-            text: async () => data
+            text: async () => data,
+            blob: async () => new Blob([Buffer.from(data)])
           });
         });
       });

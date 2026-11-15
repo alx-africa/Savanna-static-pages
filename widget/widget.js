@@ -254,34 +254,10 @@
   let hostFocusTimer = null;
   const hostAudioCache = new Map();
 
-  // Instant pre-cached audio assets for standard navigation cues (0ms latency, 100% offline)
-  const PRESET_AUDIO_MAP = {
-    'ረዳትን ክፈት፣ አዝራር፣ ተዘግቷል': '/assets/audio/nav/trigger_open.mp3',
-    'ረዳትን ዝጋ፣ አዝራር፣ ተከፍቷል': '/assets/audio/nav/trigger_close.mp3',
-    'አዝራር': '/assets/audio/nav/role_button.mp3',
-    'አገናኝ': '/assets/audio/nav/role_link.mp3',
-    'የፅሑፍ ማስገቢያ': '/assets/audio/nav/role_edit.mp3',
-    'ርዕስ': '/assets/audio/nav/role_heading.mp3',
-    'ዝርዝር': '/assets/audio/nav/role_list.mp3'
-  };
-
   async function speakHost(text) {
     if (!isVoiceGuideEnabled() || !text) return;
     const currentLang = localStorage.getItem('savanna_lang') || 'en';
     const bcp47 = BCP47_HOST[currentLang] || 'en-US';
-
-    // 0. Instant static preset check (0ms latency, runs offline)
-    if (PRESET_AUDIO_MAP[text]) {
-      try {
-        if (activeHostAudio) {
-          activeHostAudio.pause();
-          activeHostAudio = null;
-        }
-        activeHostAudio = new Audio(PRESET_AUDIO_MAP[text]);
-        activeHostAudio.play().catch(function () {});
-        return;
-      } catch (_) {}
-    }
 
     // 1. Check if browser has a matching local voice for this language (0ms native Web Speech)
     if (window.speechSynthesis && window.speechSynthesis.getVoices) {
@@ -371,49 +347,19 @@
     const curLang = localStorage.getItem('savanna_lang') || 'en';
     const r = I18N_ROLES[curLang] || I18N_ROLES.en;
 
-    const COMMON_AMHARIC_LABELS = {
-      'Skip to main content': 'ወደ ዋናው ይዘት ይለፉ',
-      'Toggle navigation menu': 'የአሰሳ ምናሌ',
-      'Home': 'መነሻ',
-      'Access my learning': 'ትምህርቴን ጀምር',
-      'My courses': 'የእኔ ኮርሶች',
-      'Concepts': 'ጽንሰ-ሐሳቦች',
-      'Close': 'ዝጋ',
-      'Open': 'ክፈት',
-      'Next': 'ቀጣይ',
-      'Previous': 'ቀዳሚ',
-      'Apply Now': 'አሁን ያመልክቱ',
-      'Apply': 'ያመልክቱ',
-      'Save Job': 'ሥራውን ያስቀምጡ',
-      'Saved Jobs': 'የተቀመጡ ሥራዎች',
-      'Submit Application': 'ማመልከቻ ያስገቡ',
-      'Filter Jobs': 'ሥራዎችን ያጣሩ',
-      'Search Jobs': 'ሥራዎችን ይፈልጉ',
-      'Search': 'ፈልግ',
-      'Remote': 'የርቀት ሥራ',
-      'Full-time': 'ሙሉ ጊዜ',
-      'Part-time': 'የትርፍ ጊዜ',
-      'Contract': 'የኮንትራት',
-      'View Details': 'ዝርዝር ይመልከቱ',
-      'Clear Filters': 'ማጣሪያዎችን አጽዳ',
-      'Back': 'ተመለስ',
-      'Cancel': 'ይቅር',
-      'Submit': 'አስገባ',
-      'Download': 'አውርድ',
-      'Upload': 'ጫን',
-      'Sign In': 'ይግቡ',
-      'Sign Up': 'ይመዝገቡ',
-      'Log Out': 'ይውጡ'
-    };
-
     let label = el.getAttribute('aria-label') || '';
     if (!label && el.placeholder) label = el.placeholder;
     if (!label && el.innerText && el.innerText.trim().length > 0) {
       label = el.innerText.trim();
     }
     const cleanLabel = label.replace(/\s+/g, ' ').trim();
-    if (curLang === 'am' && COMMON_AMHARIC_LABELS[cleanLabel]) {
-      label = COMMON_AMHARIC_LABELS[cleanLabel];
+    if (curLang !== 'en') {
+      const dynMap = (window.SavannaA11y && typeof window.SavannaA11y.getDynamicTranslations === 'function')
+        ? window.SavannaA11y.getDynamicTranslations(curLang)
+        : null;
+      if (dynMap && dynMap[cleanLabel]) {
+        label = dynMap[cleanLabel];
+      }
     }
     let role = el.getAttribute('role');
     if (!role) {

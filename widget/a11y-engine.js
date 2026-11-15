@@ -2741,7 +2741,8 @@
         activeA11yAudio.onended = function () {
           activeA11yAudio = null;
         };
-        activeA11yAudio.play().catch(() => {});
+        const p = activeA11yAudio.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
