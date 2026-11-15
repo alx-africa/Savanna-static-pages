@@ -2681,14 +2681,54 @@
     }
   };
 
-  function speakVisualDescription(text) {
-    if (!('speechSynthesis' in window)) return;
+  let activeA11yAudio = null;
+  const a11yAudioCache = new Map();
+
+  async function speakVisualDescription(text) {
+    if (!text) return;
+    const bcp47 = BCP47_A11Y[currentLang] || 'en-US';
+
+    // 1. Try native browser voice if available for this language
+    if ('speechSynthesis' in window && window.speechSynthesis.getVoices) {
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        const prefix = currentLang.toLowerCase();
+        const hasVoice = voices.some(v => v.lang && v.lang.toLowerCase().startsWith(prefix));
+        if (hasVoice) {
+          if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+          const utt = new SpeechSynthesisUtterance(text);
+          utt.lang = bcp47;
+          utt.rate = 1.0;
+          window.speechSynthesis.speak(utt);
+          return;
+        }
+      } catch (_) {}
+    }
+
+    // 2. Stream neural audio fallback via /speech/synthesize (Edge-TTS am-ET-MekdesNeural)
     try {
-      if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(text);
-      utt.lang = BCP47_A11Y[currentLang] || 'en-US';
-      utt.rate = 1.0;
-      window.speechSynthesis.speak(utt);
+      if (activeA11yAudio) {
+        activeA11yAudio.pause();
+        activeA11yAudio = null;
+      }
+      const cacheKey = currentLang + ':' + text;
+      let audioUrl = a11yAudioCache.get(cacheKey);
+      if (!audioUrl) {
+        const resp = await fetch('/speech/synthesize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text, language: currentLang })
+        });
+        if (resp.ok) {
+          const blob = await resp.blob();
+          audioUrl = URL.createObjectURL(blob);
+          a11yAudioCache.set(cacheKey, audioUrl);
+        }
+      }
+      if (audioUrl) {
+        activeA11yAudio = new Audio(audioUrl);
+        activeA11yAudio.play().catch(() => {});
+      }
     } catch (_) {}
   }
 

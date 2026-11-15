@@ -249,21 +249,81 @@
     return localStorage.getItem(VOICE_GUIDE_KEY) !== 'false';
   }
 
-  function speakHost(text) {
-    if (!isVoiceGuideEnabled() || !window.speechSynthesis || !text) return;
+  let activeHostAudio = null;
+  const hostAudioCache = new Map();
+
+  async function speakHost(text) {
+    if (!isVoiceGuideEnabled() || !text) return;
+    const currentLang = localStorage.getItem('savanna_lang') || 'en';
+    const bcp47 = BCP47_HOST[currentLang] || 'en-US';
+
+    // 1. Check if browser has a matching local voice for this language
+    if (window.speechSynthesis && window.speechSynthesis.getVoices) {
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        const prefix = currentLang.toLowerCase();
+        const hasVoice = voices.some(function (v) {
+          return v.lang && v.lang.toLowerCase().startsWith(prefix);
+        });
+        if (hasVoice) {
+          window.speechSynthesis.cancel();
+          const utt = new SpeechSynthesisUtterance(text);
+          utt.lang = bcp47;
+          utt.rate = 1.05;
+          window.speechSynthesis.speak(utt);
+          return;
+        }
+      } catch (_) {}
+    }
+
+    // 2. Otherwise stream synthesized neural audio from /speech/synthesize (Edge-TTS am-ET-MekdesNeural)
     try {
-      window.speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(text);
-      const currentLang = localStorage.getItem('savanna_lang') || 'en';
-      utt.lang = BCP47_HOST[currentLang] || 'en-US';
-      utt.rate = 1.05;
-      window.speechSynthesis.speak(utt);
-    } catch (_) {}
+      if (activeHostAudio) {
+        activeHostAudio.pause();
+        activeHostAudio = null;
+      }
+      const cacheKey = currentLang + ':' + text;
+      let audioUrl = hostAudioCache.get(cacheKey);
+      if (!audioUrl) {
+        const base = apiUrl.replace(/\/api$/, '');
+        const endpoint = base + '/speech/synthesize';
+        const resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text, language: currentLang })
+        });
+        if (resp.ok) {
+          const blob = await resp.blob();
+          audioUrl = URL.createObjectURL(blob);
+          hostAudioCache.set(cacheKey, audioUrl);
+        }
+      }
+      if (audioUrl) {
+        activeHostAudio = new Audio(audioUrl);
+        activeHostAudio.play().catch(function () {});
+      }
+    } catch (err) {
+      console.debug('[Savanna widget] Speech fallback error:', err);
+    }
   }
+
+  const I18N_ROLES = {
+    en: { button: 'button', link: 'link', edit: 'edit text', para: 'paragraph', heading: 'heading level ', list: 'list item', expanded: 'expanded', collapsed: 'collapsed', pressed: 'pressed', notPressed: 'not pressed' },
+    am: { button: 'አዝራር', link: 'አገናኝ', edit: 'የፅሑፍ ማስገቢያ', para: 'አንቀጽ', heading: 'ርዕስ ደረጃ ', list: 'ዝርዝር ንጥል', expanded: 'ተከፍቷል', collapsed: 'ተዘግቷል', pressed: 'ነቅቷል', notPressed: 'ጠፍቷል' },
+    om: { button: 'qabduu', link: 'hidhata', edit: 'galmee barreeffamaa', para: 'keeyyata', heading: 'sadarkaa mata duree ', list: 'miseensa tarree', expanded: "bal'ateera", collapsed: "dudduubatti deebi'eera", pressed: 'cuqaasameera', notPressed: 'hin cuqaasamne' },
+    ti: { button: 'መልጎም', link: 'መላገቢ', edit: 'መእተዊ ጽሑፍ', para: 'ዓንቀጽ', heading: 'ደረጃ ኣርእስቲ ', list: 'ንጥሪ ዝርዝር', expanded: 'ተዘርጊሑ', collapsed: 'ተዓጺፉ', pressed: 'ተጠዊቑ', notPressed: 'ኣይተጠወቐን' },
+    so: { button: 'badhan', link: 'xiriir', edit: 'meel qoraal', para: 'faqradda', heading: 'heerka cinwaanka ', list: 'shayga liiska', expanded: 'la fidiyay', collapsed: 'la laabay', pressed: 'la riixay', notPressed: 'aan la riixin' },
+    ar: { button: 'زر', link: 'رابط', edit: 'إدخال نص', para: 'فقرة', heading: 'عنوان مستوى ', list: 'عنصر قائمة', expanded: 'موسع', collapsed: 'مطوي', pressed: 'مضغوط', notPressed: 'غير مضغوط' },
+    sw: { button: 'kitufe', link: 'kiungo', edit: 'uandishi wa maandishi', para: 'aya', heading: 'kiwango cha kichwa ', list: 'kipengee cha orodha', expanded: 'imepanuliwa', collapsed: 'imekunjwa', pressed: 'imebonyezwa', notPressed: 'haijabonyezwa' },
+    fr: { button: 'bouton', link: 'lien', edit: 'champ de texte', para: 'paragraphe', heading: 'titre de niveau ', list: 'élément de liste', expanded: 'développé', collapsed: 'réduit', pressed: 'enfoncé', notPressed: 'non enfoncé' }
+  };
 
   function getHostElementDescription(el) {
     if (!el || el === document.body || el === document.documentElement) return null;
     if (el.dataset && (el.dataset.sa11yBound || el.dataset.sa11yTextBound)) return null;
+
+    const curLang = localStorage.getItem('savanna_lang') || 'en';
+    const r = I18N_ROLES[curLang] || I18N_ROLES.en;
 
     let label = el.getAttribute('aria-label') || '';
     if (!label && el.placeholder) label = el.placeholder;
@@ -273,19 +333,19 @@
     let role = el.getAttribute('role');
     if (!role) {
       const tag = el.tagName;
-      if (tag === 'BUTTON') role = 'button';
-      else if (tag === 'A') role = 'link';
-      else if (tag === 'INPUT' || tag === 'TEXTAREA') role = 'edit text';
-      else if (tag === 'P') role = 'paragraph';
-      else if (/^H[1-6]$/.test(tag)) role = 'heading level ' + tag[1];
-      else if (tag === 'LI') role = 'list item';
+      if (tag === 'BUTTON') role = r.button;
+      else if (tag === 'A') role = r.link;
+      else if (tag === 'INPUT' || tag === 'TEXTAREA') role = r.edit;
+      else if (tag === 'P') role = r.para;
+      else if (/^H[1-6]$/.test(tag)) role = r.heading + tag[1];
+      else if (tag === 'LI') role = r.list;
     }
     const states = [];
     if (el.hasAttribute('aria-expanded')) {
-      states.push(el.getAttribute('aria-expanded') === 'true' ? 'expanded' : 'collapsed');
+      states.push(el.getAttribute('aria-expanded') === 'true' ? r.expanded : r.collapsed);
     }
     if (el.hasAttribute('aria-pressed')) {
-      states.push(el.getAttribute('aria-pressed') === 'true' ? 'pressed' : 'not pressed');
+      states.push(el.getAttribute('aria-pressed') === 'true' ? r.pressed : r.notPressed);
     }
     if (!label && !role) return null;
     return [label, role, states.join(', ')].filter(Boolean).join(', ');

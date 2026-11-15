@@ -65,7 +65,9 @@ def create_app() -> FastAPI:
     app.include_router(teacher.router,     prefix="/teacher",     tags=["Teacher Analytics"])
     app.include_router(vision.router,                             tags=["Vision & Image Accessibility"])
     app.include_router(speech.router,                             tags=["Speech & Voice Accessibility"])
+    app.include_router(speech.router,    prefix="/api",           tags=["Speech & Voice Accessibility"])
     app.include_router(translate.router,                          tags=["Translation"])
+    app.include_router(translate.router, prefix="/api",           tags=["Translation"])
 
     # ── Level 2 Technical Guide Contract ─────────────────────────────────────
     app.include_router(v1_contract.router, prefix="/api/v1",      tags=["Level 2 Contract"])
