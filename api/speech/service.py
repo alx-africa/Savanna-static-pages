@@ -8,6 +8,7 @@ import collections
 import hashlib
 import logging
 import re
+from pathlib import Path
 from typing import Any, Optional
 
 from config import Settings
@@ -34,13 +35,19 @@ def sanitize_secrets(msg: str, *keys: str) -> str:
 class SpeechService:
     """Manages speech transcription and synthesis across configured providers."""
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, cache_dir: Optional[Path] = None):
         self.settings = settings
         self.stt_provider: BaseSTTProvider = self._resolve_stt_provider()
         self.tts_provider: BaseTTSProvider = self._resolve_tts_provider()
         # In-memory bounded LRU cache for audio synthesis: key -> TTSResult
         self._tts_cache: collections.OrderedDict[str, TTSResult] = collections.OrderedDict()
-        self._max_cache_size = 250
+        self._max_cache_size = 500
+        # Persistent on-disk audio cache for sub-millisecond response and offline operation
+        if cache_dir is not None:
+            self._cache_dir = cache_dir
+        else:
+            self._cache_dir = Path(__file__).resolve().parent.parent / "data" / "tts_cache"
+        self._cache_dir.mkdir(parents=True, exist_ok=True)
 
     def _resolve_stt_provider(self) -> BaseSTTProvider:
         prov_name = (self.settings.stt_provider or "addisai").lower()
@@ -99,21 +106,46 @@ class SpeechService:
     async def synthesize(
         self, text: str, language: str, voice: Optional[str] = None
     ) -> TTSResult:
-        """Synthesize text into speech with caching."""
-        cache_key = hashlib.sha256(f"{language}:{voice or ''}:{text.strip()}".encode("utf-8")).hexdigest()
+        """Synthesize text into speech with memory and disk caching."""
+        clean_text = text.strip()
+        cache_key = hashlib.sha256(f"{language}:{voice or ''}:{clean_text}".encode("utf-8")).hexdigest()
 
+        # 1. In-memory LRU hit (0ms)
         if cache_key in self._tts_cache:
-            # Move to end (most recently used)
             self._tts_cache.move_to_end(cache_key)
             return self._tts_cache[cache_key]
 
+        # 2. Persistent on-disk audio cache hit (<1ms, survives restarts & offline)
+        disk_file = self._cache_dir / f"{cache_key}.mp3"
+        if disk_file.is_file():
+            try:
+                audio_bytes = disk_file.read_bytes()
+                res = TTSResult(
+                    audio_bytes=audio_bytes,
+                    media_type="audio/mpeg",
+                    voice_name=voice or "cached",
+                    language=language,
+                    provider="disk-cache",
+                )
+                self._tts_cache[cache_key] = res
+                return res
+            except Exception as e:
+                logger.warning("Failed to read TTS disk cache for %s: %s", cache_key, e)
+
+        # 3. Provider synthesis
         try:
             res = await self.tts_provider.synthesize(
-                text=text,
+                text=clean_text,
                 language=language,
                 voice=voice,
             )
-            # Cache successful synthesis
+            # Write to disk cache for instantaneous future playback
+            try:
+                disk_file.write_bytes(res.audio_bytes)
+            except Exception as e:
+                logger.warning("Failed to write TTS disk cache: %s", e)
+
+            # Cache successful synthesis in memory LRU
             self._tts_cache[cache_key] = res
             if len(self._tts_cache) > self._max_cache_size:
                 self._tts_cache.popitem(last=False)  # Evict oldest entry

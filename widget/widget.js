@@ -250,14 +250,40 @@
   }
 
   let activeHostAudio = null;
+  let hostSpeechAbort = null;
+  let hostFocusTimer = null;
   const hostAudioCache = new Map();
+
+  // Instant pre-cached audio assets for standard navigation cues (0ms latency, 100% offline)
+  const PRESET_AUDIO_MAP = {
+    'ረዳትን ክፈት፣ አዝራር፣ ተዘግቷል': '/assets/audio/nav/trigger_open.mp3',
+    'ረዳትን ዝጋ፣ አዝራር፣ ተከፍቷል': '/assets/audio/nav/trigger_close.mp3',
+    'አዝራር': '/assets/audio/nav/role_button.mp3',
+    'አገናኝ': '/assets/audio/nav/role_link.mp3',
+    'የፅሑፍ ማስገቢያ': '/assets/audio/nav/role_edit.mp3',
+    'ርዕስ': '/assets/audio/nav/role_heading.mp3',
+    'ዝርዝር': '/assets/audio/nav/role_list.mp3'
+  };
 
   async function speakHost(text) {
     if (!isVoiceGuideEnabled() || !text) return;
     const currentLang = localStorage.getItem('savanna_lang') || 'en';
     const bcp47 = BCP47_HOST[currentLang] || 'en-US';
 
-    // 1. Check if browser has a matching local voice for this language
+    // 0. Instant static preset check (0ms latency, runs offline)
+    if (PRESET_AUDIO_MAP[text]) {
+      try {
+        if (activeHostAudio) {
+          activeHostAudio.pause();
+          activeHostAudio = null;
+        }
+        activeHostAudio = new Audio(PRESET_AUDIO_MAP[text]);
+        activeHostAudio.play().catch(function () {});
+        return;
+      } catch (_) {}
+    }
+
+    // 1. Check if browser has a matching local voice for this language (0ms native Web Speech)
     if (window.speechSynthesis && window.speechSynthesis.getVoices) {
       try {
         const voices = window.speechSynthesis.getVoices();
@@ -269,41 +295,61 @@
           window.speechSynthesis.cancel();
           const utt = new SpeechSynthesisUtterance(text);
           utt.lang = bcp47;
-          utt.rate = 1.05;
+          utt.rate = 1.15; // Crisp, fast reading rate matching English
           window.speechSynthesis.speak(utt);
           return;
         }
       } catch (_) {}
     }
 
-    // 2. Otherwise stream synthesized neural audio from /speech/synthesize (Edge-TTS am-ET-MekdesNeural)
+    // 2. Client-side memory cache check (0ms instant playback)
+    const cacheKey = currentLang + ':' + text;
+    if (hostAudioCache.has(cacheKey)) {
+      try {
+        if (activeHostAudio) {
+          activeHostAudio.pause();
+          activeHostAudio = null;
+        }
+        activeHostAudio = new Audio(hostAudioCache.get(cacheKey));
+        activeHostAudio.play().catch(function () {});
+        return;
+      } catch (_) {}
+    }
+
+    // 3. Otherwise stream synthesized neural audio with abort capability
     try {
+      if (hostSpeechAbort) {
+        hostSpeechAbort.abort();
+      }
+      hostSpeechAbort = new AbortController();
+
       if (activeHostAudio) {
         activeHostAudio.pause();
         activeHostAudio = null;
       }
-      const cacheKey = currentLang + ':' + text;
-      let audioUrl = hostAudioCache.get(cacheKey);
-      if (!audioUrl) {
-        const base = apiUrl.replace(/\/api$/, '');
-        const endpoint = base + '/speech/synthesize';
-        const resp = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text, language: currentLang })
-        });
-        if (resp.ok) {
-          const blob = await resp.blob();
-          audioUrl = URL.createObjectURL(blob);
-          hostAudioCache.set(cacheKey, audioUrl);
-        }
-      }
-      if (audioUrl) {
+
+      const base = apiUrl.replace(/\/api$/, '');
+      const endpoint = base + '/speech/synthesize';
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, language: currentLang }),
+        signal: hostSpeechAbort.signal
+      });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        hostAudioCache.set(cacheKey, audioUrl);
         activeHostAudio = new Audio(audioUrl);
+        activeHostAudio.onended = function () {
+          activeHostAudio = null;
+        };
         activeHostAudio.play().catch(function () {});
       }
     } catch (err) {
-      console.debug('[Savanna widget] Speech fallback error:', err);
+      if (err.name !== 'AbortError') {
+        console.debug('[Savanna widget] Speech notice:', err);
+      }
     }
   }
 
@@ -381,9 +427,52 @@
     if (e.target === trigger) return;
     if (isKeyboardNav) {
       const desc = getHostElementDescription(e.target);
-      if (desc) speakHost(desc);
+      if (!desc) return;
+      if (hostFocusTimer) clearTimeout(hostFocusTimer);
+      hostFocusTimer = setTimeout(function () {
+        speakHost(desc);
+      }, 75);
     }
   });
+
+  // Prewarm host page interactive cues in background for zero-latency Tab speech
+  function prewarmHostNavigation() {
+    const curLang = localStorage.getItem('savanna_lang') || 'en';
+    if (curLang === 'en') return;
+    const elements = document.querySelectorAll('a, button, input, [role="button"], [tabindex="0"]');
+    const seen = new Set();
+    let delay = 300;
+    for (let i = 0; i < elements.length && i < 20; i++) {
+      const desc = getHostElementDescription(elements[i]);
+      if (desc && !seen.has(desc) && !PRESET_AUDIO_MAP[desc]) {
+        seen.add(desc);
+        setTimeout(function () {
+          const cacheKey = curLang + ':' + desc;
+          if (!hostAudioCache.has(cacheKey)) {
+            const base = apiUrl.replace(/\/api$/, '');
+            fetch(base + '/speech/synthesize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: desc, language: curLang })
+            }).then(function (res) {
+              if (res.ok) return res.blob();
+            }).then(function (blob) {
+              if (blob) hostAudioCache.set(cacheKey, URL.createObjectURL(blob));
+            }).catch(function () {});
+          }
+        }, delay);
+        delay += 100;
+      }
+    }
+  }
+
+  if (document.readyState === 'complete') {
+    setTimeout(prewarmHostNavigation, 1000);
+  } else {
+    window.addEventListener('load', function () {
+      setTimeout(prewarmHostNavigation, 1000);
+    });
+  }
 
   /* ── 9. Double-Space Shortcut for Live Help Desk ───────────────────────── */
   let lastSpaceTime = 0;

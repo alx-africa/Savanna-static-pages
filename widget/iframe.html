@@ -737,6 +737,9 @@
     try {
       parent.postMessage({ type: 'savanna:lang_change', lang: currentLanguage }, '*');
     } catch (_) {}
+    try {
+      if (typeof prewarmWidgetAudio === 'function') prewarmWidgetAudio();
+    } catch (_) {}
   }
 
   applyLanguage();
@@ -964,11 +967,15 @@
     }
   }
 
+  const widgetAudioCache = new Map();
+  let activeSpeechAbort = null;
+  let focusDebounceTimer = null;
+
   async function playSpeechAudio(text, lang) {
     if (!text) return;
     const targetLang = lang || currentLanguage || 'en';
 
-    // 1. Check if browser has a matching local voice
+    // 1. Check if browser has a matching local voice (instant, 0ms)
     if (window.speechSynthesis && window.speechSynthesis.getVoices) {
       try {
         const voices = window.speechSynthesis.getVoices();
@@ -980,40 +987,91 @@
           window.speechSynthesis.cancel();
           const utt = new SpeechSynthesisUtterance(text);
           utt.lang = BCP47_MAP[targetLang] || 'en-US';
-          utt.rate = 1.05;
+          utt.rate = 1.15;
           window.speechSynthesis.speak(utt);
           return;
         }
       } catch (_) {}
     }
 
-    // 2. Otherwise stream synthesized neural / fallback audio from /speech/synthesize
+    // 2. Client-side memory cache (Instant 0ms playback!)
+    const cacheKey = targetLang + ':' + text;
+    if (widgetAudioCache.has(cacheKey)) {
+      try {
+        if (activeAudio) {
+          activeAudio.pause();
+          activeAudio = null;
+        }
+        activeAudio = new Audio(widgetAudioCache.get(cacheKey));
+        activeAudio.play().catch(function () {});
+        return;
+      } catch (_) {}
+    }
+
+    // 3. Otherwise stream synthesized neural / fallback audio with abort capability
     try {
+      if (activeSpeechAbort) {
+        activeSpeechAbort.abort();
+      }
+      activeSpeechAbort = new AbortController();
+
       if (activeAudio) {
         activeAudio.pause();
         activeAudio = null;
       }
+
       const resp = await fetch(apiUrl + '/speech/synthesize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text, language: targetLang })
+        body: JSON.stringify({ text: text, language: targetLang }),
+        signal: activeSpeechAbort.signal
       });
       if (resp.ok) {
         const blob = await resp.blob();
         const url = URL.createObjectURL(blob);
+        widgetAudioCache.set(cacheKey, url);
         activeAudio = new Audio(url);
         activeAudio.onended = function () {
-          URL.revokeObjectURL(url);
           activeAudio = null;
         };
         activeAudio.play().catch(function () {});
       }
-    } catch (_) {}
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.debug('[Savanna widget] Speech notice:', err);
+      }
+    }
   }
 
   function speakFocus(text) {
     if (!voiceGuideEnabled || !text) return;
     playSpeechAudio(text, currentLanguage);
+  }
+
+  function prewarmWidgetAudio() {
+    if (!voiceGuideEnabled || currentLanguage === 'en') return;
+    const elements = [closeBtn, langSelect, voiceGuideBtn, simpleModeBtn, chatInput, voiceBtn, sendBtn, escalateBtn];
+    let delay = 100;
+    elements.forEach(function (el) {
+      if (!el) return;
+      const desc = getAccessibleDescription(el);
+      if (!desc) return;
+      const cacheKey = currentLanguage + ':' + desc;
+      if (!widgetAudioCache.has(cacheKey)) {
+        setTimeout(function () {
+          fetch(apiUrl + '/speech/synthesize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: desc, language: currentLanguage })
+          }).then(function (r) {
+            if (r.ok) return r.blob();
+          }).then(function (blob) {
+            if (blob) widgetAudioCache.set(cacheKey, URL.createObjectURL(blob));
+          }).catch(function () {});
+        }, delay);
+        delay += 120;
+      }
+    });
   }
 
   function getAccessibleDescription(el) {
@@ -1058,8 +1116,13 @@
   }
 
   document.addEventListener('focusin', function (e) {
+    if (!voiceGuideEnabled) return;
     const desc = getAccessibleDescription(e.target);
-    if (desc) speakFocus(desc);
+    if (!desc) return;
+    if (focusDebounceTimer) clearTimeout(focusDebounceTimer);
+    focusDebounceTimer = setTimeout(function () {
+      speakFocus(desc);
+    }, 70);
   });
 
   /* ── Focus & message management (from parent) ───────────── */

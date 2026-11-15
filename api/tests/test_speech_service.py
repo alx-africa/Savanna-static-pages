@@ -151,29 +151,32 @@ class TestSpeechServiceCoordinator(unittest.IsolatedAsyncioTestCase):
         self.assertIn("[REDACTED_API_KEY]", sanitized)
 
     async def test_tts_cache_prevents_duplicate_network_calls(self):
+        import tempfile
+        from pathlib import Path
         settings = Settings()
-        service = SpeechService(settings)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            service = SpeechService(settings, cache_dir=Path(tmp_dir))
 
-        # Mock the active TTS provider
-        mock_tts = AsyncMock()
-        mock_tts.synthesize.return_value = TTSResult(
-            audio_bytes=b"cached-audio-content",
-            media_type="audio/mpeg",
-            voice_name="test-voice",
-            language="en",
-            provider="mock"
-        )
-        service.tts_provider = mock_tts
+            # Mock the active TTS provider
+            mock_tts = AsyncMock()
+            mock_tts.synthesize.return_value = TTSResult(
+                audio_bytes=b"cached-audio-content",
+                media_type="audio/mpeg",
+                voice_name="test-voice",
+                language="en",
+                provider="mock"
+            )
+            service.tts_provider = mock_tts
 
-        # First call -> hits provider
-        res1 = await service.synthesize("Hello world", language="en")
-        self.assertEqual(res1.audio_bytes, b"cached-audio-content")
-        self.assertEqual(mock_tts.synthesize.call_count, 1)
+            # First call -> hits provider
+            res1 = await service.synthesize("Hello world", language="en")
+            self.assertEqual(res1.audio_bytes, b"cached-audio-content")
+            self.assertEqual(mock_tts.synthesize.call_count, 1)
 
-        # Second call with same text and lang -> served from LRU cache
-        res2 = await service.synthesize("Hello world", language="en")
-        self.assertEqual(res2.audio_bytes, b"cached-audio-content")
-        self.assertEqual(mock_tts.synthesize.call_count, 1, "Cache hit must not invoke TTS provider a second time")
+            # Second call with same text and lang -> served from LRU cache
+            res2 = await service.synthesize("Hello world", language="en")
+            self.assertEqual(res2.audio_bytes, b"cached-audio-content")
+            self.assertEqual(mock_tts.synthesize.call_count, 1, "Cache hit must not invoke TTS provider a second time")
 
     def test_stt_provider_resolution(self):
         # Addis AI
