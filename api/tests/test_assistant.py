@@ -109,6 +109,22 @@ class TestSMSFormatting(unittest.TestCase):
         self.assertTrue(p1.startswith("(1/2)"))
         self.assertTrue(p2.startswith("(2/2)"))
 
+    def test_truncate_ethiopic_ucs2(self):
+        from routers.sms import truncate_sms, is_ucs2_script
+        amharic_long = "የሳቫና የትምህርት ረዳት ለሁሉም ተማሪዎች ተደራሽ ነው። " * 5
+        self.assertTrue(is_ucs2_script(amharic_long))
+        p1 = truncate_sms(amharic_long, page=1)
+        self.assertTrue(len(p1) <= 70, f"Ethiopic SMS chunk exceeded 70-char UCS-2 limit: {len(p1)}")
+        self.assertTrue(p1.startswith("(1/"))
+
+    def test_truncate_arabic_ucs2(self):
+        from routers.sms import truncate_sms, is_ucs2_script
+        arabic_long = "مساعد سافانا التعليمي يقدم الدعم لجميع الطلاب في كل مكان. " * 5
+        self.assertTrue(is_ucs2_script(arabic_long))
+        p1 = truncate_sms(arabic_long, page=1)
+        self.assertTrue(len(p1) <= 70, f"Arabic SMS chunk exceeded 70-char UCS-2 limit: {len(p1)}")
+        self.assertTrue(p1.startswith("(1/"))
+
     def test_strip_prefix(self):
         from routers.sms import _strip_prefix
         text, prefix = _strip_prefix("JOB virtual assistant")

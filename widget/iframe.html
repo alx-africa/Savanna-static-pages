@@ -777,15 +777,58 @@
   });
 
   /* ── Built-in Focus Reader / Self-Voicing ─────────────────── */
-  function speakFocus(text) {
-    if (!voiceGuideEnabled || !window.speechSynthesis || !text) return;
+  let activeAudio = null;
+
+  async function playSpeechAudio(text, lang) {
+    if (!text) return;
+    const targetLang = lang || currentLanguage || 'en';
+
+    // 1. Check if browser has a matching local voice
+    if (window.speechSynthesis && window.speechSynthesis.getVoices) {
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        const prefix = targetLang.toLowerCase();
+        const hasVoice = voices.some(function (v) {
+          return v.lang && v.lang.toLowerCase().startsWith(prefix);
+        });
+        if (hasVoice) {
+          window.speechSynthesis.cancel();
+          const utt = new SpeechSynthesisUtterance(text);
+          utt.lang = BCP47_MAP[targetLang] || 'en-US';
+          utt.rate = 1.05;
+          window.speechSynthesis.speak(utt);
+          return;
+        }
+      } catch (_) {}
+    }
+
+    // 2. Otherwise stream synthesized neural / fallback audio from /speech/synthesize
     try {
-      window.speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(text);
-      utt.lang = BCP47_MAP[currentLanguage] || 'en-US';
-      utt.rate = 1.05;
-      window.speechSynthesis.speak(utt);
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio = null;
+      }
+      const resp = await fetch(apiUrl + '/speech/synthesize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, language: targetLang })
+      });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        activeAudio = new Audio(url);
+        activeAudio.onended = function () {
+          URL.revokeObjectURL(url);
+          activeAudio = null;
+        };
+        activeAudio.play().catch(function () {});
+      }
     } catch (_) {}
+  }
+
+  function speakFocus(text) {
+    if (!voiceGuideEnabled || !text) return;
+    playSpeechAudio(text, currentLanguage);
   }
 
   function getAccessibleDescription(el) {
@@ -1040,11 +1083,9 @@
       appendMessage('assistant', reply, cites, ethDate);
       history.push({ role: 'assistant', content: reply });
 
-      /* TTS */
-      if (window.speechSynthesis && reply) {
-        const utt = new SpeechSynthesisUtterance(reply);
-        utt.lang = BCP47_MAP[currentLanguage] || 'en-US';
-        window.speechSynthesis.speak(utt);
+      /* TTS: Natural multi-lingual speech readout */
+      if (reply) {
+        playSpeechAudio(reply.replace(/\[\d+\]/g, ''), currentLanguage);
       }
 
       /* Notify parent of content height change */
@@ -1059,50 +1100,139 @@
     }
   }
 
-  /* ── Voice input ─────────────────────────────────────────── */
+  /* ── Voice input (Dual-Mode: Web Speech API + MediaRecorder fallback) ── */
+  let mediaRecorder = null;
+  let audioChunks = [];
+
   function setupVoice() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
+    const hasMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+    if (!SR && !hasMedia) {
       voiceBtn.setAttribute('aria-disabled', 'true');
       voiceBtn.setAttribute('title', 'Voice input not supported in this browser');
       voiceBtn.style.opacity = '0.4';
       return;
     }
 
-    recognition = new SR();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
-
-    recognition.addEventListener('result', function (e) {
-      const transcript = e.results[0][0].transcript;
-      chatInput.value = (chatInput.value ? chatInput.value + ' ' : '') + transcript;
-      chatInput.dispatchEvent(new Event('input'));
-    });
-
-    recognition.addEventListener('end', function () {
-      isListening = false;
-      voiceBtn.setAttribute('aria-pressed', 'false');
-      voiceBtn.setAttribute('aria-label', getI18n().voiceStart);
-      voiceBtn.style.color = '';
-    });
-
-    recognition.addEventListener('error', function (e) {
-      isListening = false;
-      voiceBtn.setAttribute('aria-pressed', 'false');
-      showError('Voice input error: ' + e.error);
-    });
-
-    voiceBtn.addEventListener('click', function () {
-      if (isListening) {
-        recognition.stop();
-      } else {
+    if (SR) {
+      try {
+        recognition = new SR();
+        recognition.continuous = false;
+        recognition.interimResults = false;
         recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
-        recognition.start();
+
+        recognition.addEventListener('result', function (e) {
+          const transcript = e.results[0][0].transcript;
+          chatInput.value = (chatInput.value ? chatInput.value + ' ' : '') + transcript;
+          chatInput.dispatchEvent(new Event('input'));
+        });
+
+        recognition.addEventListener('end', function () {
+          isListening = false;
+          voiceBtn.setAttribute('aria-pressed', 'false');
+          voiceBtn.setAttribute('aria-label', getI18n().voiceStart);
+          voiceBtn.style.color = '';
+        });
+
+        recognition.addEventListener('error', function (e) {
+          isListening = false;
+          voiceBtn.setAttribute('aria-pressed', 'false');
+          voiceBtn.style.color = '';
+          if (e.error === 'language-not-supported' && hasMedia) {
+            startMediaRecording();
+          } else {
+            showError('Voice input error: ' + e.error);
+          }
+        });
+      } catch (_) {}
+    }
+
+    async function startMediaRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = function (e) {
+          if (e.data.size > 0) audioChunks.push(e.data);
+        };
+        mediaRecorder.onstop = async function () {
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          if (audioBlob.size > 0) {
+            await uploadAndTranscribe(audioBlob);
+          }
+        };
+        mediaRecorder.start();
         isListening = true;
         voiceBtn.setAttribute('aria-pressed', 'true');
         voiceBtn.setAttribute('aria-label', getI18n().voiceStop);
         voiceBtn.style.color = 'var(--c-error)';
+      } catch (err) {
+        isListening = false;
+        voiceBtn.setAttribute('aria-pressed', 'false');
+        voiceBtn.style.color = '';
+        showError('Microphone access error: ' + (err.message || err));
+      }
+    }
+
+    async function uploadAndTranscribe(blob) {
+      try {
+        showThinking();
+        const formData = new FormData();
+        formData.append('file', blob, 'recording.webm');
+        formData.append('language', currentLanguage);
+
+        const resp = await fetch(apiUrl + '/speech/transcribe', {
+          method: 'POST',
+          body: formData
+        });
+        removeThinking();
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.text) {
+            chatInput.value = (chatInput.value ? chatInput.value + ' ' : '') + data.text;
+            chatInput.dispatchEvent(new Event('input'));
+            chatInput.focus();
+          }
+        } else {
+          showError('Voice transcription could not be completed.');
+        }
+      } catch (err) {
+        removeThinking();
+        showError('Transcription error: ' + (err.message || err));
+      }
+    }
+
+    voiceBtn.addEventListener('click', function () {
+      if (isListening) {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+        } else if (recognition) {
+          try { recognition.stop(); } catch (_) {}
+        }
+        isListening = false;
+        voiceBtn.setAttribute('aria-pressed', 'false');
+        voiceBtn.setAttribute('aria-label', getI18n().voiceStart);
+        voiceBtn.style.color = '';
+      } else {
+        const serverPreferredLanguages = ['om', 'ti', 'so'];
+        if (serverPreferredLanguages.indexOf(currentLanguage) !== -1 && hasMedia) {
+          startMediaRecording();
+        } else if (recognition) {
+          try {
+            recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
+            recognition.start();
+            isListening = true;
+            voiceBtn.setAttribute('aria-pressed', 'true');
+            voiceBtn.setAttribute('aria-label', getI18n().voiceStop);
+            voiceBtn.style.color = 'var(--c-error)';
+          } catch (_) {
+            if (hasMedia) startMediaRecording();
+          }
+        } else if (hasMedia) {
+          startMediaRecording();
+        }
       }
     });
   }

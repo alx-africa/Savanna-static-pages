@@ -30,16 +30,30 @@ settings = get_settings()
 # ── SMS helpers ───────────────────────────────────────────────────────────────
 
 SMS_MAX = 160
-SMS_PAGE_CONTENT = 155  # leaves room for "(1/N)" prefix
+SMS_PAGE_CONTENT = 155  # leaves room for "(1/N)" prefix in GSM-7
+
+# UCS-2 (Ethiopic & Arabic) carrier boundaries
+SMS_UCS2_MAX = 70
+SMS_UCS2_PAGE_CONTENT = 65  # leaves room for "(1/N)" prefix in UCS-2
+
+
+def is_ucs2_script(text: str) -> bool:
+    """
+    Detect if text contains Ethiopic (Ge'ez), Arabic, or non-GSM characters
+    requiring UCS-2 70-character SMS carrier encoding (Ethio Telecom / Safaricom).
+    """
+    return any("\u1200" <= ch <= "\u137F" or "\u0600" <= ch <= "\u06FF" for ch in text)
 
 
 def truncate_sms(text: str, page: int = 1) -> str:
     """
-    Split *text* into 155-char chunks and return the chunk at *page* (1-based).
+    Split *text* into carrier-compliant chunks and return the chunk at *page* (1-based).
+    Uses 65-char chunks for UCS-2 scripts (Amharic, Tigrinya, Arabic) to fit 70-char carrier limits.
+    Uses 155-char chunks for standard GSM-7 scripts (English, Afaan Oromoo, Somali, Swahili, French).
     Prepends a "(page/total)" indicator, e.g. "(1/3)".
     """
-    # Split into chunks of SMS_PAGE_CONTENT chars
-    chunks = [text[i: i + SMS_PAGE_CONTENT] for i in range(0, len(text), SMS_PAGE_CONTENT)]
+    chunk_size = SMS_UCS2_PAGE_CONTENT if is_ucs2_script(text) else SMS_PAGE_CONTENT
+    chunks = [text[i: i + chunk_size] for i in range(0, len(text), chunk_size)]
     if not chunks:
         return ""
     total = len(chunks)
@@ -107,7 +121,8 @@ def _job_summary(language: str = "en") -> str:
 
     lines.append("HELP")
     summary = " | ".join(lines)
-    return summary[:SMS_MAX]
+    max_len = SMS_UCS2_MAX if language in ("am", "ti", "ar") else SMS_MAX
+    return summary[:max_len]
 
 
 # ── Chat via API logic (reuses chat router logic directly) ───────────────────

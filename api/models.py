@@ -167,3 +167,31 @@ class HealthResponse(BaseModel):
     status: str
     version: str
     ai_provider: str
+
+
+# ─── Speech (STT & TTS) ───────────────────────────────────────────────────────
+
+class TranscribeResponse(BaseModel):
+    text: str
+    language: str
+    confidence: float = 0.95
+    duration_seconds: float = 0.0
+    provider: str = "savanna-stt"
+
+
+class SynthesizeRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=4096)
+    language: SupportedLanguage | str = "en"
+    voice: Optional[str] = None
+    rate: Optional[str] = "+0%"
+    pitch: Optional[str] = "+0Hz"
+
+
+class VoiceInfo(BaseModel):
+    id: str
+    name: str
+    language: str
+    gender: Literal["female", "male", "neutral"] = "neutral"
+    locale: str
+    provider: str
+
