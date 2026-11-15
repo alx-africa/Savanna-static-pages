@@ -1120,3 +1120,44 @@ img[tabindex="0"]:focus-visible {
   color: #facc15 !important;
   border: 1px solid #facc15 !important;
 }
+
+/* ── 18. Arabic & RTL Localization Support ───────────────────────────────── */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] .sa11y-modal-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .sa11y-modal-footer {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .sa11y-card {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+[dir="rtl"] .sa11y-card-content {
+  text-align: right;
+}
+
+[dir="rtl"] .sa11y-shortcuts-table th,
+[dir="rtl"] .sa11y-shortcuts-table td {
+  text-align: right;
+}
+
+[dir="rtl"] .sa11y-transcript-drawer summary {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+[dir="rtl"] .sa11y-transcript-content {
+  text-align: right;
+}
+
+[dir="rtl"] .sa11y-motor-toolbar {
+  direction: rtl;
+}

@@ -45,6 +45,7 @@ except ImportError:
 
 
 # ─── Voice Directory ──────────────────────────────────────────────────────────
+# Only advertise genuinely available, verified voices
 
 VOICE_CATALOG: dict[str, list[dict[str, Any]]] = {
     "en": [
@@ -55,14 +56,6 @@ VOICE_CATALOG: dict[str, list[dict[str, Any]]] = {
         {"id": "am-ET-MekdesNeural", "name": "መቅደስ Mekdes (Neural)", "gender": "female", "locale": "am-ET", "provider": "edge-tts"},
         {"id": "am-ET-AmehaNeural", "name": "አሜሃ Ameha (Neural)", "gender": "male", "locale": "am-ET", "provider": "edge-tts"},
     ],
-    "om": [
-        {"id": "om-ET-AfaanNeural", "name": "Hawwii (Afaan Oromoo Neural)", "gender": "female", "locale": "om-ET", "provider": "savanna-tts"},
-        {"id": "om-ET-CaalaaNeural", "name": "Caalaa (Afaan Oromoo Neural)", "gender": "male", "locale": "om-ET", "provider": "savanna-tts"},
-    ],
-    "ti": [
-        {"id": "ti-ET-TigrinyaNeural", "name": "ሰላም Selam (Tigrinya Neural)", "gender": "female", "locale": "ti-ET", "provider": "savanna-tts"},
-        {"id": "ti-ET-BerhaneNeural", "name": "ብርሃነ Berhane (Tigrinya Neural)", "gender": "male", "locale": "ti-ET", "provider": "savanna-tts"},
-    ],
     "so": [
         {"id": "so-SO-UbaxNeural", "name": "Ubax (Neural)", "gender": "female", "locale": "so-SO", "provider": "edge-tts"},
         {"id": "so-SO-MuuseNeural", "name": "Muuse (Neural)", "gender": "male", "locale": "so-SO", "provider": "edge-tts"},
@@ -72,7 +65,6 @@ VOICE_CATALOG: dict[str, list[dict[str, Any]]] = {
         {"id": "ar-SA-HamedNeural", "name": "حامد Hamed (Neural)", "gender": "male", "locale": "ar-SA", "provider": "edge-tts"},
     ],
     "sw": [
-        {"id": "sw-KE-RafikiNeural", "name": "Rafiki (Neural)", "gender": "male", "locale": "sw-KE", "provider": "edge-tts"},
         {"id": "sw-TZ-DaudiNeural", "name": "Daudi (Neural)", "gender": "male", "locale": "sw-TZ", "provider": "edge-tts"},
     ],
     "fr": [
@@ -81,78 +73,24 @@ VOICE_CATALOG: dict[str, list[dict[str, Any]]] = {
     ],
 }
 
-# Mapping to neural synthesis voices where available
+# Mapping to neural synthesis voices where verified genuine voices exist.
+# Afaan Oromoo (om) and Tigrinya (ti) are intentionally omitted because no genuine
+# neural voices currently exist for them; Amharic speech is NEVER substituted for Tigrinya.
 _EDGE_VOICE_MAP: dict[str, str] = {
     "en": "en-US-JennyNeural",
     "am": "am-ET-MekdesNeural",
     "so": "so-SO-UbaxNeural",
     "ar": "ar-SA-ZariyahNeural",
-    "sw": "sw-KE-RafikiNeural",
+    "sw": "sw-TZ-DaudiNeural",
     "fr": "fr-FR-DeniseNeural",
-    # Tigrinya shares Ge'ez phonemes with Amharic neural voice
-    "ti": "am-ET-MekdesNeural",
 }
-
-
-# ─── Resilient Audio Fallback Synthesizer ─────────────────────────────────────
-
-def _generate_fallback_wav(text: str, language: str) -> bytes:
-    """
-    Generate an immediate, playable 16-bit PCM WAV audio track in pure Python.
-    Produces harmonic cadence corresponding to word count and sentence rhythm,
-    guaranteeing that any browser audio player or assistive device gets valid audio.
-    """
-    sample_rate = 16000
-    words = len(text.split())
-    # Estimate natural spoken duration: ~3.5 words per second + boundary pauses
-    duration = max(0.8, min(10.0, words * 0.28 + 0.4))
-    n_samples = int(sample_rate * duration)
-
-    # Base pitch varies slightly by language family for natural distinction
-    base_freq = {
-        "am": 220.0,
-        "om": 240.0,
-        "ti": 210.0,
-        "so": 230.0,
-        "ar": 215.0,
-        "sw": 225.0,
-        "fr": 235.0,
-        "en": 220.0,
-    }.get(language, 220.0)
-
-    buffer = io.BytesIO()
-    with wave.open(buffer, "wb") as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(sample_rate)
-
-        frames = bytearray()
-        for i in range(n_samples):
-            t = float(i) / sample_rate
-            # Syllabic amplitude modulation (approx 4 syllables per second)
-            mod = 0.5 + 0.5 * math.sin(2.0 * math.pi * 4.0 * t)
-            # Fundamental + 2nd + 3rd harmonic for rich vocal timbre
-            signal = (
-                0.55 * math.sin(2.0 * math.pi * base_freq * t)
-                + 0.25 * math.sin(2.0 * math.pi * (base_freq * 1.5) * t)
-                + 0.15 * math.sin(2.0 * math.pi * (base_freq * 2.0) * t)
-            ) * mod
-            # Smooth attack and decay envelope
-            envelope = min(1.0, t * 15.0) * min(1.0, (duration - t) * 15.0)
-            sample_val = int(signal * envelope * 12000)
-            clamped = max(-32768, min(32767, sample_val))
-            frames.extend(struct.pack("<h", clamped))
-
-        wf.writeframes(frames)
-
-    return buffer.getvalue()
 
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
-@router.get("/voices", response_model=dict[str, list[VoiceInfo]], summary="Get available TTS voices across 8 languages")
+@router.get("/voices", response_model=dict[str, list[VoiceInfo]], summary="Get available TTS voices across supported languages")
 async def list_voices() -> dict[str, list[VoiceInfo]]:
-    """Return all configured voices categorized by language."""
+    """Return verified available neural voices categorized by language."""
     result: dict[str, list[VoiceInfo]] = {}
     for lang, voices in VOICE_CATALOG.items():
         result[lang] = [
@@ -169,60 +107,80 @@ async def list_voices() -> dict[str, list[VoiceInfo]]:
     return result
 
 
-@router.post("/synthesize", summary="Synthesize natural speech from text across 8 languages")
+@router.post("/synthesize", summary="Synthesize natural speech from text across supported languages")
 async def synthesize_speech(body: SynthesizeRequest):
     """
     Synthesize text into speech audio.
-    Supports English, Amharic, Afaan Oromoo, Tigrinya, Somali, Arabic, Kiswahili, and French.
-    Attempts neural voice synthesis (edge-tts / openai) and falls back to resilient audio synthesis.
+    Supports languages with verified neural voices (English, Amharic, Somali, Arabic, Kiswahili, French).
+    Returns 501 Not Implemented if genuine speech output is unavailable for the requested language.
     """
     lang = body.language.lower()
-    if lang == "auto" or lang not in VOICE_CATALOG:
+    if lang == "auto" or lang not in _EDGE_VOICE_MAP:
+        if lang not in _EDGE_VOICE_MAP:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail={
+                    "error": "voice_synthesis_unavailable",
+                    "language": lang,
+                    "message": f"Voice synthesis is not currently available for '{lang}'. Genuine neural speech voices are not available for this language.",
+                    "supported_languages": list(_EDGE_VOICE_MAP.keys()),
+                },
+            )
         lang = "en"
 
-    # 1. Try Edge-TTS neural voice if available and voice is supported
     voice_name = body.voice or _EDGE_VOICE_MAP.get(lang)
-    if HAS_EDGE_TTS and voice_name:
-        try:
-            import asyncio
+    if not HAS_EDGE_TTS or not voice_name:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "error": "tts_service_unavailable",
+                "message": "Text-to-speech synthesis engine is not available or edge-tts is uninstalled.",
+            },
+        )
 
-            async def _stream_edge():
-                communicate = edge_tts.Communicate(
-                    text=body.text,
-                    voice=voice_name,
-                    rate=body.rate or "+0%",
-                    pitch=body.pitch or "+0Hz",
-                )
-                buf = bytearray()
-                async for chunk in communicate.stream():
-                    if chunk["type"] == "audio":
-                        buf.extend(chunk["data"])
-                return buf
+    try:
+        import asyncio
 
-            audio_buffer = await asyncio.wait_for(_stream_edge(), timeout=2.5)
+        async def _stream_edge():
+            communicate = edge_tts.Communicate(
+                text=body.text,
+                voice=voice_name,
+                rate=body.rate or "+0%",
+                pitch=body.pitch or "+0Hz",
+            )
+            buf = bytearray()
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    buf.extend(chunk["data"])
+            return buf
 
-            if audio_buffer:
-                return Response(
-                    content=bytes(audio_buffer),
-                    media_type="audio/mpeg",
-                    headers={
-                        "Content-Disposition": f'inline; filename="savanna_{lang}.mp3"',
-                        "X-Savanna-Voice": voice_name,
-                        "X-Savanna-Language": lang,
-                    },
-                )
-        except Exception as exc:
-            logger.warning("Edge-TTS synthesis fallback triggered (%s): %s", voice_name, exc)
+        audio_buffer = await asyncio.wait_for(_stream_edge(), timeout=4.0)
 
-    # 2. Resilient audio fallback (guaranteed valid audio stream)
-    wav_bytes = _generate_fallback_wav(body.text, lang)
-    return Response(
-        content=wav_bytes,
-        media_type="audio/wav",
-        headers={
-            "Content-Disposition": f'inline; filename="savanna_{lang}.wav"',
-            "X-Savanna-Voice": f"{lang}-fallback-harmonized",
-            "X-Savanna-Language": lang,
+        if audio_buffer:
+            return Response(
+                content=bytes(audio_buffer),
+                media_type="audio/mpeg",
+                headers={
+                    "Content-Disposition": f'inline; filename="savanna_{lang}.mp3"',
+                    "X-Savanna-Voice": voice_name,
+                    "X-Savanna-Language": lang,
+                },
+            )
+    except Exception as exc:
+        logger.warning("Edge-TTS synthesis error (%s): %s", voice_name, exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "error": "tts_synthesis_failed",
+                "message": f"Neural voice synthesis service failed or timed out: {exc}",
+            },
+        )
+
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={
+            "error": "tts_empty_audio",
+            "message": "Neural voice synthesis produced no audio frames.",
         },
     )
 
@@ -233,10 +191,8 @@ async def transcribe_speech(
     language: Optional[str] = Form("auto", description="Spoken language hint or 'auto' for zero-shot LID"),
 ) -> TranscribeResponse:
     """
-    Transcribe speech audio into text.
-    Handles Ethiopian languages (Amharic, Afaan Oromo, Tigrinya, Somali)
-    and regional languages (Arabic, Kiswahili, French, English).
-    Supports spoken language identification (LID).
+    Transcribe speech audio into text using configured ASR provider.
+    Returns 503 Service Unavailable when no genuine speech-to-text provider is configured.
     """
     try:
         contents = await file.read()
@@ -260,7 +216,6 @@ async def transcribe_speech(
             client = AsyncOpenAI(api_key=settings.openai_api_key)
             whisper_lang = lang_hint if lang_hint in ("en", "am", "so", "ar", "sw", "fr") else None
 
-            # Create in-memory file for OpenAI
             audio_io = io.BytesIO(contents)
             audio_io.name = file.filename or "recording.webm"
 
@@ -278,35 +233,23 @@ async def transcribe_speech(
                 provider="openai-whisper",
             )
         except Exception as exc:
-            logger.warning("OpenAI Whisper transcription failed, falling back to multilingual engine: %s", exc)
+            logger.warning("OpenAI Whisper transcription failed: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "error": "whisper_transcription_failed",
+                    "message": f"Cloud transcription provider failed: {exc}",
+                },
+            )
 
-    # 2. Resilient multilingual STT / LID engine
-    # In offline or edge deployments without cloud API, extract language and simulate pedagogical voice input
-    detected_lang = lang_hint if lang_hint != "auto" else "en"
-
-    # Exemplar pedagogical speech transcripts matching learner inquiries in each language
-    exemplar_transcripts: dict[str, str] = {
-        "en": "What is the passing score threshold for course graduation?",
-        "am": "የኮርስ ማጠናቀቂያ ውጤት ምን ያህል ነው?",
-        "om": "Qabxiin eebbaa yookan xumura koorsii meeqa?",
-        "ti": "ናይ ምረቓ መመዘኒ ነጥቢ ክንደይ እዩ?",
-        "so": "Waa maxay buundada looga baahan yahay qalin-jabinta?",
-        "ar": "ما هي درجة التخرج المطلوبة لاجتياز الدورة؟",
-        "sw": "Kiwango cha ufaulu wa kuhitimu kozi ni kipi?",
-        "fr": "Quel est le score minimum requis pour obtenir le diplôme?",
-    }
-
-    text = exemplar_transcripts.get(
-        detected_lang,
-        "What is the passing score threshold for course graduation?"
-    )
-
-    estimated_duration = round(max(0.5, len(contents) / 16000.0), 2)
-
-    return TranscribeResponse(
-        text=text,
-        language=detected_lang,
-        confidence=0.94,
-        duration_seconds=estimated_duration,
-        provider="savanna-multilingual-stt",
+    # 2. When no genuine speech recognition provider is available:
+    # Do NOT fabricate mock transcripts. Return honest service unavailable status.
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={
+            "error": "speech_transcription_unavailable",
+            "message": "Speech transcription service is currently unavailable. No speech-to-text provider is configured or reachable.",
+            "language_hint": lang_hint,
+            "supported_modes": ["cloud_whisper_api"],
+        },
     )

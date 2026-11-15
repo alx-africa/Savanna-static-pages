@@ -91,14 +91,30 @@ def _load_faq() -> list[dict]:
 
 
 def _keyword_score(query: str, entry: dict, target_lang: str) -> int:
-    """Keyword overlap score with token cleaning and language affinity boost."""
+    """Keyword overlap score with stopword filtering and language affinity boost."""
     import re
-    query_tokens = set(re.findall(r"[\w']+", query.lower()))
+
+    STOPWORDS = {
+        "is", "the", "a", "an", "and", "or", "of", "to", "in", "on", "what", "how", "can", "i", "do",
+        "ምን", "ነው", "እና", "ወይም", "በ", "ላይ", "እንዴት",
+        "maal", "dha", "fi", "moo", "keessa", "irra", "akkamitti",
+        "እንታይ", "እዩ", "ኣብ", "ከመይ",
+        "waa", "maxay", "iyo", "ama", "ku", "sidee",
+        "ما", "هو", "هي", "في", "على", "كيف",
+        "ni", "ya", "na", "au", "katika", "kwa", "vipi",
+        "est", "le", "la", "et", "ou", "dans", "sur", "comment"
+    }
+
+    query_tokens = {t for t in re.findall(r"[\w']+", query.lower()) if t not in STOPWORDS and len(t) > 1}
     if not query_tokens:
         return 0
     target = (entry.get("question", "") + " " + entry.get("answer", "")).lower()
     target_tokens = set(re.findall(r"[\w']+", target))
-    base_score = len(query_tokens & target_tokens)
+    matched = query_tokens & target_tokens
+    base_score = len(matched)
+    # Require at least 2 content tokens (or a single very specific token >= 5 chars) to prevent false matches
+    if base_score < 2 and not any(len(m) >= 5 for m in matched):
+        return 0
     if base_score > 0 and entry.get("language") == target_lang:
         base_score += 4  # Strong bonus for matching language
     return base_score

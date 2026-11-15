@@ -54,26 +54,67 @@ SUPPORTED_LANGUAGES: dict[str, dict[str, str]] = {
     "fr": {"name": "French", "native": "Français", "dir": "ltr"},
 }
 
-_TIGRINYA_MARKERS = {
-    "ከመይ", "ናይ", "ኣለኹ", "እዩ", "እንታይ", "ትምህርቲ", "ብኸመይ", "ቀዳማይ", "ሓበሬታ",
-    "ቐ", "ቘ", "ኸ", "ዀ", "ጘ", "ጝ"
+# Tigrinya distinctive Ethiopic glyphs (including all 7 vowel orders for ቐ, ቘ, ኸ, ዀ, ጘ, ጟ)
+# Note: ኸ-ኾ series (ኸ, ኹ, ኺ, ኻ, ኼ, ኽ, ኾ) and ቐ-ቖ series never occur in standard Amharic orthography.
+_TIGRINYA_EXCLUSIVE_GLYPHS = set(
+    "ቐቑቒቓቔቕቖ"  # q' series (U+1250 - U+1256)
+    "ቘቚቛቜቝ"    # labialized q' series (U+1258, 125A-125D)
+    "ኸኹኺኻኼኽኾ"  # x series (U+12B8 - U+12BE) e.g., ዲኻ, ዲኺ, ብኸመይ
+    "ዀዂዄዅ"      # labialized x series (U+12C0, 12C2, 12C4, 12C5)
+    "ጘጙጚጛጜጝጞ"  # g̃ series (U+1318 - U+131E)
+    "ጟ"          # g̃w series (U+131F)
+)
+
+_TIGRINYA_WORDS = {
+    "ከመይ", "ናይ", "ኣለኹ", "ኣለኻ", "ኣለኺ", "ኣለዉ", "እዩ", "እያ", "እዮም",
+    "እንታይ", "ስለምንታይ", "ኣበይ", "ማዓስ", "መዓስ", "ክንደይ", "ድዩ", "ድያ",
+    "ዲኻ", "ዲኺ", "ኢኻ", "ኢኺ", "ኢኹም", "ኢና", "ትምህርቲ", "ብኸመይ",
+    "ቀዳማይ", "ሓበሬታ", "ምረቓ", "ስራሕ", "ሓገዝ", "ደሓን", "ይቐንየለይ",
+    "የቐንየልና", "ደልየ", "ደሊየ", "ተበጻሕነት", "ምምችቻው", "ኣነ", "ንሕና",
+    "ሰላም", "ትኽእል", "ይኽእል", "ክምዝገብ", "ዝተጸበናዮ"
+}
+
+_AMHARIC_WORDS = {
+    "ነው", "ናት", "ናቸው", "ነኝ", "ነህ", "ነሽ", "ነን", "ነበር",
+    "ምን", "ለምን", "የት", "መቼ", "ስንት", "እንዴት", "እንደምን",
+    "ስራ", "እርዳታ", "ተደራሽነት", "እፈልጋለሁ", "ይቻላል", "አመሰግናለሁ",
+    "አለኝ", "አለህ", "አለሽ", "አለው", "አላት", "አለን", "አስተባባሪ",
+    "ማጠናቀቂያ", "ውጤት", "ፈተና", "መመዝገብ", "እችላለሁ", "እባክዎ", "እባክህ"
 }
 
 _OROMO_KEYWORDS = {
     "afaan", "oromoo", "oromo", "oromootiin", "akkam", "nagaa", "barnoota", "barachuu", "barataa", 
-    "hojii", "danda", "danda'aa", "danda'u", "maaloo", "waa", "ani", "eessa", "akkamitti", "maal"
+    "hojii", "danda", "danda'aa", "danda'u", "maaloo", "waa", "ani", "eessa", "akkamitti",
+    "maal", "maaliif", "meeqa", "yoom", "eenyu", "dha", "miti", "moo", "eeyyee", "lakki",
+    "galatoomi", "fageenyaa", "deeggarsa", "eebba", "eebbaa", "qabxii", "qabxiin",
+    "koorsii", "koorsicha", "sagantaa", "jijjiiruu", "barbaada", "jira", "jiru", "isa"
 }
 
 _SOMALI_KEYWORDS = {
-    "soomaali", "sidee", "barashada", "shaqo", "mahadsanid", "fadlan", "waa", "maxay", "waxbarasho", "koorsada"
+    "soomaali", "sidee", "barashada", "shaqo", "shaqada", "mahadsanid", "fadlan", "waa", "maxay",
+    "waxbarasho", "koorsada", "waxaan", "doonayaa", "rabtaa", "haye", "haa", "maya",
+    "subax", "galab", "qalin", "jabinta", "buundada", "caawimaad", "karti", "macallin",
+    "xagee", "goormaa", "yaa", "immisa", "sababtoo"
 }
 
 _SWAHILI_KEYWORDS = {
-    "habari", "jambo", "kazi", "masomo", "asante", "naomba", "tafadhali", "nini", "vipi", "mimi", "kujifunza", "nataka"
+    "habari", "jambo", "kazi", "masomo", "asante", "naomba", "tafadhali", "nini", "vipi",
+    "mimi", "kujifunza", "nataka", "sawa", "ndiyo", "hapana", "kozi", "kuhusu", "yangu",
+    "yako", "kwa", "katika", "shukrani", "kiwango", "ufaulu", "kuhitimu", "gani", "lini",
+    "wapi", "ngapi", "sababu"
 }
 
 _FRENCH_KEYWORDS = {
-    "bonjour", "comment", "formation", "merci", "travail", "suis", "cours", "pourquoi", "aide", "inscrire"
+    "bonjour", "comment", "formation", "merci", "travail", "suis", "cours", "pourquoi",
+    "aide", "inscrire", "oui", "non", "salut", "bonsoir", "je", "veux", "score",
+    "minimum", "diplome", "diplôme", "requis", "obtenir", "quand", "quel", "quelle",
+    "combien", "est", "pour", "avec", "une", "des"
+}
+
+_ENGLISH_KEYWORDS = {
+    "what", "how", "course", "job", "help", "can", "graduation", "score", "threshold",
+    "please", "hello", "hi", "thanks", "yes", "no", "passing", "requirement", "assistant",
+    "when", "why", "where", "which", "who", "enroll", "learn", "deadline", "review"
 }
 
 _TIMEOUT_MESSAGES = {
@@ -114,30 +155,47 @@ def _detect_language(text: str) -> str:
 
     # 2. Ethiopic script detection (\u1200 - \u137F)
     if any("\u1200" <= c <= "\u137f" for c in text):
-        # Disambiguate Tigrinya vs Amharic
-        words = set(text.split())
-        if any(marker in text for marker in _TIGRINYA_MARKERS) or any(m in words for m in _TIGRINYA_MARKERS):
+        # 2a. Check for exclusive Tigrinya glyphs (e.g., ኸ, ኹ, ኺ, ኻ, ኼ, ኽ, ኾ, ቐ, ቘ, ዀ, ጘ, ጟ)
+        if any(c in _TIGRINYA_EXCLUSIVE_GLYPHS for c in text):
+            return "ti"
+
+        # 2b. Disambiguate shared Ge'ez characters by word vocabulary
+        import re
+        tokens = set(re.findall(r"[\w]+", text))
+        ti_score = sum(1 for w in tokens if w in _TIGRINYA_WORDS)
+        am_score = sum(1 for w in tokens if w in _AMHARIC_WORDS)
+        if ti_score > am_score:
             return "ti"
         return "am"
 
-    # 3. Keyword heuristic check for Latin scripts
-    lower = text.lower()
-    words = set(lower.split())
-
-    # Strip punctuation for cleaner token matching
+    # 3. Keyword & phrase heuristic scoring for Latin scripts
     import re
+    lower = text.lower()
     cleaned_tokens = set(re.findall(r"[\w']+", lower))
 
-    if any(k in cleaned_tokens for k in _OROMO_KEYWORDS) or any(k in lower for k in ("afaan orom", "barachuu", "akkamitti", "akkam jirtu", "barnoota")):
-        return "om"
-    if any(k in cleaned_tokens for k in _SOMALI_KEYWORDS) or any(k in lower for k in ("mahadsanid", "waxbarasho")):
-        return "so"
-    if any(k in cleaned_tokens for k in _SWAHILI_KEYWORDS) or any(k in lower for k in ("habari", "asante sana", "naomba kusaidiwa")):
-        return "sw"
-    if any(k in cleaned_tokens for k in _FRENCH_KEYWORDS) or any(k in lower for k in ("bonjour", "s'il vous plaît", "merci beaucoup")):
-        return "fr"
+    scores = {
+        "om": sum(1 for w in cleaned_tokens if w in _OROMO_KEYWORDS),
+        "so": sum(1 for w in cleaned_tokens if w in _SOMALI_KEYWORDS),
+        "sw": sum(1 for w in cleaned_tokens if w in _SWAHILI_KEYWORDS),
+        "fr": sum(1 for w in cleaned_tokens if w in _FRENCH_KEYWORDS),
+        "en": sum(1 for w in cleaned_tokens if w in _ENGLISH_KEYWORDS),
+    }
 
-    # 4. Fallback to langdetect
+    # Boost for common multi-word greetings/phrases
+    if "afaan orom" in lower or "akkam jirtu" in lower or "akkam nagaa" in lower:
+        scores["om"] += 3
+    if "asante sana" in lower or "habari gani" in lower or "habari za" in lower:
+        scores["sw"] += 3
+    if "s'il vous plaît" in lower or "merci beaucoup" in lower or "s il vous plait" in lower:
+        scores["fr"] += 3
+    if "thank you" in lower or "good morning" in lower:
+        scores["en"] += 3
+
+    best_lang, best_score = max(scores.items(), key=lambda item: item[1])
+    if best_score > 0:
+        return best_lang
+
+    # 4. Fallback to langdetect for longer text without keyword matches
     try:
         code = detect(text)
         if code in SUPPORTED_LANGUAGES:

@@ -34,8 +34,21 @@
   }
   injectStylesheet();
 
-  /* ── 2. Bilingual Copy (EN & AM) ─────────────────────────────────────── */
-  let currentLang = (localStorage.getItem(LANG_KEY) === 'am') ? 'am' : 'en';
+  /* ── 2. Multilingual Support (8 Supported Languages) ─────────────────── */
+  const ALL_LANGUAGES = ['en', 'am', 'om', 'ti', 'so', 'ar', 'sw', 'fr'];
+  const storedLang = localStorage.getItem(LANG_KEY);
+  let currentLang = ALL_LANGUAGES.includes(storedLang) ? storedLang : 'en';
+
+  const BCP47_A11Y = {
+    en: 'en-US',
+    am: 'am-ET',
+    om: 'om-ET',
+    ti: 'ti-ET',
+    so: 'so-SO',
+    ar: 'ar-SA',
+    sw: 'sw-TZ',
+    fr: 'fr-FR'
+  };
 
   const i18n = {
     en: {
@@ -55,7 +68,7 @@
       optCognitiveDesc: 'Optimized for neurodivergent learners, ADHD, and dyslexia: simplified text, reading guide ruler, and reduced animations.',
       btnSave: 'Save & Apply Preferences',
       btnSkip: 'Skip for now (I will configure later)',
-      langToggle: 'አማርኛ (AM)',
+      langToggle: 'English (EN)',
       closeLabel: 'Close accessibility dialog',
       savedAnnouncement: 'Accessibility preferences updated and applied.',
       skippedAnnouncement: 'Accessibility setup skipped. You can open it anytime using the accessibility button.',
@@ -102,6 +115,19 @@
       imgDescAnnounce: 'Reading visual description aloud...',
       imgArrivalAnnouncement: 'Graphic focused. Analyzing visual elements with AI...',
       imgArrivalCached: 'Graphic focused. Playing AI visual description.',
+      // Accommodations & Shortcuts Drawer i18n
+      transcriptLabel: 'Lesson Audio & Video Transcript',
+      transcriptSummary: 'Lesson Audio Transcript & Captions (Deaf / Hard of Hearing Access)',
+      transcriptHeading: 'Lesson Spoken Content Transcript',
+      transcriptBody: 'This lesson covers the future of the Virtual Assistant profession. As businesses adopt remote tools and Artificial Intelligence, the demand for human collaboration, specialized niche skills, emotional intelligence, and adaptable digital operations increases dramatically.',
+      transcriptSignBtn: 'Request Ethiopian Sign Language (EthSL) Interpretation',
+      transcriptSignAlert: 'Sign language interpretation request logged. An accessibility coordinator will assist you.',
+      shortcutTableKey: 'Shortcut',
+      shortcutTableAction: 'Action',
+      shortcutTableImg: 'Describe Image with AI (Screen Reader Ready)',
+      shortcutTableSpace: 'Select active element during Auto-Scan',
+      shortcutVoiceTitle: 'Hands-Free Voice Commands',
+      shortcutGotIt: 'Got it',
     },
     am: {
       triggerLabel: 'የተደራሽነት ምርጫዎች እና የማስተካከያ ቅንብሮች',
@@ -120,7 +146,7 @@
       optCognitiveDesc: 'ለቀላል ንባብ እና ትኩረት፡ አጫጭር ዓረፍተ ነገሮች፣ የንባብ መስመር እና የማይንቀሳቀስ እይታ።',
       btnSave: 'አስቀምጥና ተግብር',
       btnSkip: 'ለጊዜው እለፈው (በኋላ አስተካክላለሁ)',
-      langToggle: 'English (EN)',
+      langToggle: 'አማርኛ (AM)',
       closeLabel: 'የተደራሽነት መስኮትን ዝጋ',
       savedAnnouncement: 'የተደራሽነት ምርጫዎች ተቀምጠው ተተግብረዋል።',
       skippedAnnouncement: 'የተደራሽነት ቅንብር አልፏል። በማንኛውም ጊዜ በተደራሽነት አዝራሩ መክፈት ይችላሉ።',
@@ -167,6 +193,463 @@
       imgDescAnnounce: 'የምስሉ ማብራሪያ በድምፅ እየተነበበ ነው...',
       imgArrivalAnnouncement: 'ምስል ላይ ደርሰዋል። AI ምስሉን በመተንተን ላይ ነው...',
       imgArrivalCached: 'ምስል ላይ ደርሰዋል። የAI ምስል መግለጫ እየተነበበ ነው...',
+      // Accommodations & Shortcuts Drawer i18n
+      transcriptLabel: 'የቪዲዮና ኦዲዮ የፅሑፍ ግልባጭ',
+      transcriptSummary: 'የትምህርቱ ሙሉ የፅሑፍ ግልባጭ እና ንዑስ ርዕሶች (የመስማት ችግር ላለባቸው)',
+      transcriptHeading: 'የድምፅ ይዘት ማጠቃለያ',
+      transcriptBody: 'ይህ ትምህርት የቨርቹዋል አሲስታንት ኢንዱስትሪ የወደፊት ጉዞን ያብራራል። ቴክኖሎጂ እና አርቴፊሻል ኢንተለጀንስ (AI) የስራ ሂደቶችን እንዴት እየቀየሩ እንዳሉ እና የሰው ልጅ ክህሎቶች ለምን ይበልጥ አስፈላጊ እንደሆኑ በዝርዝር ያትታል።',
+      transcriptSignBtn: 'የኢትዮጵያ የምልክት ቋንቋ (EthSL) አስተርጓሚ ይጠይቁ',
+      transcriptSignAlert: 'የምልክት ቋንቋ ጥያቄዎ ተመዝግቧል። የተደራሽነት አስተባባሪ ያነጋግርዎታል።',
+      shortcutTableKey: 'ቁልፍ',
+      shortcutTableAction: 'ተግባር',
+      shortcutTableImg: 'የምስሉን ዝርዝር መግለጫ አድምጥ (AI Image Inspector)',
+      shortcutTableSpace: 'በስካነር ውስጥ ንቁ የሆነውን መምረጥ',
+      shortcutVoiceTitle: 'እጅ-አልባ የድምፅ ትዕዛዞች',
+      shortcutGotIt: 'ተረዳሁ',
+    },
+    om: {
+      triggerLabel: 'Filannoowwan qaqqabiinsaa fi qindaa’inoota madaqsuu',
+      modalTitle: 'Barnoota keessan haala akkamiin hordofuu barbaaddu?',
+      modalSubtitle: 'Fuula barnootaa keessan fooyyeffadhaa. Waan barachuuf isin gargaaru hundumaa filadhaa.',
+      noticeText: 'Waraqaa ragaa yaalaa hin gaafannu. Yeroo barbaaddanitti jijjiiruu ykn bira darbuu dandeessu.',
+      optScreenReaderTitle: 'Dubbisaa Iskiriinii fi Qajeelcha Sagalee',
+      optScreenReaderDesc: 'Barattoota ijaan hin argineef kan mijate: ibsa suuraa bal’aa, deeggarsa dubbisaa iskiriinii fi kallattii sagalee.',
+      optCaptionsTitle: 'Ibsa Barreeffamaa fi Akeekkachiisa Mul’ataa',
+      optCaptionsDesc: 'Barattoota gurraan hin dhageenyeef kan mijate: barreeffama sagalee fi akeekkachiisa ifa mul’ataa.',
+      optContrastTitle: 'Barreeffama Guddaa fi Wal-dhabdee Rangi Mul’ataa',
+      optContrastDesc: 'Barattoota arguuf rakkina qabaniif: wal-dhabdee rangi gaarii, barreeffama bal’aa fi agarsiistuu ifaa.',
+      optMotorTitle: 'Kiiyboordii, Meesha Swiikii fi Deeggarsa Sochii',
+      optMotorDesc: 'Rakkina sochii qaamaa qabaniif: qabduuwwan gurguddoo, kutaalee saffisaa fi iskaanerii ofumaa.',
+      optCognitiveTitle: 'Afaan Salphaa fi Hubannoo Qulqulluu',
+      optCognitiveDesc: 'Barattoota xiyyeeffannoo fi dubbisuun isaan dhibuuf: barreeffama salphaa, sarara dubbisaa fi sochii hir’ate.',
+      btnSave: 'Olkaayiitii Hojiirra Oolchi',
+      btnSkip: 'Ammaaf bira darbi (Booddeen qindeessa)',
+      langToggle: 'Afaan Oromoo (OM)',
+      closeLabel: 'Dallaa qaqqabiinsaa cufi',
+      savedAnnouncement: 'Filannoowwan qaqqabiinsaa haaromfaman hojiirra oolaniiru.',
+      skippedAnnouncement: 'Qindaa’inni qaqqabiinsaa darbeera. Yeroo barbaaddanitti qabduu qaqqabiinsaan banuu dandeessu.',
+      motorBarLabel: 'Tarkaanfiiwwan Saffisaa Sochii Qaamaa',
+      btnMotorBack: 'Duubatti (K)',
+      btnMotorComplete: 'Xumuri (C)',
+      btnMotorNext: 'Itti aani (J)',
+      btnVoiceNav: 'Kallattii Sagalee (V)',
+      btnAutoScan: 'Iskaanerii Swiikii (S)',
+      btnShortcuts: 'Qaxxaamura (?)',
+      voiceNavActive: '🎙️ Sagalee dhaggeeffachuun banaadha. Jechoota kanneen fayyadamaa: Itti aani, Duubatti, Xumuri, Gadi siqi, Dubbisi, Dhaabi, Gargaarsa',
+      voiceNavUnsupported: 'Biroowzariin keessan ajaja sagalee hin deggeru. Qaxxaamura kiiyboordii (J, K, C, S) fayyadamaa.',
+      voiceNavStopped: 'Ajajni sagalee dhaabbateera.',
+      scanActive: '⚡ Iskaaneriin ofumaa banaadha. Waan filatame banuuf Space ykn Enter dhiibaa. Dhaabuuf Esc dhiibaa.',
+      scanStopped: 'Iskaaneriin ofumaa dhaabbateera.',
+      shortcutsModalTitle: 'Qajeelfama Kiiyboordii fi Ajaja Sagalee',
+      shortcutsModalDesc: 'Barattoota sochii qaamaa irratti rakkina qabaniif qaxxaamura kiiyboordii fi ajaja sagalee.',
+      shortcutNext: 'Gara barnoota itti aanutti darbi',
+      shortcutPrev: 'Gara barnoota darbeetti deebi’i',
+      shortcutComplete: 'Hojii kana akka xumurameetti galmeessi',
+      shortcutScan: 'Iskaanerii swiikii ofumaa bani / cufi',
+      shortcutVoice: 'Ajaja sagalee harka-malee bani / cufi',
+      shortcutHelp: 'Qajeelfama qaxxaamuraa bani / cufi',
+      shortcutEsc: 'Iskaanerii dhaabi ykn dallaa banaa cufi',
+      voiceCmdList: 'Ajaja Sagalee: "next", "back", "complete", "scroll down", "scroll up", "read", "stop", "help"',
+      btnSimplify: '✨ Ibsa Salphaa',
+      btnOriginal: 'Barreeffama Jalqabaa',
+      simplifiedTitle: 'Cuunfaa Sadarkaa-sadarkaan Afaan Salphaan',
+      simplifiedLoading: 'Gara afaan salphaatti jijjiiramaa jira...',
+      btnReadAloud: '🔊 Sagaleen Dhaggeeffadhu',
+      rulerToggle: '📏 Sarara Qajeelcha Dubbisaa',
+      rulerActivePill: '📏 Sarara Dubbisaa: BANAA (Cufuuf R dhiibaa)',
+      rulerInactivePill: '📏 Sarara Dubbisaa: CUFAA (Banuuf R dhiibaa)',
+      stepBadge: 'Sadarkaa',
+      plainKeyTakeaway: 'Qabxii Ijoo',
+      plainActionSteps: 'Tarkaanfiiwwan Hojii',
+      btnDescribeImg: '👁️ Suuraa Ibsi (Alt+I)',
+      imgDescTitle: 'Ibsa Suuraa AI (Dubbisaa Iskiriiniif)',
+      imgDescReadAloud: '🔊 Sagaleen Dhaggeeffadhu',
+      imgDescClose: 'Ibsa Cufi',
+      imgDescAnnounce: 'Ibsi suuraa sagaleen dubbifamaa jira...',
+      imgArrivalAnnouncement: 'Suuraa irra geessaniittu. AI suuraa qaaccessaa jira...',
+      imgArrivalCached: 'Suuraa irra geessaniittu. Ibsi suuraa AI taphachaa jira.',
+      transcriptLabel: 'Waraabbii Barreeffama Sagalee fi Viidiyoo Barnootaa',
+      transcriptSummary: 'Waraabbii Guutuu Sagalee fi Mata-duree Gadii (Gurraan Hin Dhageenyeef)',
+      transcriptHeading: 'Cuunfaa Qabiyyee Dubbatamee',
+      transcriptBody: 'Barnoonni kun gara fuulduraa ogummaa Gargaaraa Fageenyaa (Virtual Assistant) ibsa. Akkaataa teeknooloojiin fi Namtolcheen (AI) adeemsa hojii jijjiiraa jiranii fi sababa dandeettiin dhala namaa daran barbaachisaa ta’e bal’inaan dhiyeessa.',
+      transcriptSignBtn: 'Afaan Mallattoo Itoophiyaa (EthSL) Gaafadhaa',
+      transcriptSignAlert: 'Gaaffiin afaan mallattoo keessanii galmaa’eera. Qindeessaan qaqqabiinsaa isin gargaara.',
+      shortcutTableKey: 'Qubee',
+      shortcutTableAction: 'Hojii',
+      shortcutTableImg: 'Ibsa suuraa AI dhaggeeffadhu (Screen Reader)',
+      shortcutTableSpace: 'Iskaanerii keessatti waan filatame bani',
+      shortcutVoiceTitle: 'Ajaja Sagalee Harka-Malee',
+      shortcutGotIt: 'Hubadheera',
+    },
+    ti: {
+      triggerLabel: 'ናይ ተበጻሕነት ምርጫታትን ምምችቻው ቅጥዕታትን',
+      modalTitle: 'ትምህርትኹም ብኸመይ ክትከታተሉ ትደልዩ?',
+      modalSubtitle: 'ናይ ትምህርቲ መተግበሪ ገጽኩም ኣመዓራርዩ። ዝበለጸ ንኽትመሃሩ ዝሕግዙኹም ኲሎም ምረጹ።',
+      noticeText: 'ናይ ሕክምና መረዳእታ ወይ መረጋገጺ ኣይንሓትን ኢና። ኣብ ዝኾነ እዋን ክትቅይሩ ወይ ክትሓልፉ ትኽእሉ ኢኹም።',
+      optScreenReaderTitle: 'ስክሪን ኣንባቢን ናይ ድምጺ መምርሒን',
+      optScreenReaderDesc: 'ንዓይነ-ስዉራን ተምሃሮ ዝተመቻቸወ፡ ዝርዝር መግለጺታት ስእሊ፡ ደገፍ ስክሪን ኣንባቢን ድምጻዊ ዳህሳስን።',
+      optCaptionsTitle: 'ጽሑፋዊ መግለጺታትን ናይ ምርኢት መጠንቀቕታታትን',
+      optCaptionsDesc: 'ጸገም ምስማዕ ንዘለዎም ተምሃሮ ዝተመቻቸወ፡ ትሕዝቶ ድምጺ ብጽሑፍን ናይ ምርኢት ብልጭታ መጠንቀቕታን።',
+      optContrastTitle: 'ዓቢ ጽሑፍን ልዑል ናይ ሕብሪ ፍልልይን',
+      optContrastDesc: 'ትሑት ምርኢት ንዘለዎም ተምሃሮ፡ ልዑል ፍልልይ ሕብርታት፡ ዓበይቲ ፊደላትን ድሙቕ መመልከቲን።',
+      optMotorTitle: 'ኪቦርድ፡ ናይ ስዊች መሳርሒን ናይ ምንቅስቓስ ሓገዝን',
+      optMotorDesc: 'ናይ ምንቅስቓስ ጸገም ንዘለዎም፡ ዓበይቲ መተኮሲታት፡ ቀለልቲ ኣቋራጭ ቁልፍታትን ኣውቶማቲክ ስካነርን።',
+      optCognitiveTitle: 'ቀሊል ቋንቋን ካብ ምዝንጋዕ ነጻ ዝኾነ ምርኢትን',
+      optCognitiveDesc: 'ንቀሊል ንባብን ቆላሕታን፡ ሓጸርቲ ሓረጋት፡ ናይ ንባብ መስመርን ምንቅስቓስ ዘይብሉ ትርኢትን።',
+      btnSave: 'ኣቐሚጥካ ተግብር',
+      btnSkip: 'ንሕጂ ሕለፎ (ጸኒሐ ከስተኻኽሎ እየ)',
+      langToggle: 'ትግርኛ (TI)',
+      closeLabel: 'ናይ ተበጻሕነት መስኮት ዕጾ',
+      savedAnnouncement: 'ናይ ተበጻሕነት ምርጫታት ተመዝጊቦም ተተግቢሮም ኣለዉ።',
+      skippedAnnouncement: 'ናይ ተበጻሕነት ቅጥዒ ሓሊፉ። ኣብ ዝኾነ እዋን በቲ ናይ ተበጻሕነት መጎልበቲ ክትከፍቱዎ ትኽእሉ ኢኹም።',
+      motorBarLabel: 'ናይ ምንቅስቓስን ኣካላዊ ሓገዝን ቅልጡፍ ስጉምትታት',
+      btnMotorBack: 'ተመለስ (K)',
+      btnMotorComplete: 'ፈጽም (C)',
+      btnMotorNext: 'ቀጻሊ (J)',
+      btnVoiceNav: 'ናይ ድምጺ ትእዛዝ (V)',
+      btnAutoScan: 'ስዊች ስካነር (S)',
+      btnShortcuts: 'ኣቋራጭታት (?)',
+      voiceNavActive: '🎙️ ናይ ድምጺ ምስማዕ ተኸፊቱ ኣሎ። ዝስዕቡ ቃላት ተጠቐሙ፡ ቀጻሊ፡ ተመለስ፡ ፈጽም፡ ንታሕቲ፡ ኣንብብ፡ ደው በል፡ ሓገዝ',
+      voiceNavUnsupported: 'እዚ ብሮውዘር ናይ ድምጺ ትእዛዝ ኣይድግፍን እዩ። ናይ ኪቦርድ ኣቋራጭታት (J, K, C, S) ተጠቐሙ።',
+      voiceNavStopped: 'ናይ ድምጺ ትእዛዝ ደው ኢሉ ኣሎ።',
+      scanActive: '⚡ ኣውቶማቲክ ስካነር በርሁ ኣሎ። ዝተመርጸ ንምኽፋት Space ወይ Enter ጠውቑ። ደው ንምባል Esc ጠውቑ።',
+      scanStopped: 'ኣውቶማቲክ ስካነር ደው ኢሉ ኣሎ።',
+      shortcutsModalTitle: 'ናይ ኪቦርድን ናይ ድምጺ ትእዛዝን መምርሒ',
+      shortcutsModalDesc: 'ናይ ምንቅስቓስ ጸገም ንዘለዎም ተምሃሮ ዝተዳለዉ ነጸል ቁልፍታትን ናይ ድምጺ ትእዛዛትን።',
+      shortcutNext: 'ናብ ቀጻሊ ትምህርቲ / ክፍሊ ኪድ',
+      shortcutPrev: 'ናብ ዝሓለፈ ትምህርቲ / ተመለስ',
+      shortcutComplete: 'ናይ ሕጂ ዕዮ ከም ዝተዛዘመ መዝግብ',
+      shortcutScan: 'ናይ ስዊች ኣውቶማቲክ ስካነር ኣብርህ / ኣጥፍእ',
+      shortcutVoice: 'ኢድ-ኣልቦ ናይ ድምጺ ትእዛዝ ኣብርህ / ኣጥፍእ',
+      shortcutHelp: 'እዚ ናይ መምርሒ መስኮት ክፈት / ዕጾ',
+      shortcutEsc: 'ስካነር ደው ኣብል ወይ ንቑሕ መስኮት ዕጾ',
+      voiceCmdList: 'ናይ ድምጺ ትእዛዛት: "next", "back", "complete", "scroll down", "scroll up", "read", "stop", "help"',
+      btnSimplify: '✨ ቀሊል መብርሂ',
+      btnOriginal: 'መበቆላዊ ጽሑፍ',
+      simplifiedTitle: 'ቀሊልን ብደረጃ ዝተሰርዐን ጽማቔ',
+      simplifiedLoading: 'ናብ ቀሊል ቋንቋ ይቕየር ኣሎ...',
+      btnReadAloud: '🔊 ብድምጺ ኣስምዕ',
+      rulerToggle: '📏 ናይ ንባብ መምርሒ መስመር',
+      rulerActivePill: '📏 ናይ ንባብ መስመር: በርሁ ኣሎ (R ጠውቑ)',
+      rulerInactivePill: '📏 ናይ ንባብ መስመር: ጠፊኡ ኣሎ (R ጠውቑ)',
+      stepBadge: 'ደረጃ',
+      plainKeyTakeaway: 'ቀንዲ ነጥቢ',
+      plainActionSteps: 'ቀጻሊ ስጉምትታት',
+      btnDescribeImg: '👁️ ስእሊ ኣብራህ (Alt+I)',
+      imgDescTitle: 'ናይ AI ስእላዊ መግለጺ (ንሰክሪን ኣንባቢ)',
+      imgDescReadAloud: '🔊 ብድምጺ ኣስምዕ',
+      imgDescClose: 'መብርሂ ዕጾ',
+      imgDescAnnounce: 'ናይ ስእሉ መግለጺ ብድምጺ ይንበብ ኣሎ...',
+      imgArrivalAnnouncement: 'ስእሊ ረኺብኩም ኣለኹም። AI ነቲ ስእሊ ይምርምሮ ኣሎ...',
+      imgArrivalCached: 'ስእሊ ረኺብኩም ኣለኹም። ናይ AI ስእላዊ መግለጺ ይንበብ ኣሎ።',
+      transcriptLabel: 'ናይ ትምህርቲ ድምጽን ቪድዮን ጽሑፋዊ ቅዳሕ',
+      transcriptSummary: 'ናይ ትምህርቲ ምሉእ ጽሑፋዊ ቅዳሕን ንኡሳን ኣርእስታትን (ንጸገም ምስማዕ)',
+      transcriptHeading: 'ጽማቔ ናይቲ ዝተነበበ ትሕዝቶ',
+      transcriptBody: 'እዚ ትምህርቲ መጻኢ ናይ ቨርቹዋል ኣሲስታንት (Virtual Assistant) ሞያ የብርህ። ቴክኖሎጂን ሰርሖ-ሰብን (AI) ከመይ ጌሮም ናይ ስራሕ ሂደታት ይቕይሩ ከምዘለዉን ናይ ደቂ-ሰብ ክእለት ስለምንታይ ኣዝዩ ኣገዳሲ ከምዝኾነን ብዝርዝር የረድእ።',
+      transcriptSignBtn: 'ናይ ኢትዮጵያ ምልክት ቋንቋ (EthSL) ተርጓሚ ሕተት',
+      transcriptSignAlert: 'ናይ ምልክት ቋንቋ ሕቶኹም ተመዝጊቡ ኣሎ። ናይ ተበጻሕነት ኣተሓባባሪ ክሕግዘኩም እዩ።',
+      shortcutTableKey: 'ቁልፊ',
+      shortcutTableAction: 'ተግባር',
+      shortcutTableImg: 'ናይ ስእሊ ዝርዝር መግለጺ ስማዕ (Screen Reader)',
+      shortcutTableSpace: 'ኣብ ስካነር ንቑሕ ዝኾነ ምረጽ',
+      shortcutVoiceTitle: 'ኢድ-ኣልቦ ናይ ድምጺ ትእዛዛት',
+      shortcutGotIt: 'ተረዲኡኒ',
+    },
+    so: {
+      triggerLabel: 'Dookhyada fududeynta iyo habeynta adeegga',
+      modalTitle: 'Sidee ayaad jeclaan lahayd inaad wax u barato?',
+      modalSubtitle: 'Habeey muuqaalkaaga waxbarasho. Dooro wax kasta oo waxbarashadaada fududeynaya.',
+      noticeText: 'Ma weydiinno caddeyn caafimaad. Waad beddeli kartaa wakhti kasta ama waad ka boodi kartaa.',
+      optScreenReaderTitle: 'Akhristaha Shaashadda iyo Hagidda Codka',
+      optScreenReaderDesc: 'Waxaa loo habeeyay ardayda aragga naafada ka ah: sharaxaad sawirro oo faahfaahsan iyo hagidda codka.',
+      optCaptionsTitle: 'Qoraalka Hoose, Qoraallada iyo Digniinaha Muuqaalka ah',
+      optCaptionsDesc: 'Waxaa loo habeeyay ardayda maagalka naafada ka ah: qoraalka codka iyo digniino biligleynaya.',
+      optContrastTitle: 'Qoraal Weyn iyo Aragti Ka Duwan oo Sare',
+      optContrastDesc: 'Waxaa loo habeeyay dadka araggoodu daciifka yahay: xuruuf waaweyn iyo tilmaamayaal cad.',
+      optMotorTitle: 'Kiiboodhka, Qalabka Badhanka iyo Caawinta Dhaqdhaqaaqa',
+      optMotorDesc: 'Waxaa loo habeeyay xaddidaadda dhaqdhaqaaqa: badhano waaweyn iyo furayaal gaagaaban.',
+      optCognitiveTitle: 'Luqad Fudud iyo Feejignaan Sare',
+      optCognitiveDesc: 'Waxaa loo habeeyay feejignaanta iyo akhriska: qoraal la fududeeyay iyo xariiqda hagidda akhriska.',
+      btnSave: 'Keydi oo Dhaqangeli',
+      btnSkip: 'Ka bood hadda (Hadhow baan habeyn doonaa)',
+      langToggle: 'Soomaali (SO)',
+      closeLabel: 'Xir daaqadda fududeynta',
+      savedAnnouncement: 'Dookhyada fududeynta waa la cusbooneysiiyay waana la dhaqangeliyay.',
+      skippedAnnouncement: 'Dejinta fududeynta waa laga booday. Waxaad furi kartaa wakhti kasta adigoo isticmaalaya badhanka fududeynta.',
+      motorBarLabel: 'Tallaabooyinka Degdegga ah ee Dhaqdhaqaaqa',
+      btnMotorBack: 'Dib (K)',
+      btnMotorComplete: 'Dhameystir (C)',
+      btnMotorNext: 'Xiga (J)',
+      btnVoiceNav: 'Hagidda Codka (V)',
+      btnAutoScan: 'Baaraha Badhanka (S)',
+      btnShortcuts: 'Gaagaaban (?)',
+      voiceNavActive: '🎙️ Dhageysiga codka waa furan yahay. Dheh: Xiga, Dib, Dhameystir, Hoos u rog, Akhri, Jooji, Caawimaad',
+      voiceNavUnsupported: 'Barrawsarkaagu ma taageero amarrada codka. Fadlan isticmaal furayaasha gaagaaban (J, K, C, S).',
+      voiceNavStopped: 'Hagiddii codka waa la hakiyay.',
+      scanActive: '⚡ Baaraha tooska ah waa shaqeynayaa. Riix Space ama Enter si aad u doorato. Riix Esc si aad u joojiso.',
+      scanStopped: 'Baarihii tooska ahaa waa istaagay.',
+      shortcutsModalTitle: 'Tilmaamaha Furayaasha Kiiboodhka iyo Codka',
+      shortcutsModalDesc: 'Furayaal gaagaaban oo loogu talagalay ardayda qabta dhibaatooyinka dhaqdhaqaaqa.',
+      shortcutNext: 'U gudub casharka xiga',
+      shortcutPrev: 'Ku noqo casharkii hore',
+      shortcutComplete: 'U calaamadee hawshan mid dhammaatay',
+      shortcutScan: 'Daar / Demi baaraha tooska ah',
+      shortcutVoice: 'Daar / Demi aqoonsiga codka',
+      shortcutHelp: 'Fur / Xir tilmaamaha furayaasha',
+      shortcutEsc: 'Jooji baaraha ama xir daaqadaha furan',
+      voiceCmdList: 'Amarrada Codka: "next", "back", "complete", "scroll down", "scroll up", "read", "stop", "help"',
+      btnSimplify: '✨ Fududee Qoraalka',
+      btnOriginal: 'Qoraalkii Asalka Ahaa',
+      simplifiedTitle: 'Soo Koobid Luqad Fudud ah (Tallaabo-tallaabo)',
+      simplifiedLoading: 'Waxaa loo beddelayaa luqad fudud...',
+      btnReadAloud: '🔊 Kor u Akhri',
+      rulerToggle: '📏 Xariiqda Hagidda Akhriska',
+      rulerActivePill: '📏 Xariiqda Akhriska: DAARAN (Riix R si aad u damiso)',
+      rulerInactivePill: '📏 Xariiqda Akhriska: DAMISAN (Riix R si aad u daarto)',
+      stepBadge: 'Tallaabada',
+      plainKeyTakeaway: 'Qodobka Muhiimka ah',
+      plainActionSteps: 'Tallaabooyinka Shaqada',
+      btnDescribeImg: '👁️ Sharax Sawirka (Alt+I)',
+      imgDescTitle: 'Sharaxaadda Muuqaalka AI (Akhristaha Shaashadda)',
+      imgDescReadAloud: '🔊 Kor u Akhri',
+      imgDescClose: 'Xir Sharaxaadda',
+      imgDescAnnounce: 'Sharaxaadda sawirka ayaa kor loo akhrinayaa...',
+      imgArrivalAnnouncement: 'Sawir ayaad dul joogtaa. AI ayaa baaraya sawirka...',
+      imgArrivalCached: 'Sawir ayaad dul joogtaa. Sharaxaadda AI ayaa socota.',
+      transcriptLabel: 'Qoraalka Codka iyo Fiidyowga Casharka',
+      transcriptSummary: 'Qoraalka Buuxa ee Codka Casharka (Dadka Dhegaha Naafada ka ah)',
+      transcriptHeading: 'Soo Koobidda Qoraalka Codka',
+      transcriptBody: 'Casharkani wuxuu faahfaahinayaa mustaqbalka xirfadda Kaaliyaha Fogaanta (Virtual Assistant). Sida tiknoolajiyada iyo Garaadka Macmalka ah (AI) ay u beddelayaan shaqada iyo sababta xirfadaha aadanaha ay muhiim u yihiin.',
+      transcriptSignBtn: 'Codso Turjumaanka Luqadda Dhaqdhaqaaqa (EthSL)',
+      transcriptSignAlert: 'Codsigaaga luqadda dhegoolaha waa la diiwaangeliyay. Isku-duwaha fududeynta ayaa kula soo xiriiri doona.',
+      shortcutTableKey: 'Furaha',
+      shortcutTableAction: 'Shaqada',
+      shortcutTableImg: 'Dhageyso sharaxaadda sawirka AI (Screen Reader)',
+      shortcutTableSpace: 'Dooro waxa calaamadeysan xilliga baarista',
+      shortcutVoiceTitle: 'Amarrada Codka ee Gacmo-La\'aanta ah',
+      shortcutGotIt: 'Waan Fahmay',
+    },
+    ar: {
+      triggerLabel: 'تفضيلات إمكانية الوصول وإعدادات الملاءمة',
+      modalTitle: 'كيف تفضل خوض تجربتك التعليمية؟',
+      modalSubtitle: 'خصّص واجهة تعلّمك. اختر جميع الخيارات التي تساعدك على التعلّم بشكل أفضل.',
+      noticeText: 'نحن لا نطلب سجلاً طبياً أو إثباتاً. يمكنك تعديل هذه الخيارات في أي وقت أو تخطيها.',
+      optScreenReaderTitle: 'قارئ الشاشة والتعلم الموجّه صوتياً',
+      optScreenReaderDesc: 'مُحسّن للمتعلمين المكفوفين: معالم منطوقة، ووصف غني للصور، وتنقّل صوتي.',
+      optCaptionsTitle: 'الترجمة النصية والنصوص المقروءة والتنبيهات المرئية',
+      optCaptionsDesc: 'مُحسّن للمتعلمين الصم وضعاف السمع: ترجمات، نصوص كاملة للمحتوى الصوتي، وتنبيهات وميض مرئية.',
+      optContrastTitle: 'نص كبير وتباين بصري عالٍ',
+      optContrastDesc: 'مُحسّن للمتعلمين ضعاف البصر: نسب تباين محسنة، نصوص قابلة للتكبير، ومؤشرات تركيز واضحة.',
+      optMotorTitle: 'لوحة المفاتيح وأجهزة التبديل والمساعدة الحركية',
+      optMotorDesc: 'مُحسّن لمحدودي الحركة: أزرار تحكم كبيرة، اختصارات بمفتاح واحد، وفحص تلقائي للمفاتيح.',
+      optCognitiveTitle: 'لغة مبسطة وتقليل المشتتات',
+      optCognitiveDesc: 'مُحسّن للتنوع العصبي والتشتت وعسر القراءة: نصوص مبسطة، مسطرة قراءة، وحركات مخففة.',
+      btnSave: 'حفظ وتطبيق التفضيلات',
+      btnSkip: 'تخطي الآن (سأقوم بالتهيئة لاحقاً)',
+      langToggle: 'العربية (AR)',
+      closeLabel: 'إغلاق نافذة إمكانية الوصول',
+      savedAnnouncement: 'تم تحديث تفضيلات إمكانية الوصول وتطبيقها.',
+      skippedAnnouncement: 'تم تخطي إعداد إمكانية الوصول. يمكنك فتحه في أي وقت باستخدام زر إمكانية الوصول.',
+      motorBarLabel: 'الإجراءات السريعة للمساعدة الحركية',
+      btnMotorBack: 'رجوع (K)',
+      btnMotorComplete: 'إكمال (C)',
+      btnMotorNext: 'التالي (J)',
+      btnVoiceNav: 'التنقل الصوتي (V)',
+      btnAutoScan: 'الفحص التلقائي (S)',
+      btnShortcuts: 'الاختصارات (?)',
+      voiceNavActive: '🎙️ الاستماع للأوامر الصوتية نشط. قل: التالي، رجوع، إكمال، مرر لأسفل، اقرأ، توقف، مساعدة',
+      voiceNavUnsupported: 'متصفحك لا يدعم التعرف على الصوت. يرجى استخدام اختصارات لوحة المفاتيح (J, K, C, S).',
+      voiceNavStopped: 'تم إيقاف التنقل الصوتي مؤقتاً.',
+      scanActive: '⚡ الفحص التلقائي نشط. اضغط مسافة أو Enter للاختيار. اضغط Esc للإيقاف.',
+      scanStopped: 'تم إيقاف الفحص التلقائي.',
+      shortcutsModalTitle: 'دليل لوحة المفاتيح والأوامر الصوتية',
+      shortcutsModalDesc: 'اختصارات بمفتاح واحد وأوامر صوتية مصممة لتيسير الحركة.',
+      shortcutNext: 'الانتقال إلى الدرس أو القسم التالي',
+      shortcutPrev: 'الرجوع إلى الدرس السابق',
+      shortcutComplete: 'تحديد النشاط الحالي كمكتمل',
+      shortcutScan: 'تبديل الفاحص التلقائي للمفاتيح',
+      shortcutVoice: 'تبديل التعرف الصوتي دون استخدام اليدين',
+      shortcutHelp: 'فتح أو إغلاق دليل الاختصارات',
+      shortcutEsc: 'إلغاء الفحص أو إغلاق النوافذ المفتوحة',
+      voiceCmdList: 'الأوامر الصوتية: "next", "back", "complete", "scroll down", "scroll up", "read", "stop", "help"',
+      btnSimplify: '✨ تبسيط النص',
+      btnOriginal: 'النص الأصلي',
+      simplifiedTitle: 'ملخص بلغة مبسطة (خطوة بخطوة)',
+      simplifiedLoading: 'جارٍ تبسيط النص إلى لغة سهلة...',
+      btnReadAloud: '🔊 قراءة بصوت عالٍ',
+      rulerToggle: '📏 مسطرة دليل القراءة',
+      rulerActivePill: '📏 مسطرة القراءة: مفعلة (اضغط R للإيقاف)',
+      rulerInactivePill: '📏 مسطرة القراءة: معطلة (اضغط R للتشغيل)',
+      stepBadge: 'الخطوة',
+      plainKeyTakeaway: 'الفكرة الرئيسية',
+      plainActionSteps: 'خطوات التنفيذ',
+      btnDescribeImg: '👁️ وصف الصورة (Alt+I)',
+      imgDescTitle: 'الوصف البصري بالذكاء الاصطناعي (لقارئ الشاشة)',
+      imgDescReadAloud: '🔊 قراءة بصوت عالٍ',
+      imgDescClose: 'إغلاق الوصف',
+      imgDescAnnounce: 'جارٍ قراءة الوصف البصري بصوت عالٍ...',
+      imgArrivalAnnouncement: 'تم التركيز على الصورة. يقوم الذكاء الاصطناعي بتحليل العناصر...',
+      imgArrivalCached: 'تم التركيز على الصورة. تشغيل الوصف البصري.',
+      transcriptLabel: 'النص المقروء والتفريغ الصوتي للدرس',
+      transcriptSummary: 'التفريغ الصوتي والترجمة النصية للدرس (لضعاف السمع)',
+      transcriptHeading: 'تفريغ المحتوى الصوتي للدرس',
+      transcriptBody: 'يشرح هذا الدرس مستقبل مهنة المساعد الافتراضي (Virtual Assistant). كيف تؤثر التكنولوجيا والذكاء الاصطناعي في بيئة العمل ولماذا تزداد أهمية المهارات البشرية.',
+      transcriptSignBtn: 'طلب ترجمة بلغة الإشارة الإثيوبية (EthSL)',
+      transcriptSignAlert: 'تم تسجيل طلب ترجمة لغة الإشارة. سيتواصل معك منسق إمكانية الوصول.',
+      shortcutTableKey: 'المفتاح',
+      shortcutTableAction: 'الإجراء',
+      shortcutTableImg: 'الاستماع لوصف الصورة بالذكاء الاصطناعي',
+      shortcutTableSpace: 'تحديد العنصر النشط أثناء الفحص التلقائي',
+      shortcutVoiceTitle: 'الأوامر الصوتية دون استخدام اليدين',
+      shortcutGotIt: 'حسناً، فهمت',
+    },
+    sw: {
+      triggerLabel: 'Mapendeleo ya ufikiaji na mipangilio ya marekebisho',
+      modalTitle: 'Je, ungependa kupata uzoefu gani wa kujifunza?',
+      modalSubtitle: 'Binafsisha kiolesura chako cha kujifunza. Chagua vyote vinavyokusaidia kujifunza vizuri.',
+      noticeText: 'Hatuulizi historia ya matibabu au uthibitisho. Unaweza kubadilisha haya wakati wowote au kuruka.',
+      optScreenReaderTitle: 'Kisoma Skrini na Masomo ya Kuongozwa kwa Sauti',
+      optScreenReaderDesc: 'Imeboreshwa kwa wanafunzi wasioona: maelezo ya kina ya picha na urambazaji kwa sauti.',
+      optCaptionsTitle: 'Manukuu, Nakala za Maandishi na Arifa za Kuona',
+      optCaptionsDesc: 'Imeboreshwa kwa viziwi na wenye ugumu wa kusikia: manukuu ya sauti na arifa za mwanga.',
+      optContrastTitle: 'Maandishi Makubwa na Utofautishaji wa Juu wa Rangi',
+      optContrastDesc: 'Imeboreshwa kwa wanafunzi wenye uono hafifu: utofautishaji wa hali ya juu na maandishi yanayokuzika.',
+      optMotorTitle: 'Kibodi, Vifaa vya Swichi na Usaidizi wa Mwendo',
+      optMotorDesc: 'Imeboreshwa kwa wenye ulemavu wa viungo: vitufe vikubwa, njia za mkato na skana ya kiotomatiki.',
+      optCognitiveTitle: 'Lugha Rahisi na Utulivu wa Kuzingatia',
+      optCognitiveDesc: 'Imeboreshwa kwa wanafunzi wenye ugumu wa kusoma: maandishi rahisi, rula ya kusoma na uhuishaji uliopunguzwa.',
+      btnSave: 'Hifadhi na Utumie',
+      btnSkip: 'Ruka kwa sasa (Nitarekebisha baadaye)',
+      langToggle: 'Kiswahili (SW)',
+      closeLabel: 'Funga dirisha la ufikiaji',
+      savedAnnouncement: 'Mapendeleo ya ufikiaji yamesasishwa na kutumiwa.',
+      skippedAnnouncement: 'Usanidi wa ufikiaji umerukwa. Unaweza kuufungua wakati wowote kwa kitufe cha ufikiaji.',
+      motorBarLabel: 'Vitendo vya Haraka vya Usaidizi wa Mwendo',
+      btnMotorBack: 'Nyuma (K)',
+      btnMotorComplete: 'Kamilisha (C)',
+      btnMotorNext: 'Mbele (J)',
+      btnVoiceNav: 'Amri za Sauti (V)',
+      btnAutoScan: 'Skana ya Swichi (S)',
+      btnShortcuts: 'Njia za Mkato (?)',
+      voiceNavActive: '🎙️ Usikilizaji wa amri za sauti unatumika. Sema: Mbele, Nyuma, Kamilisha, Shuka chini, Soma, Simama, Msaada',
+      voiceNavUnsupported: 'Kivinjari chako hakiungi mkono utambuzi wa sauti. Tumia njia za mkato za kibodi (J, K, C, S).',
+      voiceNavStopped: 'Urambazaji wa sauti umesitishwa.',
+      scanActive: '⚡ Skana ya kiotomatiki inafanya kazi. Bonyeza Space au Enter kuchagua. Bonyeza Esc kusimamisha.',
+      scanStopped: 'Skana ya kiotomatiki imesimamishwa.',
+      shortcutsModalTitle: 'Mwongozo wa Kibodi na Amri za Sauti',
+      shortcutsModalDesc: 'Njia za mkato na amri za sauti zilizoundwa kusaidia wanafunzi wenye vikwazo vya mwendo.',
+      shortcutNext: 'Nenda kwenye somo au sehemu inayofuata',
+      shortcutPrev: 'Rudi kwenye somo lililopita',
+      shortcutComplete: 'Weka alama ya shughuli kuwa imekamilika',
+      shortcutScan: 'Washa / Zima skana ya swichi ya kiotomatiki' ,
+      shortcutVoice: 'Washa / Zima amri za sauti bila mikono',
+      shortcutHelp: 'Fungua / Funga mwongozo wa njia za mkato',
+      shortcutEsc: 'Sitisha skana au funga madirisha yaliyofunguliwa',
+      voiceCmdList: 'Amri za Sauti: "next", "back", "complete", "scroll down", "scroll up", "read", "stop", "help"',
+      btnSimplify: '✨ Rahisisha Sehemu Hii',
+      btnOriginal: 'Maandishi Asili',
+      simplifiedTitle: 'Muhtasari wa Lugha Rahisi (Hatua kwa Hatua)',
+      simplifiedLoading: 'Inarahisisha maandishi kuwa lugha nyepesi...',
+      btnReadAloud: '🔊 Soma kwa Sauti',
+      rulerToggle: '📏 Rula ya Mwongozo wa Kusoma',
+      rulerActivePill: '📏 Rula ya Kusoma: IMEWASHWA (Bonyeza R kuzima)',
+      rulerInactivePill: '📏 Rula ya Kusoma: IMEZIMWA (Bonyeza R kuwasha)',
+      stepBadge: 'Hatua',
+      plainKeyTakeaway: 'Jambo Kuu',
+      plainActionSteps: 'Hatua za Kuchukua',
+      btnDescribeImg: '👁️ Eleza Picha (Alt+I)',
+      imgDescTitle: 'Maelezo ya Picha ya AI (Kwa Kisoma Skrini)',
+      imgDescReadAloud: '🔊 Soma kwa Sauti',
+      imgDescClose: 'Funga Maelezo',
+      imgDescAnnounce: 'Maelezo ya picha yanasomwa kwa sauti...',
+      imgArrivalAnnouncement: 'Picha imelengwa. AI inachambua vipengele vya picha...',
+      imgArrivalCached: 'Picha imelengwa. Inasoma maelezo ya picha ya AI.',
+      transcriptLabel: 'Nakala ya Maandishi ya Sauti na Video ya Somo',
+      transcriptSummary: 'Nakala Kamili ya Maandishi ya Somo (Kwa Viziwi na Wenye Ugumu wa Kusikia)',
+      transcriptHeading: 'Muhtasari wa Yaliyosemwa Katika Somo',
+      transcriptBody: 'Somo hili linaeleza mustakabali wa taaluma ya Msaidizi wa Mtandaoni (Virtual Assistant). Jinsi teknolojia na Akili Mnemba (AI) zinavyobadilisha kazi na kwa nini ujuzi wa binadamu unazidi kuwa muhimu.',
+      transcriptSignBtn: 'Omba Mkalimani wa Lugha ya Alama (EthSL)',
+      transcriptSignAlert: 'Ombi lako la lugha ya alama limesajiliwa. Mratibu wa ufikiaji atawasiliana nawe.',
+      shortcutTableKey: 'Kitufe',
+      shortcutTableAction: 'Kitendo',
+      shortcutTableImg: 'Sikiliza maelezo ya picha ya AI (Screen Reader)',
+      shortcutTableSpace: 'Chagua kipengele wakati wa skana ya kiotomatiki',
+      shortcutVoiceTitle: 'Amri za Sauti Bila Kutumia Mikono',
+      shortcutGotIt: 'Nimeelewa',
+    },
+    fr: {
+      triggerLabel: 'Préférences d’accessibilité et paramètres d’adaptation',
+      modalTitle: 'Comment souhaitez-vous vivre votre apprentissage ?',
+      modalSubtitle: 'Personnalisez votre interface d’apprentissage. Sélectionnez tout ce qui vous aide à mieux apprendre.',
+      noticeText: 'Nous ne demandons aucun justificatif médical. Vous pouvez modifier ces options à tout moment ou ignorer.',
+      optScreenReaderTitle: 'Lecteur d’écran et apprentissage guidé par la voix',
+      optScreenReaderDesc: 'Optimisé pour les apprenants non-voyants : repères vocaux, descriptions riches des images et navigation audio.',
+      optCaptionsTitle: 'Sous-titres, transcriptions et alertes visuelles',
+      optCaptionsDesc: 'Optimisé pour les personnes sourdes ou malentendantes : sous-titres, transcriptions audio et alertes visuelles.',
+      optContrastTitle: 'Grand texte et contraste visuel élevé',
+      optContrastDesc: 'Optimisé pour la basse vision : contrastes renforcés, typographie agrandie et indicateurs de focus nets.',
+      optMotorTitle: 'Clavier, contacteurs et assistance motrice',
+      optMotorDesc: 'Optimisé pour les limitations motrices : grands boutons, raccourcis à touche unique et balayage automatique.',
+      optCognitiveTitle: 'Langage clair et faible distraction',
+      optCognitiveDesc: 'Optimisé pour la neurodiversité, le TDAH et la dyslexie : texte simplifié, règle de lecture et animations réduites.',
+      btnSave: 'Enregistrer et appliquer',
+      btnSkip: 'Ignorer pour l’instant (je configurerai plus tard)',
+      langToggle: 'Français (FR)',
+      closeLabel: 'Fermer la boîte de dialogue d’accessibilité',
+      savedAnnouncement: 'Préférences d’accessibilité mises à jour et appliquées.',
+      skippedAnnouncement: 'Configuration d’accessibilité ignorée. Vous pouvez l’ouvrir à tout moment via le bouton d’accessibilité.',
+      motorBarLabel: 'Actions rapides d’assistance motrice et de mobilité',
+      btnMotorBack: 'Précédent (K)',
+      btnMotorComplete: 'Terminer (C)',
+      btnMotorNext: 'Suivant (J)',
+      btnVoiceNav: 'Commandes Vocales (V)',
+      btnAutoScan: 'Balayage Contacteur (S)',
+      btnShortcuts: 'Raccourcis (?)',
+      voiceNavActive: '🎙️ Écoute vocale active. Dites : Suivant, Précédent, Terminer, Défiler vers le bas, Lire, Arrêter, Aide',
+      voiceNavUnsupported: 'Votre navigateur ne prend pas en charge la reconnaissance vocale. Utilisez les raccourcis clavier (J, K, C, S).',
+      voiceNavStopped: 'Navigation vocale mise en pause.',
+      scanActive: '⚡ Balayage automatique actif. Appuyez sur Espace ou Entrée pour sélectionner. Échap pour arrêter.',
+      scanStopped: 'Balayage automatique arrêté.',
+      shortcutsModalTitle: 'Guide des raccourcis clavier et commandes vocales',
+      shortcutsModalDesc: 'Raccourcis à touche unique et commandes vocales mains libres conçus pour l’accessibilité motrice.',
+      shortcutNext: 'Leçon suivante / section suivante',
+      shortcutPrev: 'Leçon précédente / retour',
+      shortcutComplete: 'Marquer l’activité actuelle comme terminée',
+      shortcutScan: 'Activer / désactiver le balayage automatique',
+      shortcutVoice: 'Activer / désactiver les commandes vocales mains libres',
+      shortcutHelp: 'Ouvrir / fermer ce guide de raccourcis',
+      shortcutEsc: 'Annuler le balayage ou fermer les boîtes de dialogue',
+      voiceCmdList: 'Commandes vocales : "next", "back", "complete", "scroll down", "scroll up", "read", "stop", "help"',
+      btnSimplify: '✨ Simplifier la section',
+      btnOriginal: 'Texte original',
+      simplifiedTitle: 'Résumé en langage clair (étape par étape)',
+      simplifiedLoading: 'Simplification du texte en langage clair...',
+      btnReadAloud: '🔊 Lire à haute voix',
+      rulerToggle: '📏 Règle de guidage de lecture',
+      rulerActivePill: '📏 Règle de lecture : ACTIVE (Appuyez sur R pour désactiver)',
+      rulerInactivePill: '📏 Règle de lecture : DÉSACTIVÉE (Appuyez sur R pour activer)',
+      stepBadge: 'Étape',
+      plainKeyTakeaway: 'Point clé',
+      plainActionSteps: 'Actions à mener',
+      btnDescribeImg: '👁️ Décrire l’image (Alt+I)',
+      imgDescTitle: 'Description visuelle par l’IA (pour lecteur d’écran)',
+      imgDescReadAloud: '🔊 Lire à haute voix',
+      imgDescClose: 'Fermer la description',
+      imgDescAnnounce: 'Lecture de la description visuelle à haute voix...',
+      imgArrivalAnnouncement: 'Image ciblée. L’IA analyse les éléments visuels...',
+      imgArrivalCached: 'Image ciblée. Lecture de la description de l’IA.',
+      transcriptLabel: 'Transcription audio et vidéo de la leçon',
+      transcriptSummary: 'Transcription intégrale et sous-titres de la leçon (accessibilité sourds et malentendants)',
+      transcriptHeading: 'Transcription du contenu oral de la leçon',
+      transcriptBody: 'Cette leçon aborde l’avenir de la profession d’assistant virtuel (Virtual Assistant). Comment la technologie et l’intelligence artificielle (IA) transforment le travail et pourquoi les compétences humaines restent indispensables.',
+      transcriptSignBtn: 'Demander une interprétation en langue des signes éthiopienne (EthSL)',
+      transcriptSignAlert: 'Demande d’interprétation enregistrée. Un coordinateur d’accessibilité prendra contact avec vous.',
+      shortcutTableKey: 'Touche',
+      shortcutTableAction: 'Action',
+      shortcutTableImg: 'Écouter la description de l’image par l’IA',
+      shortcutTableSpace: 'Sélectionner l’élément actif pendant le balayage',
+      shortcutVoiceTitle: 'Commandes vocales mains libres',
+      shortcutGotIt: 'J’ai compris',
     }
   };
 
@@ -266,11 +749,14 @@
     backdrop.id = 'savanna-a11y-modal-backdrop';
     backdrop.className = 'sa11y-backdrop';
     backdrop.setAttribute('hidden', '');
+    const isRtl = (currentLang === 'ar');
+    backdrop.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+    backdrop.setAttribute('lang', currentLang);
 
-    const t = i18n[currentLang];
+    const t = i18n[currentLang] || i18n.en;
 
     backdrop.innerHTML = `
-      <div class="sa11y-modal" role="dialog" aria-modal="true" aria-labelledby="sa11y-modal-title" aria-describedby="sa11y-modal-desc">
+      <div class="sa11y-modal" role="dialog" aria-modal="true" aria-labelledby="sa11y-modal-title" aria-describedby="sa11y-modal-desc" dir="${isRtl ? 'rtl' : 'ltr'}" lang="${currentLang}">
         <div class="sa11y-modal-header">
           <div class="sa11y-title-group">
             <h2 id="sa11y-modal-title">
@@ -369,13 +855,35 @@
   }
 
   function updateModalLanguage(backdrop) {
-    const t = i18n[currentLang];
-    backdrop.querySelector('#sa11y-modal-title span:last-child').textContent = t.modalTitle;
-    backdrop.querySelector('#sa11y-modal-desc').textContent = t.modalSubtitle;
-    backdrop.querySelector('#sa11y-lang-btn').textContent = t.langToggle;
-    backdrop.querySelector('.sa11y-notice').textContent = t.noticeText;
-    backdrop.querySelector('#sa11y-skip-btn').textContent = t.btnSkip;
-    backdrop.querySelector('#sa11y-save-btn').textContent = t.btnSave;
+    const t = i18n[currentLang] || i18n.en;
+    const isRtl = (currentLang === 'ar');
+
+    backdrop.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+    backdrop.setAttribute('lang', currentLang);
+
+    const modalEl = backdrop.querySelector('.sa11y-modal');
+    if (modalEl) {
+      modalEl.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+      modalEl.setAttribute('lang', currentLang);
+    }
+
+    const titleEl = backdrop.querySelector('#sa11y-modal-title span:last-child');
+    if (titleEl) titleEl.textContent = t.modalTitle;
+
+    const descEl = backdrop.querySelector('#sa11y-modal-desc');
+    if (descEl) descEl.textContent = t.modalSubtitle;
+
+    const langBtn = backdrop.querySelector('#sa11y-lang-btn');
+    if (langBtn) langBtn.textContent = t.langToggle;
+
+    const noticeEl = backdrop.querySelector('.sa11y-notice');
+    if (noticeEl) noticeEl.textContent = t.noticeText;
+
+    const skipBtn = backdrop.querySelector('#sa11y-skip-btn');
+    if (skipBtn) skipBtn.textContent = t.btnSkip;
+
+    const saveBtn = backdrop.querySelector('#sa11y-save-btn');
+    if (saveBtn) saveBtn.textContent = t.btnSave;
 
     // Card texts
     const cards = [
@@ -388,8 +896,10 @@
     cards.forEach(c => {
       const el = backdrop.querySelector(c.id);
       if (el) {
-        el.querySelector('.txt-title').textContent = c.title;
-        el.querySelector('.txt-desc').textContent = c.desc;
+        const titleSpan = el.querySelector('.txt-title');
+        const descSpan = el.querySelector('.txt-desc');
+        if (titleSpan) titleSpan.textContent = c.title;
+        if (descSpan) descSpan.textContent = c.desc;
       }
     });
 
@@ -397,6 +907,23 @@
       triggerBtn.setAttribute('aria-label', t.triggerLabel);
       triggerBtn.setAttribute('title', t.triggerLabel);
     }
+
+    // Update Accommodations & Captions Drawer if already injected in DOM
+    const drawer = document.getElementById('sa11y-lesson-transcript');
+    if (drawer) {
+      drawer.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+      drawer.setAttribute('lang', currentLang);
+      drawer.setAttribute('aria-label', t.transcriptLabel);
+      const sumSpan = drawer.querySelector('summary span:last-child');
+      if (sumSpan) sumSpan.textContent = t.transcriptSummary;
+      const h4 = drawer.querySelector('.sa11y-transcript-content h4');
+      if (h4) h4.textContent = t.transcriptHeading;
+      const p = drawer.querySelector('.sa11y-transcript-content p');
+      if (p) p.textContent = t.transcriptBody;
+      const signSpan = drawer.querySelector('#sa11y-request-ethsl span:last-child');
+      if (signSpan) signSpan.textContent = t.transcriptSignBtn;
+    }
+
     updateStickyMotorBarLanguage();
     if (rulerPillEl) {
       renderRulerPill(true);
@@ -425,21 +952,26 @@
       });
     });
 
-    // Language Toggle
+    // Language Selector / Cycler across all 8 languages
     const langBtn = backdrop.querySelector('#sa11y-lang-btn');
-    langBtn.addEventListener('click', () => {
-      currentLang = (currentLang === 'en') ? 'am' : 'en';
-      localStorage.setItem(LANG_KEY, currentLang);
-      updateModalLanguage(backdrop);
-      announce(currentLang === 'am' ? 'ቋንቋ ወደ አማርኛ ተቀይሯል' : 'Language set to English');
-      window.dispatchEvent(new CustomEvent('savanna:set_language', { detail: { lang: currentLang } }));
-    });
+    if (langBtn) {
+      langBtn.addEventListener('click', () => {
+        const nextIndex = (ALL_LANGUAGES.indexOf(currentLang) + 1) % ALL_LANGUAGES.length;
+        currentLang = ALL_LANGUAGES[nextIndex];
+        localStorage.setItem(LANG_KEY, currentLang);
+        updateModalLanguage(backdrop);
+        announce(i18n[currentLang].langToggle);
+        window.dispatchEvent(new CustomEvent('savanna:set_language', { detail: { lang: currentLang } }));
+        window.dispatchEvent(new CustomEvent('savanna:language_changed', { detail: { lang: currentLang } }));
+      });
+    }
 
     window.addEventListener('savanna:language_changed', (e) => {
       if (e.detail && e.detail.lang) {
         const newLang = e.detail.lang;
-        currentLang = (newLang === 'am' || newLang === 'ti') ? 'am' : 'en';
-        if (!backdrop.hasAttribute('hidden')) {
+        if (ALL_LANGUAGES.includes(newLang)) {
+          currentLang = newLang;
+          localStorage.setItem(LANG_KEY, currentLang);
           updateModalLanguage(backdrop);
         }
       }
@@ -580,7 +1112,7 @@
     try {
       if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
       const utt = new SpeechSynthesisUtterance(text);
-      utt.lang = (currentLang === 'am') ? 'am-ET' : 'en-US';
+      utt.lang = BCP47_A11Y[currentLang] || 'en-US';
       utt.rate = 1.0;
       window.speechSynthesis.speak(utt);
     } catch (_) {}
@@ -1141,27 +1673,29 @@
       document.querySelector('main');
     if (!content) return;
 
+    const t = i18n[currentLang] || i18n.en;
+    const isRtl = (currentLang === 'ar');
+
     const drawer = document.createElement('div');
     drawer.id = 'sa11y-lesson-transcript';
     drawer.className = 'sa11y-transcript-box';
     drawer.setAttribute('role', 'region');
-    drawer.setAttribute('aria-label', (currentLang === 'am') ? 'የቪዲዮና ኦዲዮ የፅሑፍ ግልባጭ' : 'Lesson Audio & Video Transcript');
+    drawer.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+    drawer.setAttribute('lang', currentLang);
+    drawer.setAttribute('aria-label', t.transcriptLabel);
 
     drawer.innerHTML = `
       <details class="sa11y-transcript-drawer">
         <summary>
           <span aria-hidden="true">📝</span>
-          <span>${currentLang === 'am' ? 'የትምህርቱ ሙሉ የፅሑፍ ግልባጭ እና ንዑስ ርዕሶች' : 'Lesson Audio Transcript & Captions (Deaf / Hard of Hearing Access)'}</span>
+          <span>${t.transcriptSummary}</span>
         </summary>
         <div class="sa11y-transcript-content">
-          <h4>${currentLang === 'am' ? 'የድምፅ ይዘት ማጠቃለያ' : 'Lesson Spoken Content Transcript'}</h4>
-          <p>${currentLang === 'am'
-            ? 'ይህ ትምህርት የቨርቹዋል አሲስታንት ኢንዱስትሪ የወደፊት ጉዞን ያብራራል። ቴክኖሎጂ እና አርቴፊሻል ኢንተለጀንስ (AI) የስራ ሂደቶችን እንዴት እየቀየሩ እንዳሉ እና የሰው ልጅ ክህሎቶች ለምን ይበልጥ አስፈላጊ እንደሆኑ በዝርዝር ያትታል።'
-            : 'This lesson covers the future of the Virtual Assistant profession. As businesses adopt remote tools and Artificial Intelligence, the demand for human collaboration, specialized niche skills, emotional intelligence, and adaptable digital operations increases dramatically.'
-          }</p>
+          <h4>${t.transcriptHeading}</h4>
+          <p>${t.transcriptBody}</p>
           <a href="#" id="sa11y-request-ethsl" class="sa11y-sign-lang-link" role="button">
             <span aria-hidden="true">🤟</span>
-            <span>${currentLang === 'am' ? 'የኢትዮጵያ የምልክት ቋንቋ (EthSL) አስተርጓሚ ይጠይቁ' : 'Request Ethiopian Sign Language (EthSL) Interpretation'}</span>
+            <span>${t.transcriptSignBtn}</span>
           </a>
         </div>
       </details>
@@ -1171,9 +1705,7 @@
     if (signBtn) {
       signBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        triggerVisualAlert(currentLang === 'am' 
-          ? 'የምልክት ቋንቋ ጥያቄዎ ተመዝግቧል። የተደራሽነት አስተባባሪ ያነጋግርዎታል።'
-          : 'Sign language interpretation request logged. An accessibility coordinator will assist you.');
+        triggerVisualAlert(t.transcriptSignAlert);
       });
     }
 
@@ -1314,12 +1846,23 @@
 
     const speakText = `${heading}. ${paragraphs}`.slice(0, 600);
     const utterance = new SpeechSynthesisUtterance(speakText);
-    utterance.lang = (currentLang === 'am') ? 'am-ET' : 'en-US';
+    utterance.lang = BCP47_A11Y[currentLang] || 'en-US';
     utterance.rate = 0.95;
     window.speechSynthesis.speak(utterance);
 
-    triggerVisualAlert(currentLang === 'am' ? 'የትምህርቱ ይዘት በድምፅ እየተነበበ ነው...' : 'Reading lesson content aloud...');
-    announce(currentLang === 'am' ? 'የትምህርቱ ይዘት በድምፅ እየተነበበ ነው...' : 'Reading lesson content aloud...');
+    const readingAlerts = {
+      en: 'Reading lesson content aloud...',
+      am: 'የትምህርቱ ይዘት በድምፅ እየተነበበ ነው...',
+      om: 'Qabiyyee barnootichaa sagaleen dubbifamaa jira...',
+      ti: 'ትሕዝቶ ናይቲ ትምህርቲ ብድምጺ ይንበብ ኣሎ...',
+      so: 'Qoraalka casharka ayaa kor loo akhrinayaa...',
+      ar: 'جارٍ قراءة محتوى الدرس بصوت عالٍ...',
+      sw: 'Inasoma maudhui ya somo kwa sauti...',
+      fr: 'Lecture du contenu de la leçon à haute voix...',
+    };
+    const readMsg = readingAlerts[currentLang] || readingAlerts.en;
+    triggerVisualAlert(readMsg);
+    announce(readMsg);
   }
 
   /* ── 12. Single-Key Keyboard Navigation ─────────────────────────────────── */
@@ -1529,7 +2072,7 @@
       voiceRecognition = new SpeechRecognition();
       voiceRecognition.continuous = true;
       voiceRecognition.interimResults = false;
-      voiceRecognition.lang = (currentLang === 'am') ? 'am-ET' : 'en-US';
+      voiceRecognition.lang = BCP47_A11Y[currentLang] || 'en-US';
 
       voiceRecognition.onresult = (event) => {
         const lastResult = event.results[event.results.length - 1];
@@ -1715,14 +2258,17 @@
       return document.getElementById('sa11y-shortcuts-backdrop');
     }
 
-    const t = i18n[currentLang];
+    const t = i18n[currentLang] || i18n.en;
+    const isRtl = (currentLang === 'ar');
     const backdrop = document.createElement('div');
     backdrop.id = 'sa11y-shortcuts-backdrop';
     backdrop.className = 'sa11y-backdrop';
+    backdrop.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+    backdrop.setAttribute('lang', currentLang);
     backdrop.setAttribute('hidden', '');
 
     backdrop.innerHTML = `
-      <div class="sa11y-modal sa11y-shortcuts-modal" role="dialog" aria-modal="true" aria-labelledby="sa11y-shortcuts-title" aria-describedby="sa11y-shortcuts-desc">
+      <div class="sa11y-modal sa11y-shortcuts-modal" role="dialog" aria-modal="true" aria-labelledby="sa11y-shortcuts-title" aria-describedby="sa11y-shortcuts-desc" dir="${isRtl ? 'rtl' : 'ltr'}" lang="${currentLang}">
         <div class="sa11y-modal-header">
           <div class="sa11y-title-group">
             <h2 id="sa11y-shortcuts-title">
@@ -1738,8 +2284,8 @@
             <table class="sa11y-shortcuts-table">
               <thead>
                 <tr>
-                  <th scope="col">${currentLang === 'am' ? 'ቁልፍ' : 'Shortcut'}</th>
-                  <th scope="col">${currentLang === 'am' ? 'ተግባር' : 'Action'}</th>
+                  <th scope="col">${t.shortcutTableKey}</th>
+                  <th scope="col">${t.shortcutTableAction}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1749,21 +2295,21 @@
                 <tr><td><kbd>S</kbd></td><td>${t.shortcutScan}</td></tr>
                 <tr><td><kbd>V</kbd></td><td>${t.shortcutVoice}</td></tr>
                 <tr><td><kbd>R</kbd></td><td>${t.rulerToggle}</td></tr>
-                <tr><td><kbd>Alt + I / I</kbd></td><td>${currentLang === 'am' ? 'የምስሉን ዝርዝር መግለጫ አድምጥ (AI Image Inspector)' : 'Describe Image with AI (Screen Reader Ready)'}</td></tr>
+                <tr><td><kbd>Alt + I / I</kbd></td><td>${t.shortcutTableImg}</td></tr>
                 <tr><td><kbd>?</kbd></td><td>${t.shortcutHelp}</td></tr>
-                <tr><td><kbd>Space / Enter</kbd></td><td>${currentLang === 'am' ? 'በስካነር ውስጥ ንቁ የሆነውን መምረጥ' : 'Select active element during Auto-Scan'}</td></tr>
+                <tr><td><kbd>Space / Enter</kbd></td><td>${t.shortcutTableSpace}</td></tr>
                 <tr><td><kbd>Esc</kbd></td><td>${t.shortcutEsc}</td></tr>
               </tbody>
             </table>
           </div>
           <div class="sa11y-voice-commands-card">
-            <h4><span aria-hidden="true">🎙️</span> ${currentLang === 'am' ? 'እጅ-አልባ የድምፅ ትዕዛዞች' : 'Hands-Free Voice Commands'}</h4>
+            <h4><span aria-hidden="true">🎙️</span> ${t.shortcutVoiceTitle}</h4>
             <p class="sa11y-code-pill">${t.voiceCmdList}</p>
           </div>
         </div>
         <div class="sa11y-modal-footer">
           <button type="button" id="sa11y-shortcuts-ok" class="sa11y-btn sa11y-btn-primary">
-            ${currentLang === 'am' ? 'ተረዳሁ' : 'Got it'}
+            ${t.shortcutGotIt}
           </button>
         </div>
       </div>
@@ -2043,7 +2589,7 @@
                 return;
               }
               const utter = new SpeechSynthesisUtterance(plainSummary.replace(/[•\-\*]/g, ''));
-              utter.lang = (currentLang === 'am') ? 'am-ET' : 'en-US';
+              utter.lang = BCP47_A11Y[currentLang] || 'en-US';
               window.speechSynthesis.speak(utter);
             }
           });
