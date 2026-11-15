@@ -1144,10 +1144,17 @@
     bubble.className = 'message-bubble';
     bubble.textContent = content;
 
-    // RTL dynamic formatting for Arabic
-    if (/[\u0600-\u06FF]/.test(content)) {
+    // Dynamic language and script tagging for screen readers (WCAG 3.1.2)
+    if (/[\u1200-\u137F]/.test(content)) {
+      bubble.setAttribute('lang', (typeof currentLanguage !== 'undefined' && currentLanguage === 'ti') ? 'ti' : 'am');
+    } else if (/[\u0600-\u06FF]/.test(content)) {
       bubble.setAttribute('dir', 'rtl');
+      bubble.setAttribute('lang', 'ar');
       bubble.classList.add('rtl-msg');
+    } else if (typeof currentLanguage !== 'undefined' && currentLanguage && currentLanguage !== 'en') {
+      bubble.setAttribute('lang', currentLanguage);
+    } else {
+      bubble.setAttribute('lang', 'en');
     }
 
     const ts = document.createElement('time');

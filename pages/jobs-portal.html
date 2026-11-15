@@ -482,7 +482,7 @@
     <section class="job-search-results" aria-label="Available Job Listings">
       <div class="results-heading-bar">
         <h2 id="job-postings-header" style="font-size: 18px; font-weight: 700; color: var(--primary);">Available Job Opportunities</h2>
-        <span class="results-count" id="jobs-count-badge">4 positions found</span>
+        <span class="results-count" id="jobs-count-badge" role="status" aria-live="polite">4 positions found</span>
       </div>
 
       <div id="jobs-list" role="feed" aria-busy="false">
@@ -596,7 +596,7 @@
         <h2 class="modal-title" id="apply-modal-title">Submit Application</h2>
         <button type="button" class="btn-modal-close" id="btn-modal-close" aria-label="Close dialog">&times;</button>
       </div>
-      <form id="apply-form" onsubmit="event.preventDefault(); alert('Application submitted successfully!'); document.getElementById('apply-modal').classList.remove('open');">
+      <form id="apply-form">
         <div class="form-group">
           <label for="app-name" class="form-label">Full Name</label>
           <input type="text" id="app-name" class="form-control" placeholder="e.g. Abebe Bekele" required>
@@ -613,9 +613,24 @@
           <label for="app-notes" class="form-label">Why are you a great fit?</label>
           <textarea id="app-notes" class="form-control" rows="3" placeholder="Brief summary of relevant skills and experience..."></textarea>
         </div>
+        <div class="form-group" style="margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+          <label for="app-accommodation" class="form-label" style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span>Interview Accommodation Request (Optional)</span>
+            <span style="font-size: 11px; font-weight: 400; color: #64748b;">No medical proof required</span>
+          </label>
+          <select id="app-accommodation" class="form-control">
+            <option value="">No accommodation requested</option>
+            <option value="Screen Reader">Screen reader compatible interview materials</option>
+            <option value="Extended Time">Extended time for technical assessment (1.5x)</option>
+            <option value="Sign Language Interpreter">Ethiopian Sign Language (ETSL) / ASL interpreter</option>
+            <option value="Captions">Live human captions (CART)</option>
+            <option value="Plain Language">Plain language / cognitive support format</option>
+          </select>
+        </div>
+        <div id="app-status-zone" role="status" aria-live="polite" style="margin: 10px 0; font-size: 13px; display: none;"></div>
         <div class="modal-actions">
           <button type="button" class="btn-save" id="btn-cancel-apply">Cancel</button>
-          <button type="submit" class="btn-apply">Submit</button>
+          <button type="submit" class="btn-apply" id="btn-submit-apply">Submit Application</button>
         </div>
       </form>
     </div>
@@ -715,9 +730,9 @@
       }
     };
 
-    // Card click event listener (SPA dynamic swap)
+    // Card click & keyboard event listener (SPA dynamic swap, WCAG 2.1.1)
     document.querySelectorAll('.job-card').forEach(card => {
-      card.addEventListener('click', () => {
+      const selectCard = () => {
         document.querySelectorAll('.job-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
         const jobId = card.dataset.jobId;
@@ -746,14 +761,86 @@
 
           document.getElementById('detail-benefits').textContent = data.benefits;
         }
+      };
+
+      card.addEventListener('click', selectCard);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectCard();
+        }
       });
     });
 
-    // Apply modal open / close
+    // Apply modal open / close / accessibility (WCAG 2.4.3)
     const modal = document.getElementById('apply-modal');
-    document.getElementById('btn-open-apply-modal').addEventListener('click', () => modal.classList.add('open'));
-    document.getElementById('btn-modal-close').addEventListener('click', () => modal.classList.remove('open'));
-    document.getElementById('btn-cancel-apply').addEventListener('click', () => modal.classList.remove('open'));
+    const openBtn = document.getElementById('btn-open-apply-modal');
+    const closeBtn = document.getElementById('btn-modal-close');
+    const cancelBtn = document.getElementById('btn-cancel-apply');
+
+    function openModal() {
+      modal.classList.add('open');
+      document.getElementById('app-name').focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+      openBtn.focus();
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+
+    // Handle Application & Accommodation Submission
+    document.getElementById('apply-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const statusZone = document.getElementById('app-status-zone');
+      const name = document.getElementById('app-name').value;
+      const email = document.getElementById('app-email').value;
+      const accommodation = document.getElementById('app-accommodation').value;
+
+      statusZone.style.display = 'block';
+      statusZone.style.color = '#005fcc';
+      statusZone.textContent = 'Submitting application...';
+
+      let refMsg = '';
+      if (accommodation) {
+        try {
+          const resp = await fetch('/accommodate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: name,
+              email: email,
+              accommodation_type: accommodation,
+              additional_notes: 'Requested via Job Application Gateway',
+              language: 'en'
+            })
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            refMsg = ' Accommodation confirmed without medical proof: ' + data.reference_number + '.';
+          }
+        } catch (err) {
+          console.warn('Accommodation service offline:', err);
+        }
+      }
+
+      statusZone.style.color = '#166534';
+      statusZone.textContent = 'Application submitted successfully!' + refMsg;
+      setTimeout(() => {
+        closeModal();
+        statusZone.style.display = 'none';
+        document.getElementById('apply-form').reset();
+      }, 2500);
+    });
   </script>
 
   <!-- SAVANNA PLUGGABLE ACCESSIBILITY & LOCALIZATION ENGINE -->
