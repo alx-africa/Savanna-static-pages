@@ -5,11 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
   <title>Savanna Learning Assistant</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2.4.0" />
   <style>
     /* Iframe-specific overrides — full-height shell */
     html, body { height: 100%; overflow: hidden; }
     body { margin: 0; }
+
+    /* Guarantee no text duplication: visually hide the screen-reader label element */
+    .input-label,
+    #chat-input-label,
+    .input-label-wrapper > label {
+      display: none !important;
+      position: absolute !important;
+      width: 0 !important;
+      height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    #chat-input::placeholder {
+      color: var(--c-text-muted, #767676);
+      opacity: 1;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -138,7 +162,7 @@
     <div id="voice-recording-status" class="voice-status-banner" role="status" aria-live="polite" style="display: none;"></div>
     <div class="input-wrapper">
       <div class="input-label-wrapper">
-        <label id="chat-input-label" for="chat-input" class="input-label visually-hidden">
+        <label id="chat-input-label" for="chat-input" class="input-label visually-hidden" style="display: none !important;">
           Message (English or Amharic)
         </label>
         <textarea
@@ -714,7 +738,10 @@
     simpleModeBtn.style.background = simpleModeEnabled ? 'rgba(255,255,255,0.3)' : '';
     simpleModeBtn.style.opacity = simpleModeEnabled ? '1' : '0.6';
 
-    inputLabel.textContent = t.inputPlaceholder;
+    if (inputLabel) {
+      inputLabel.style.display = 'none';
+      inputLabel.textContent = '';
+    }
     chatInput.setAttribute('placeholder', t.inputPlaceholder);
     chatInput.setAttribute('aria-label', t.inputPlaceholder);
     chatInput.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
