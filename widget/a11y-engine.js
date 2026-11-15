@@ -2995,8 +2995,9 @@
     const tag = node.tagName.toLowerCase();
     const role = (node.getAttribute('role') || '').toLowerCase();
     if (/^h[1-6]$/.test(tag) || role === 'heading') {
-      const level = tag[1] || node.getAttribute('aria-level') || '2';
-      prefix = (currentLang === 'am') ? `ርዕስ ${level}፡ ` : `Heading level ${level}: `;
+      // Natural spoken reading: Speak heading content directly without repeating robotic level numbers
+      // (e.g. avoiding repetitive 'ርዕስ 4' / 'ርዕስ 5' prefixes before every card title)
+      prefix = '';
     } else if (node.classList.contains('callout') || node.closest('.callout')) {
       prefix = (currentLang === 'am') ? `ማሳሰቢያ፡ ` : `Important note: `;
     } else if (node.classList.contains('job-card') || role === 'article') {

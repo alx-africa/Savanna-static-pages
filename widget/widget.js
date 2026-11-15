@@ -330,14 +330,14 @@
   }
 
   const I18N_ROLES = {
-    en: { button: 'button', link: 'link', edit: 'edit text', para: 'paragraph', heading: 'heading level ', list: 'list item', expanded: 'expanded', collapsed: 'collapsed', pressed: 'pressed', notPressed: 'not pressed' },
-    am: { button: 'አዝራር', link: 'አገናኝ', edit: 'የፅሑፍ ማስገቢያ', para: 'አንቀጽ', heading: 'ርዕስ ደረጃ ', list: 'ዝርዝር ንጥል', expanded: 'ተከፍቷል', collapsed: 'ተዘግቷል', pressed: 'ነቅቷል', notPressed: 'ጠፍቷል' },
-    om: { button: 'qabduu', link: 'hidhata', edit: 'galmee barreeffamaa', para: 'keeyyata', heading: 'sadarkaa mata duree ', list: 'miseensa tarree', expanded: "bal'ateera", collapsed: "dudduubatti deebi'eera", pressed: 'cuqaasameera', notPressed: 'hin cuqaasamne' },
-    ti: { button: 'መልጎም', link: 'መላገቢ', edit: 'መእተዊ ጽሑፍ', para: 'ዓንቀጽ', heading: 'ደረጃ ኣርእስቲ ', list: 'ንጥሪ ዝርዝር', expanded: 'ተዘርጊሑ', collapsed: 'ተዓጺፉ', pressed: 'ተጠዊቑ', notPressed: 'ኣይተጠወቐን' },
-    so: { button: 'badhan', link: 'xiriir', edit: 'meel qoraal', para: 'faqradda', heading: 'heerka cinwaanka ', list: 'shayga liiska', expanded: 'la fidiyay', collapsed: 'la laabay', pressed: 'la riixay', notPressed: 'aan la riixin' },
-    ar: { button: 'زر', link: 'رابط', edit: 'إدخال نص', para: 'فقرة', heading: 'عنوان مستوى ', list: 'عنصر قائمة', expanded: 'موسع', collapsed: 'مطوي', pressed: 'مضغوط', notPressed: 'غير مضغوط' },
-    sw: { button: 'kitufe', link: 'kiungo', edit: 'uandishi wa maandishi', para: 'aya', heading: 'kiwango cha kichwa ', list: 'kipengee cha orodha', expanded: 'imepanuliwa', collapsed: 'imekunjwa', pressed: 'imebonyezwa', notPressed: 'haijabonyezwa' },
-    fr: { button: 'bouton', link: 'lien', edit: 'champ de texte', para: 'paragraphe', heading: 'titre de niveau ', list: 'élément de liste', expanded: 'développé', collapsed: 'réduit', pressed: 'enfoncé', notPressed: 'non enfoncé' }
+    en: { button: 'button', link: 'link', edit: 'edit text', para: 'paragraph', heading: 'heading', list: 'list item', expanded: 'expanded', collapsed: 'collapsed', pressed: 'pressed', notPressed: 'not pressed' },
+    am: { button: 'አዝራር', link: 'አገናኝ', edit: 'የፅሑፍ ማስገቢያ', para: 'አንቀጽ', heading: 'ርዕስ', list: 'ዝርዝር ንጥል', expanded: 'ተከፍቷል', collapsed: 'ተዘግቷል', pressed: 'ነቅቷል', notPressed: 'ጠፍቷል' },
+    om: { button: 'qabduu', link: 'hidhata', edit: 'galmee barreeffamaa', para: 'keeyyata', heading: 'mata duree', list: 'miseensa tarree', expanded: "bal'ateera", collapsed: "dudduubatti deebi'eera", pressed: 'cuqaasameera', notPressed: 'hin cuqaasamne' },
+    ti: { button: 'መልጎም', link: 'መላገቢ', edit: 'መእተዊ ጽሑፍ', para: 'ዓንቀጽ', heading: 'ኣርእስቲ', list: 'ንጥሪ ዝርዝር', expanded: 'ተዘርጊሑ', collapsed: 'ተዓጺፉ', pressed: 'ተጠዊቑ', notPressed: 'ኣይተጠወቐን' },
+    so: { button: 'badhan', link: 'xiriir', edit: 'meel qoraal', para: 'faqradda', heading: 'cinwaanka', list: 'shayga liiska', expanded: 'la fidiyay', collapsed: 'la laabay', pressed: 'la riixay', notPressed: 'aan la riixin' },
+    ar: { button: 'زر', link: 'رابط', edit: 'إدخال نص', para: 'فقرة', heading: 'عنوان', list: 'عنصر قائمة', expanded: 'موسع', collapsed: 'مطوي', pressed: 'مضغوط', notPressed: 'غير مضغوط' },
+    sw: { button: 'kitufe', link: 'kiungo', edit: 'uandishi wa maandishi', para: 'aya', heading: 'kichwa', list: 'kipengee cha orodha', expanded: 'imepanuliwa', collapsed: 'imekunjwa', pressed: 'imebonyezwa', notPressed: 'haijabonyezwa' },
+    fr: { button: 'bouton', link: 'lien', edit: 'champ de texte', para: 'paragraphe', heading: 'titre', list: 'élément de liste', expanded: 'développé', collapsed: 'réduit', pressed: 'enfoncé', notPressed: 'non enfoncé' }
   };
 
   function getHostElementDescription(el) {
@@ -368,7 +368,7 @@
       else if (tag === 'A') role = r.link;
       else if (tag === 'INPUT' || tag === 'TEXTAREA') role = r.edit;
       else if (tag === 'P') role = r.para;
-      else if (/^H[1-6]$/.test(tag)) role = r.heading + tag[1];
+      else if (/^H[1-6]$/.test(tag)) role = r.heading;
       else if (tag === 'LI') role = r.list;
     }
     const states = [];
@@ -429,7 +429,7 @@
     let delay = 300;
     for (let i = 0; i < elements.length && i < 20; i++) {
       const desc = getHostElementDescription(elements[i]);
-      if (desc && !seen.has(desc) && !PRESET_AUDIO_MAP[desc]) {
+      if (desc && !seen.has(desc)) {
         seen.add(desc);
         setTimeout(function () {
           const cacheKey = curLang + ':' + desc;
