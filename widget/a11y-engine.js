@@ -1055,6 +1055,47 @@
     }
   }
 
+  function ensureSemanticLandmarks() {
+    if (typeof document === 'undefined') return;
+
+    // 1. Ensure primary content has role="main" if no <main> exists
+    if (!document.querySelector('main, [role="main"]')) {
+      const primaryContainer = document.getElementById('curriculum_navigation_content') ||
+        document.getElementById('content') ||
+        document.querySelector('.content, article, .formatted-content');
+      if (primaryContainer) {
+        primaryContainer.setAttribute('role', 'main');
+      }
+    }
+
+    // 2. Ensure header has role="banner" if no <header> with banner role exists
+    if (!document.querySelector('header, [role="banner"]')) {
+      const headerEl = document.querySelector('.header, #header, .navbar, .top-bar');
+      if (headerEl) {
+        headerEl.setAttribute('role', 'banner');
+      }
+    }
+
+    // 3. Ensure navigation landmarks have distinguishing aria-labels for screen reader browse mode (D key)
+    const navCandidates = document.querySelectorAll('nav, [role="navigation"], .sidebar.navigation, #sidebar, #curriculum_navigation_menu');
+    navCandidates.forEach((nav, idx) => {
+      if (!nav.getAttribute('role')) {
+        nav.setAttribute('role', 'navigation');
+      }
+      if (!nav.getAttribute('aria-label') && !nav.getAttribute('aria-labelledby')) {
+        const id = nav.id || '';
+        const cls = nav.className || '';
+        if (id.includes('sidebar') || cls.includes('sidebar')) {
+          nav.setAttribute('aria-label', currentLang === 'am' ? 'የጎን አሰሳ ማውጫ' : 'Sidebar Navigation');
+        } else if (id.includes('curriculum') || cls.includes('curriculum')) {
+          nav.setAttribute('aria-label', currentLang === 'am' ? 'የትምህርት ሞጁሎች አሰሳ' : 'Curriculum Modules Navigation');
+        } else {
+          nav.setAttribute('aria-label', currentLang === 'am' ? `አሰሳ ${idx + 1}` : `Navigation ${idx + 1}`);
+        }
+      }
+    });
+  }
+
   function translateHostPage(lang) {
     if (!lang || !ALL_LANGUAGES.includes(lang)) lang = 'en';
 
@@ -1065,6 +1106,7 @@
     }
 
     syncSkipLink(lang);
+    ensureSemanticLandmarks();
 
     if (!document.body) return;
 
@@ -3703,7 +3745,7 @@
     } else if (e.key === '?' || (e.shiftKey && key === '/')) {
       e.preventDefault();
       openShortcutsModal();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape' || e.key === 'Control') {
       if (isAutoScanActive) {
         stopSwitchScanner();
       }
@@ -3725,7 +3767,7 @@
 
   // Global shortcuts for blind and keyboard users:
   // - Alt + I: Describe focused or main lesson image
-  // - Escape: Universal silence to immediately halt any playing speech/audio
+  // - Escape or Control: Universal silence (matching NVDA/JAWS Ctrl standard) to immediately halt any playing speech/audio
   window.addEventListener('keydown', (e) => {
     if (e.altKey && (e.key === 'i' || e.key === 'I')) {
       e.preventDefault();
@@ -3737,7 +3779,7 @@
       } else {
         announce(currentLang === 'am' ? 'በዚህ ገጽ ላይ ምንም ምስል አልተገኘም' : 'No images found on this page');
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape' || e.key === 'Control') {
       // Universal silence: immediately halt any active TTS audio or Web Speech
       if (activeA11yAudio) {
         activeA11yAudio.pause();
@@ -4492,6 +4534,8 @@
   /* ── 12. Initial Mount & Check ────────────────────────────────────────── */
   function initEngine() {
     createTriggerButton();
+    syncSkipLink(currentLang);
+    ensureSemanticLandmarks();
 
     // Enable image keyboard Tab navigation and visual accessibility by default
     const isVoiceGuideOn = (localStorage.getItem('savanna_voice_guide') !== 'false');
