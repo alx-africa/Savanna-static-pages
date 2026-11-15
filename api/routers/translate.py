@@ -179,6 +179,18 @@ async def _translate_with_gemini(
             "3. Formatting & Output: Return ONLY a valid JSON object mapping each EXACT original string key to its translated string value."
         )
 
+    if target_lang == "ti":
+        guidelines += (
+            "\nCRITICAL TIGRINYA (ትግርኛ) LINGUISTIC ACCURACY RULES:\n"
+            "- Strictly generate authentic Tigrinya (ትግርኛ). Do NOT output Amharic (አማርኛ).\n"
+            "- Possession: Use 'ናይ' (e.g. 'ናይ ቨርቹዋል ረዳኢ'), NEVER use the Amharic prefix 'የ-'.\n"
+            "- Copula: Use 'እዩ / እያ / እዮም' ('is / are'), NEVER use Amharic 'ነው / ናት / ናቸው'.\n"
+            "- Interrogatives: Use 'እንታይ' ('what', NOT 'ምን'), 'ኣበይ' ('where', NOT 'የት'), 'ስለምንታይ' ('why', NOT 'ለምን').\n"
+            "- Conjunction: Use suffix '-ን' or 'ምስ' ('and'), NEVER use Amharic 'እና'.\n"
+            "- Noun forms: Use 'ረዳኢ / ረዳእቲ' for 'assistant / assistants' (NOT Amharic 'ረዳት / ረዳቶች').\n"
+            "- Relative verbs: Use prefix 'ዝ-' (e.g. 'ዝሰርሑ'), NEVER Amharic prefix 'የሚ-' (e.g. 'የሚሰሩት').\n"
+        )
+
     prompt = (
         f"You are {role_desc}.\n"
         f"Translate the following JSON array of web content and UI strings from {source_lang} into {lang_name}.\n\n"
