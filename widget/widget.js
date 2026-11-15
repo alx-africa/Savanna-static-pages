@@ -14,11 +14,11 @@
   (function loadA11yEngine() {
     if (window.__SAVANNA_A11Y_ENGINE__ || document.querySelector('script[src*="a11y-engine.js"]')) return;
     const a11yScript = document.createElement('script');
-    let a11ySrc = '/widget/a11y-engine.js';
+    let a11ySrc = '/widget/a11y-engine.js?v=2.2.0';
     if (scriptEl && scriptEl.src) {
       try {
         const u = new URL(scriptEl.src);
-        a11ySrc = u.origin + '/widget/a11y-engine.js';
+        a11ySrc = u.origin + '/widget/a11y-engine.js?v=2.2.0';
       } catch (_) {}
     }
     a11yScript.src = a11ySrc;

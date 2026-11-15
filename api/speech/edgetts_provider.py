@@ -55,62 +55,76 @@ _DEFAULT_EDGE_VOICES: dict[str, str] = {
 }
 
 
-def _prepare_bilingual_content(text: str, lang: str, default_voice: str) -> tuple[str, str]:
+def _segment_bilingual_utterance(text: str, lang: str, default_voice: str) -> list[tuple[str, str]]:
     """
-    Intelligently handle code-switching and mixed-language utterances.
+    Intelligently segment code-switched bilingual utterances.
     Prevents Edge-TTS from reading English/Latin words using Amharic/Ethiopic phonetics.
+    Each segment is paired with its native voice for seamless parallel synthesis.
     """
     clean_text = text.strip()
+    if not clean_text:
+        return []
     if lang != "am":
-        return clean_text, default_voice
+        return [(clean_text, default_voice)]
 
     has_ethiopic = bool(re.search(r"[\u1200-\u137F]", clean_text))
     has_latin = bool(re.search(r"[a-zA-Z]", clean_text))
 
     # Case 1: Pure Latin / English words in an Amharic session -> speak with native English voice
     if has_latin and not has_ethiopic:
-        return clean_text, "en-US-JennyNeural"
+        return [(clean_text, "en-US-JennyNeural")]
 
-    # Case 2: Mixed bilingual utterance (both Ethiopic script and English words)
-    # Wrap English words in en-US voice and Ethiopic words in am-ET voice seamlessly
-    if has_latin and has_ethiopic:
-        tokens = re.split(r"([A-Za-z0-9][A-Za-z0-9\s\'\-_/]*[A-Za-z0-9]|[A-Za-z0-9]+)", clean_text)
-        parts = []
-        for token in tokens:
-            if not token:
-                continue
-            escaped = (
-                token.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace('"', "&quot;")
-            )
-            if re.search(r"[a-zA-Z]", token) and not re.search(r"[\u1200-\u137F]", token):
-                parts.append(f'<voice name="en-US-JennyNeural">{escaped}</voice>')
-            else:
-                parts.append(f'<voice name="{default_voice}">{escaped}</voice>')
-        ssml = (
-            f'<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="am-ET">'
-            f'{"".join(parts)}'
-            f"</speak>"
-        )
-        return ssml, default_voice
+    # Case 2: Pure Ethiopic text -> speak with Amharic voice
+    if not (has_latin and has_ethiopic):
+        return [(clean_text, default_voice)]
 
-    # Case 3: Pure Ethiopic
-    return clean_text, default_voice
+    # Case 3: Mixed bilingual text -> split into English clusters vs Ethiopic clusters
+    tokens = re.split(r"([A-Za-z0-9\+\#\.\-]+(?:\s+[A-Za-z0-9\+\#\.\-]+)*)", clean_text)
+    raw_segments: list[tuple[str, str]] = []
+    for token in tokens:
+        if not token:
+            continue
+        if re.search(r"[a-zA-Z]", token) and not re.search(r"[\u1200-\u137F]", token):
+            raw_segments.append((token.strip(), "en-US-JennyNeural"))
+        else:
+            t = token.strip()
+            if t:
+                raw_segments.append((t, default_voice))
+
+    # Merge adjacent segments sharing the same voice
+    merged: list[tuple[str, str]] = []
+    for seg_text, seg_voice in raw_segments:
+        if not seg_text:
+            continue
+        if merged and merged[-1][1] == seg_voice:
+            merged[-1] = (merged[-1][0] + " " + seg_text, seg_voice)
+        else:
+            merged.append((seg_text, seg_voice))
+    return merged
 
 
 class EdgeTTSProvider(BaseTTSProvider):
     """Neural voice synthesis via Microsoft Edge-TTS."""
 
     def __init__(self):
-        self.timeout = 5.0
+        # 25.0s timeout ensures long curriculum paragraphs and detailed multimodal
+        # visual descriptions synthesize reliably without premature termination
+        self.timeout = 25.0
 
     def is_configured(self) -> bool:
         return HAS_EDGE_TTS
 
     def get_voices(self) -> dict[str, list[dict[str, Any]]]:
         return EDGE_VOICE_CATALOG
+
+    async def _stream_segment(self, segment_text: str, voice: str) -> bytes:
+        """Stream a single text segment through Edge-TTS into MP3 bytes."""
+        communicate = edge_tts.Communicate(text=segment_text, voice=voice)
+        buf = bytearray()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                buf.extend(chunk["data"])
+        return bytes(buf)
 
     async def synthesize(
         self, text: str, language: str, voice: Optional[str] = None
@@ -124,26 +138,34 @@ class EdgeTTSProvider(BaseTTSProvider):
                 f"Voice synthesis is not currently available for '{lang}'. Genuine neural voices are not available."
             )
 
-        voice_name = voice or _DEFAULT_EDGE_VOICES[lang]
-        synth_text, active_voice = _prepare_bilingual_content(text, lang, voice_name)
+        default_voice = voice or _DEFAULT_EDGE_VOICES[lang]
+        segments = _segment_bilingual_utterance(text, lang, default_voice)
+        if not segments:
+            raise ValueError("Cannot synthesize empty text.")
 
-        async def _stream():
-            communicate = edge_tts.Communicate(text=synth_text, voice=active_voice)
-            buf = bytearray()
-            async for chunk in communicate.stream():
-                if chunk["type"] == "audio":
-                    buf.extend(chunk["data"])
-            return buf
+        async def _synthesize_all() -> bytes:
+            if len(segments) == 1:
+                seg_text, seg_voice = segments[0]
+                return await self._stream_segment(seg_text, seg_voice)
+
+            # Concurrent synthesis of code-switched bilingual segments
+            try:
+                tasks = [self._stream_segment(s_txt, s_vc) for s_txt, s_vc in segments]
+                chunk_list = await asyncio.gather(*tasks)
+                return b"".join(chunk_list)
+            except Exception as exc:
+                logger.warning("Segmented synthesis failed, falling back to unified voice: %s", exc)
+                return await self._stream_segment(text.strip(), default_voice)
 
         try:
-            audio_buffer = await asyncio.wait_for(_stream(), timeout=self.timeout)
+            audio_buffer = await asyncio.wait_for(_synthesize_all(), timeout=self.timeout)
             if not audio_buffer:
                 raise RuntimeError("Edge-TTS produced no audio frames.")
 
             return TTSResult(
-                audio_bytes=bytes(audio_buffer),
+                audio_bytes=audio_buffer,
                 media_type="audio/mpeg",
-                voice_name=voice_name,
+                voice_name=default_voice,
                 language=lang,
                 provider="edge-tts",
             )

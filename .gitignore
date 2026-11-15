@@ -9,6 +9,7 @@ __pycache__/
 chroma_data/
 node_modules/
 axe-results.json
+api/data/tts_cache/
 *.pem
 
 

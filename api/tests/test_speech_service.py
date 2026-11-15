@@ -139,6 +139,32 @@ class TestEdgeTTSProvider(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(NotImplementedError):
             await provider.synthesize("Tigrigna test", language="ti")
 
+    def test_segment_bilingual_utterance(self):
+        from speech.edgetts_provider import _segment_bilingual_utterance
+
+        # 1. Pure Latin in Amharic session routes to JennyNeural
+        segments = _segment_bilingual_utterance("Virtual Assistant", "am", "am-ET-MekdesNeural")
+        self.assertEqual(len(segments), 1)
+        self.assertEqual(segments[0], ("Virtual Assistant", "en-US-JennyNeural"))
+
+        # 2. Pure Ethiopic routes to MekdesNeural
+        segments = _segment_bilingual_utterance("ሰላም እንደምን አላችሁ", "am", "am-ET-MekdesNeural")
+        self.assertEqual(len(segments), 1)
+        self.assertEqual(segments[0], ("ሰላም እንደምን አላችሁ", "am-ET-MekdesNeural"))
+
+        # 3. Mixed bilingual splits cleanly into native voice segments without XML tags
+        segments = _segment_bilingual_utterance("ይህ Virtual Assistant ትምህርት ነው።", "am", "am-ET-MekdesNeural")
+        self.assertEqual(len(segments), 3)
+        self.assertEqual(segments[0], ("ይህ", "am-ET-MekdesNeural"))
+        self.assertEqual(segments[1], ("Virtual Assistant", "en-US-JennyNeural"))
+        self.assertEqual(segments[2], ("ትምህርት ነው።", "am-ET-MekdesNeural"))
+
+        # 4. Multi-word English technical terms
+        segments = _segment_bilingual_utterance("የ AI ረዳት ሶፍትዌሮች እንደ ChatGPT እና Claude", "am", "am-ET-MekdesNeural")
+        voices = [s[1] for s in segments]
+        self.assertIn("en-US-JennyNeural", voices)
+        self.assertIn("am-ET-MekdesNeural", voices)
+
 
 class TestSpeechServiceCoordinator(unittest.IsolatedAsyncioTestCase):
     """Test provider resolution, caching, and secret sanitization in SpeechService."""

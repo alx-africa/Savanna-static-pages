@@ -3176,11 +3176,15 @@
             window.speechSynthesis.cancel();
           }
         });
+        focusTarget.style.cursor = 'pointer';
         focusTarget.addEventListener('keydown', function (e) {
           if (e.key === 'Enter' || e.key === ' ') {
             if (this.tagName !== 'A') e.preventDefault();
             describeImage(this);
           }
+        });
+        focusTarget.addEventListener('click', function () {
+          describeImage(img);
         });
       }
 
@@ -4317,7 +4321,9 @@
   /* ── 21. Master Adaptation Controller ──────────────────────────────────── */
   function applyAdaptations(profile) {
     if (!profile) return;
-    adaptBlindAndScreenReader(Boolean(profile.screenReader));
+    const isVoiceGuideOn = (localStorage.getItem('savanna_voice_guide') !== 'false');
+    const enableScreenReader = Boolean(profile.screenReader) || isVoiceGuideOn;
+    adaptBlindAndScreenReader(enableScreenReader);
     adaptLowVisionContrast(Boolean(profile.highContrast));
     adaptDeafAndHearing(Boolean(profile.captionsTranscripts));
     adaptMotorAndMobility(Boolean(profile.motorAssistance));
@@ -4352,7 +4358,9 @@
 
     if (mutationTimeout) clearTimeout(mutationTimeout);
     mutationTimeout = setTimeout(() => {
-      adaptBlindAndScreenReader(true);
+      const isVoiceGuideOn = (localStorage.getItem('savanna_voice_guide') !== 'false');
+      const enableScreenReader = (activeProfile && activeProfile.screenReader) || isVoiceGuideOn;
+      adaptBlindAndScreenReader(enableScreenReader);
       if (currentLang && currentLang !== 'en') translateHostPage(currentLang);
     }, 100);
   });
@@ -4364,12 +4372,22 @@
     applyAdaptations(activeProfile);
   });
 
+  // Listen to voice guide / storage updates from widget iframe
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'savanna_voice_guide' || e.key === STORAGE_KEY) {
+      applyAdaptations(getStoredProfile() || detectOSPreferences());
+    }
+  });
+
   /* ── 12. Initial Mount & Check ────────────────────────────────────────── */
   function initEngine() {
     createTriggerButton();
 
     // Enable image keyboard Tab navigation and visual accessibility by default
-    adaptBlindAndScreenReader(true);
+    const isVoiceGuideOn = (localStorage.getItem('savanna_voice_guide') !== 'false');
+    const stored = getStoredProfile();
+    const enableBlind = (stored && stored.screenReader) || isVoiceGuideOn;
+    adaptBlindAndScreenReader(enableBlind);
 
     // If current language is not English, translate host DOM immediately
     if (currentLang && currentLang !== 'en') {
@@ -4378,7 +4396,6 @@
 
     // Check if user has completed onboarding or configured profile
     const onboardingDone = (localStorage.getItem(ONBOARDING_COMPLETED_KEY) === 'true');
-    const stored = getStoredProfile();
 
     if (!onboardingDone && (!stored || (!stored.configured && !stored.skipped))) {
       // First visit: automatically open the accessible 2-step onboarding wizard
