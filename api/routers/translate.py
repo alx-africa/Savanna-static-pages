@@ -160,12 +160,15 @@ async def _translate_with_gemini(
     elif detected_type == "learning":
         role_desc = "an expert pedagogical localization engine for African digital professionals learning modern tech careers (ALX / Holberton / Online Academies)"
         guidelines = (
-            "CRITICAL PEDAGOGICAL REQUIREMENTS:\n"
+            "CRITICAL PEDAGOGICAL & COURSE SCALABILITY REQUIREMENTS:\n"
             f"1. Contextual & Natural Clarity: Translate the real semantic meaning of the sentence rather than literal word-for-word replacement. Ensure the phrasing sounds completely natural, intuitive, and engaging to an educated native speaker of {lang_name}.\n"
-            f"2. Terminology Balance: Keep core tech acronyms and recognizable industry designations clear (e.g. AI, Virtual Assistant, VA, DevOps, Kubernetes) where standard in professional practice, while explaining the concepts clearly in {lang_name}.\n"
-            "3. Sentence Flow & Grammar: Where strings are clauses, bullet points, or callouts of an educational lesson, ensure grammatical alignment so they fit smoothly into the broader lesson context.\n"
-            "4. Formatting: Preserve numbers, bullet markers, and emojis intact.\n"
-            "5. Output: Return ONLY a valid JSON object mapping each EXACT original string key to its intuitive translated string value."
+            f"2. Technical Integrity & Hands-on Labs: Strictly preserve programming syntax, CLI commands, variable names, keywords, and file paths verbatim (e.g., 'def', 'import', 'npm', 'git clone', 'WHERE', 'SELECT', 'main.py') while translating instructional steps, comments, and conceptual guidance naturally into {lang_name}.\n"
+            f"3. Quizzes & Assessments: Translate question stems, multiple-choice options, and instant feedback banners with absolute precision. Strictly preserve the logical meaning of qualifying terms such as 'NOT', 'ALWAYS', 'EXCEPT', 'TRUE', 'FALSE'.\n"
+            f"4. Grading Rubrics & Criteria: Translate evaluative standards, scoring criteria, and performance indicators clearly and objectively so learners understand exactly what is required to pass.\n"
+            f"5. Terminology Balance Across Disciplines: Keep core tech acronyms and recognizable industry designations clear (e.g., AI, Virtual Assistant, VA, DevOps, Kubernetes, REST API, Cloud) where standard in professional practice across Software Engineering, Data Science, and Virtual Assistance, while explaining the concepts clearly in {lang_name}.\n"
+            "6. Sentence Flow & Grammar: Where strings are clauses, bullet points, table cells, or inline callouts of an educational lesson, ensure grammatical alignment so they fit smoothly into the broader lesson context.\n"
+            "7. Formatting: Preserve numbers, bullet markers, and emojis intact.\n"
+            "8. Output: Return ONLY a valid JSON object mapping each EXACT original string key to its intuitive translated string value."
         )
     else:
         role_desc = "an expert localization engine for African digital platforms, online learning academies, and modern job portals"
@@ -232,11 +235,14 @@ async def _translate_with_gemini(
                         recovered: dict[str, str] = {}
                         for k, v in matches:
                             try:
-                                k_clean = bytes(k, "utf-8").decode("unicode_escape")
-                                v_clean = bytes(v, "utf-8").decode("unicode_escape")
-                                recovered[k_clean] = v_clean
+                                k_clean = json.loads(f'"{k}"')
                             except Exception:
-                                recovered[k] = v
+                                k_clean = k
+                            try:
+                                v_clean = json.loads(f'"{v}"')
+                            except Exception:
+                                v_clean = v
+                            recovered[k_clean] = v_clean
                         if recovered:
                             logger.info("Recovered %d translations via regex fallback parser.", len(recovered))
                             return recovered

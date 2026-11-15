@@ -753,6 +753,66 @@
   },
   "Enroll Now": {
     "en": "Enroll Now", "am": "አሁን ይመዝገቡ", "om": "Amma Galmaa'aa", "ti": "ሕጂ ተመዝገቡ", "so": "Hadda Isdiiwaangeli", "ar": "سجّل الآن", "sw": "Jiandikishe Sasa", "fr": "S'inscrire maintenant"
+  },
+  "Question": {
+    "en": "Question", "am": "ጥያቄ", "om": "Gaaffii", "ti": "ሕቶ", "so": "Su'aal", "ar": "سؤال", "sw": "Swali", "fr": "Question"
+  },
+  "Score": {
+    "en": "Score", "am": "ውጤት", "om": "Qabxii", "ti": "ውጽኢት", "so": "Dhibco", "ar": "الدرجة", "sw": "Alama", "fr": "Score"
+  },
+  "Grade": {
+    "en": "Grade", "am": "ደረጃ", "om": "Sadarkaa", "ti": "ደረጃ", "so": "Darajo", "ar": "التقدير", "sw": "Gredi", "fr": "Note"
+  },
+  "Correct": {
+    "en": "Correct", "am": "ትክክል", "om": "Sirrii", "ti": "ትኽክል", "so": "Sax", "ar": "صحيح", "sw": "Sahihi", "fr": "Correct"
+  },
+  "Incorrect": {
+    "en": "Incorrect", "am": "ስህተት", "om": "Dogoggora", "ti": "ጌጋ", "so": "Khalad", "ar": "غير صحيح", "sw": "Si sahihi", "fr": "Incorrect"
+  },
+  "Try Again": {
+    "en": "Try Again", "am": "እንደገና ይሞክሩ", "om": "Ammas Yaalaa", "ti": "ደጊምኩም ፈትኑ", "so": "Isku day mar kale", "ar": "حاول مرة أخرى", "sw": "Jaribu tena", "fr": "Réessayer"
+  },
+  "Submit Answer": {
+    "en": "Submit Answer", "am": "መልስ አስገባ", "om": "Deebii Galchaa", "ti": "መልሲ ኣእትዉ", "so": "Geli Jawaabta", "ar": "إرسال الإجابة", "sw": "Wasilisha jibu", "fr": "Soumettre la réponse"
+  },
+  "Lab Instructions": {
+    "en": "Lab Instructions", "am": "የተግባር ላብ መመሪያዎች", "om": "Qajeelfama Laabii Hojii", "ti": "ናይ ላብ መምርሒታት", "so": "Tilmaamaha Shaybaarka", "ar": "تعليمات المختبر العملي", "sw": "Maagizo ya maabara ya vitendo", "fr": "Instructions du laboratoire"
+  },
+  "Grading Rubric": {
+    "en": "Grading Rubric", "am": "የውጤት መስጫ መስፈርት", "om": "Ulaagaa Madaallii Qabxii", "ti": "ናይ ምዘና መምዘኒ", "so": "Halbeegga Qiimeynta", "ar": "معايير التقييم", "sw": "Vigezo vya tathmini", "fr": "Grille d'évaluation"
+  },
+  "Criteria": {
+    "en": "Criteria", "am": "መስፈርቶች", "om": "Ulaagaalee", "ti": "መምዘኒታት", "so": "Shuruudaha", "ar": "المعايير", "sw": "Vigezo", "fr": "Critères"
+  },
+  "Weight": {
+    "en": "Weight", "am": "ክብደት", "om": "Ulfaatina", "ti": "ክብደት", "so": "Miisaanka", "ar": "الوزن النسبي", "sw": "Uzito wa alama", "fr": "Pondération"
+  },
+  "Transcript": {
+    "en": "Transcript", "am": "የንግግር ጽሁፍ", "om": "Waraabbii Sagalee", "ti": "ናይ ድምጺ ጽሑፍ", "so": "Qoraalka Codka", "ar": "النص المفرّغ", "sw": "Nakala ya sauti", "fr": "Transcription"
+  },
+  "Summary": {
+    "en": "Summary", "am": "ማጠቃለያ", "om": "Goolaba", "ti": "ጽሟቕ", "so": "Soo koobid", "ar": "الملخص", "sw": "Muhtasari", "fr": "Résumé"
+  },
+  "Step": {
+    "en": "Step", "am": "ደረጃ", "om": "Tarkaanfii", "ti": "ስጉምቲ", "so": "Tallaabo", "ar": "خطوة", "sw": "Hatua", "fr": "Étape"
+  },
+  "Estimated Time": {
+    "en": "Estimated Time", "am": "የሚፈጀው ጊዜ", "om": "Yeroo Tilmaamame", "ti": "ዝግመት ግዜ", "so": "Waqtiga lagu qiyaasay", "ar": "الوقت المقدر", "sw": "Muda uliokadiriwa", "fr": "Durée estimée"
+  },
+  "Overview": {
+    "en": "Overview", "am": "አጠቃላይ እይታ", "om": "Ibsa Waliigalaa", "ti": "ሓፈሻዊ ትሕዝቶ", "so": "Dulmar guud", "ar": "نظرة عامة", "sw": "Muhtasari wa jumla", "fr": "Vue d'ensemble"
+  },
+  "Prerequisites": {
+    "en": "Prerequisites", "am": "ቅድመ ሁኔታዎች", "om": "Ulaagaalee Duraa", "ti": "ቅድመ-ኩነታት", "so": "Shuruudaha ka horreeya", "ar": "المتطلبات الأساسية", "sw": "Mahitaji ya awali", "fr": "Prérequis"
+  },
+  "Learning Objectives": {
+    "en": "Learning Objectives", "am": "የትምህርቱ ግቦች", "om": "Kaayyolee Barnootaa", "ti": "ናይ ትምህርቲ ሸቶታት", "so": "Ujeedooyinka Waxbarashada", "ar": "الأهداف التعليمية", "sw": "Malengo ya mafunzo", "fr": "Objectifs d'apprentissage"
+  },
+  "Key Takeaways": {
+    "en": "Key Takeaways", "am": "ዋና ዋና ነጥቦች", "om": "Qabxiilee Ijoo", "ti": "ቀንድታት ነጥብታት", "so": "Qodobada Muhiimka ah", "ar": "النقاط الرئيسية المستفادة", "sw": "Mambo makuu ya kuzingatia", "fr": "Points clés à retenir"
+  },
+  "Knowledge Check": {
+    "en": "Knowledge Check", "am": "የእውቀት ፍተሻ", "om": "Hubannoo Madaaluu", "ti": "ናይ ፍልጠት ምፍታሽ", "so": "Hubinta Aqoonta", "ar": "التحقق من الفهم", "sw": "Upimaji wa maarifa", "fr": "Contrôle des connaissances"
   }
 };
 
@@ -988,8 +1048,12 @@
           if (parent.closest(
             '#savanna-a11y-modal-backdrop, #savanna-a11y-trigger, #savanna-trigger, #savanna-modal-backdrop, ' +
             '#sa11y-reading-ruler, #sa11y-motor-toolbar, #savanna-a11y-announcer, #sa11y-live-region, ' +
-            '#sa11y-shortcuts-backdrop, script, style, code, pre'
+            '#sa11y-shortcuts-backdrop, script, style, code, pre, kbd, samp, var'
           )) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          const noTransEl = parent.closest('[translate="no"], .notranslate, [data-sa11y-ignore], [data-no-translate]');
+          if (noTransEl && noTransEl !== document.body && noTransEl !== document.documentElement) {
             return NodeFilter.FILTER_REJECT;
           }
           return NodeFilter.FILTER_ACCEPT;
@@ -1014,7 +1078,9 @@
       if (parent.closest(
         '#curriculum_navigation_content, .formatted-content, .savanna-styles, .course-content, ' +
         '.lesson-content, .curriculum-container, .module-body, [data-lesson-content], .quiz-container, ' +
-        '.assignment-details, .learning-material, .reading-content'
+        '.assignment-details, .learning-material, .reading-content, .lab-instructions, .rubric-table, ' +
+        '.knowledge-check, .question-card, .transcript-card, .activity-step, .quiz-stem, .option-label, ' +
+        '.quiz-feedback, .objectives-card, .table-rubric'
       )) {
         score += 100;
       }
@@ -1031,12 +1097,18 @@
       // 4. Heading elements carry high hierarchical orientation value
       if (parent.closest('h1, h2, h3, h4, h5, h6, [role="heading"]')) score += 30;
 
-      // 5. Dense text nodes (longer paragraphs or requirements specs)
+      // 5. Assessments, Question Stems & Interactive Controls
+      if (parent.closest('legend, .question-text, .quiz-stem, label[for], .step-number, .badge')) score += 35;
+
+      // 6. Rubrics & tabular learning data
+      if (parent.closest('th, td, .rubric-header, .criterion-title')) score += 25;
+
+      // 7. Dense text nodes (longer paragraphs or requirements specs)
       const textLen = (node.nodeValue || '').trim().length;
       if (textLen >= 40) score += 20;
       if (textLen >= 120) score += 20;
 
-      // 6. Deprioritize chrome, footers, breadcrumbs, cookie notices
+      // 8. Deprioritize chrome, footers, breadcrumbs, cookie notices
       if (parent.closest('nav, header, footer, .sidebar, .navbar, .breadcrumb, .social-share, .cookie-banner, .footer')) {
         score -= 40;
       }
@@ -1150,8 +1222,13 @@
     interactiveEls.forEach(el => {
       if (el.closest(
         '#savanna-a11y-modal-backdrop, #savanna-a11y-trigger, #savanna-trigger, #savanna-modal-backdrop, ' +
-        '#sa11y-reading-ruler, #sa11y-motor-toolbar, #savanna-a11y-announcer, #sa11y-live-region, #sa11y-shortcuts-backdrop'
+        '#sa11y-reading-ruler, #sa11y-motor-toolbar, #savanna-a11y-announcer, #sa11y-live-region, #sa11y-shortcuts-backdrop, ' +
+        'script, style, code, pre, kbd, samp, var'
       )) {
+        return;
+      }
+      const noTransInteractive = el.closest('[translate="no"], .notranslate, [data-sa11y-ignore], [data-no-translate]');
+      if (noTransInteractive && noTransInteractive !== document.body && noTransInteractive !== document.documentElement) {
         return;
       }
 
