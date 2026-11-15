@@ -371,10 +371,26 @@
     const curLang = localStorage.getItem('savanna_lang') || 'en';
     const r = I18N_ROLES[curLang] || I18N_ROLES.en;
 
+    const COMMON_AMHARIC_LABELS = {
+      'Skip to main content': 'ወደ ዋናው ይዘት ይለፉ',
+      'Toggle navigation menu': 'የአሰሳ ምናሌ',
+      'Home': 'መነሻ',
+      'Access my learning': 'ትምህርቴን ጀምር',
+      'My courses': 'የእኔ ኮርሶች',
+      'Concepts': 'ጽንሰ-ሐሳቦች',
+      'Close': 'ዝጋ',
+      'Open': 'ክፈት',
+      'Next': 'ቀጣይ',
+      'Previous': 'ቀዳሚ'
+    };
+
     let label = el.getAttribute('aria-label') || '';
     if (!label && el.placeholder) label = el.placeholder;
     if (!label && el.innerText && el.innerText.trim().length > 0) {
       label = el.innerText.trim();
+    }
+    if (curLang === 'am' && COMMON_AMHARIC_LABELS[label]) {
+      label = COMMON_AMHARIC_LABELS[label];
     }
     let role = el.getAttribute('role');
     if (!role) {

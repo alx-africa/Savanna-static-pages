@@ -2682,6 +2682,7 @@
   };
 
   let activeA11yAudio = null;
+  let activeA11yAbort = null;
   const a11yAudioCache = new Map();
 
   async function speakVisualDescription(text) {
@@ -2705,19 +2706,29 @@
       } catch (_) {}
     }
 
-    // 2. Stream neural audio fallback via /speech/synthesize (Edge-TTS am-ET-MekdesNeural)
+    // 2. Stream neural audio fallback via /speech/synthesize (Edge-TTS with bilingual switching)
+    if (typeof fetch !== 'function') return;
     try {
       if (activeA11yAudio) {
         activeA11yAudio.pause();
         activeA11yAudio = null;
       }
+      if (activeA11yAbort) {
+        activeA11yAbort.abort();
+      }
+      activeA11yAbort = new AbortController();
+
       const cacheKey = currentLang + ':' + text;
       let audioUrl = a11yAudioCache.get(cacheKey);
       if (!audioUrl) {
-        const resp = await fetch('/speech/synthesize', {
+        const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl)
+          ? window.SavannaConfig.apiUrl.replace(/\/api$/, '')
+          : 'http://localhost:8000';
+        const resp = await fetch(apiUrl + '/speech/synthesize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text, language: currentLang })
+          body: JSON.stringify({ text: text, language: currentLang }),
+          signal: activeA11yAbort.signal
         });
         if (resp.ok) {
           const blob = await resp.blob();
@@ -2727,9 +2738,16 @@
       }
       if (audioUrl) {
         activeA11yAudio = new Audio(audioUrl);
+        activeA11yAudio.onended = function () {
+          activeA11yAudio = null;
+        };
         activeA11yAudio.play().catch(() => {});
       }
-    } catch (_) {}
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.debug('[Savanna A11y] Speech notice:', err);
+      }
+    }
   }
 
   function extractElementVisualDetails(targetEl) {
@@ -2979,6 +2997,47 @@
       prefix = (currentLang === 'am') ? `ርዕስ ${level}፡ ` : `Heading level ${level}: `;
     } else if (node.classList.contains('callout') || node.closest('.callout')) {
       prefix = (currentLang === 'am') ? `ማሳሰቢያ፡ ` : `Important note: `;
+    }
+
+    // If student selected Amharic but the educational paragraph is in English,
+    // translate and explain the detailed paragraph in authentic Amharic!
+    if (currentLang === 'am' && /[a-zA-Z]/.test(rawText) && !/[\u1200-\u137F]/.test(rawText)) {
+      if (node.dataset.amharicTranslation) {
+        const fullAmharic = `${prefix}${node.dataset.amharicTranslation}`;
+        announce(fullAmharic);
+        speakVisualDescription(fullAmharic);
+        return;
+      }
+      const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl)
+        ? window.SavannaConfig.apiUrl.replace(/\/api$/, '')
+        : 'http://localhost:8000';
+      if (typeof fetch === 'function') {
+        fetch(apiUrl + '/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ strings: [rawText], target_lang: 'am', source_lang: 'en' })
+        })
+        .then(r => r.json())
+        .then(d => {
+          const trans = (d.translations && d.translations[rawText]) || rawText;
+          node.dataset.amharicTranslation = trans;
+          if (document.activeElement === node || node.classList.contains('sa11y-text-focused')) {
+            const fullAmharic = `${prefix}${trans}`;
+            announce(fullAmharic);
+            speakVisualDescription(fullAmharic);
+          }
+        })
+        .catch(() => {
+          const fullSpeechText = `${prefix}${rawText}`;
+          announce(fullSpeechText);
+          speakVisualDescription(fullSpeechText);
+        });
+      } else {
+        const fullSpeechText = `${prefix}${rawText}`;
+        announce(fullSpeechText);
+        speakVisualDescription(fullSpeechText);
+      }
+      return;
     }
 
     const fullSpeechText = `${prefix}${rawText}`;
@@ -3444,12 +3503,14 @@
   }
 
   function readCurrentLessonAloud() {
-    if (!('speechSynthesis' in window)) {
-      triggerVisualAlert(currentLang === 'am' ? 'የድምፅ ንባብ በዚህ ብሮውዘር አይደገፍም' : 'Speech synthesis not supported in this browser');
-      return;
-    }
-    if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
+    if (activeA11yAudio || (window.speechSynthesis && window.speechSynthesis.speaking)) {
+      if (activeA11yAudio) {
+        activeA11yAudio.pause();
+        activeA11yAudio = null;
+      }
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
       triggerVisualAlert(currentLang === 'am' ? 'የድምፅ ንባብ ቆሟል' : 'Speech readout stopped');
       return;
     }
@@ -3467,10 +3528,26 @@
       .join('. ');
 
     const speakText = `${heading}. ${paragraphs}`.slice(0, 600);
-    const utterance = new SpeechSynthesisUtterance(speakText);
-    utterance.lang = BCP47_A11Y[currentLang] || 'en-US';
-    utterance.rate = 0.95;
-    window.speechSynthesis.speak(utterance);
+    if (currentLang === 'am' && /[a-zA-Z]/.test(speakText) && !/[\u1200-\u137F]/.test(speakText) && typeof fetch === 'function') {
+      const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl)
+        ? window.SavannaConfig.apiUrl.replace(/\/api$/, '')
+        : 'http://localhost:8000';
+      fetch(apiUrl + '/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ strings: [speakText], target_lang: 'am', source_lang: 'en' })
+      })
+      .then(r => r.json())
+      .then(d => {
+        const trans = (d.translations && d.translations[speakText]) || speakText;
+        speakVisualDescription(trans);
+      })
+      .catch(() => {
+        speakVisualDescription(speakText);
+      });
+    } else {
+      speakVisualDescription(speakText);
+    }
 
     const readingAlerts = {
       en: 'Reading lesson content aloud...',
@@ -4092,7 +4169,10 @@
   /* ── 19. Plain-Language Simplification & Step Chunking ──────────────────── */
   async function fetchPlainLanguageSummary(text, lang) {
     try {
-      const resp = await fetch('/chat', {
+      const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl)
+        ? window.SavannaConfig.apiUrl.replace(/\/api$/, '')
+        : 'http://localhost:8000';
+      const resp = await fetch(apiUrl + '/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4205,15 +4285,7 @@
         const audioBtn = cardEl.querySelector('.sa11y-card-audio-btn');
         if (audioBtn) {
           audioBtn.addEventListener('click', () => {
-            if ('speechSynthesis' in window) {
-              if (window.speechSynthesis.speaking) {
-                window.speechSynthesis.cancel();
-                return;
-              }
-              const utter = new SpeechSynthesisUtterance(plainSummary.replace(/[•\-\*]/g, ''));
-              utter.lang = BCP47_A11Y[currentLang] || 'en-US';
-              window.speechSynthesis.speak(utter);
-            }
+            speakVisualDescription(plainSummary.replace(/[•\-\*]/g, ''));
           });
         }
 

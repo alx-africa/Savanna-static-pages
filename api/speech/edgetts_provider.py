@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from typing import Any, Optional
 
 from speech.base import BaseTTSProvider, TTSResult
@@ -54,6 +55,51 @@ _DEFAULT_EDGE_VOICES: dict[str, str] = {
 }
 
 
+def _prepare_bilingual_content(text: str, lang: str, default_voice: str) -> tuple[str, str]:
+    """
+    Intelligently handle code-switching and mixed-language utterances.
+    Prevents Edge-TTS from reading English/Latin words using Amharic/Ethiopic phonetics.
+    """
+    clean_text = text.strip()
+    if lang != "am":
+        return clean_text, default_voice
+
+    has_ethiopic = bool(re.search(r"[\u1200-\u137F]", clean_text))
+    has_latin = bool(re.search(r"[a-zA-Z]", clean_text))
+
+    # Case 1: Pure Latin / English words in an Amharic session -> speak with native English voice
+    if has_latin and not has_ethiopic:
+        return clean_text, "en-US-JennyNeural"
+
+    # Case 2: Mixed bilingual utterance (both Ethiopic script and English words)
+    # Wrap English words in en-US voice and Ethiopic words in am-ET voice seamlessly
+    if has_latin and has_ethiopic:
+        tokens = re.split(r"([A-Za-z0-9][A-Za-z0-9\s\'\-_/]*[A-Za-z0-9]|[A-Za-z0-9]+)", clean_text)
+        parts = []
+        for token in tokens:
+            if not token:
+                continue
+            escaped = (
+                token.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace('"', "&quot;")
+            )
+            if re.search(r"[a-zA-Z]", token) and not re.search(r"[\u1200-\u137F]", token):
+                parts.append(f'<voice name="en-US-JennyNeural">{escaped}</voice>')
+            else:
+                parts.append(f'<voice name="{default_voice}">{escaped}</voice>')
+        ssml = (
+            f'<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="am-ET">'
+            f'{"".join(parts)}'
+            f"</speak>"
+        )
+        return ssml, default_voice
+
+    # Case 3: Pure Ethiopic
+    return clean_text, default_voice
+
+
 class EdgeTTSProvider(BaseTTSProvider):
     """Neural voice synthesis via Microsoft Edge-TTS."""
 
@@ -79,9 +125,10 @@ class EdgeTTSProvider(BaseTTSProvider):
             )
 
         voice_name = voice or _DEFAULT_EDGE_VOICES[lang]
+        synth_text, active_voice = _prepare_bilingual_content(text, lang, voice_name)
 
         async def _stream():
-            communicate = edge_tts.Communicate(text=text, voice=voice_name)
+            communicate = edge_tts.Communicate(text=synth_text, voice=active_voice)
             buf = bytearray()
             async for chunk in communicate.stream():
                 if chunk["type"] == "audio":
