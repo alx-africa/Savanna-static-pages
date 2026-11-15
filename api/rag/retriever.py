@@ -20,9 +20,9 @@ _CROSS_LINGUAL_EXPANSIONS: dict[str, list[tuple[set[str], str]]] = {
         ({"ቀነ-ገደብ", "ማለፍ", "የዘገየ"}, "deadline pacing boost slightly behind cohort coordinator"),
         ({"ኮርስ", "መቀየር", "መለወጥ"}, "switch course dropdown programme status"),
         ({"እርዳታ", "አስተባባሪ", "ተደራሽነት", "ማስተካከያ"}, "request accommodation interview live help escalation operator"),
-        ({"ሥራ", "ስራ", "ቨርቹዋል", "ረዳት"}, "virtual assistant remote jobs executive administrative support"),
+        ({"ሥራ", "ስራ", "ቨርቹዋል", "ረዳት", "ወደፊት"}, "virtual assistant VA remote jobs executive administrative support future industry market growth trends shaping"),
         ({"ፅሁፍ", "መጻፍ", "መግባባት", "ኮሙኒኬሽን"}, "WR 100 fundamentals of effective communication writing technical"),
-        ({"አርቲፊሻል", "ኢንተለጀንስ", "ሞዴል", "ፕሮምፕት"}, "AIFW 1 AI foundations for work prompting models"),
+        ({"አርቲፊሻል", "አርቴፊሻል", "ኢንተለጀንስ", "ሞዴል", "ፕሮምፕት", "አይኤ"}, "artificial intelligence AI future virtual assistant work automated tools AIFW 1 prompting models"),
         ({"ግምገማ", "ፈተና", "ጥያቄዎች"}, "QA Reviews I can make evaluation quizzes projects"),
         ({"ጎግል", "ሺትስ", "ሰንጠረዥ"}, "Google Sheets spreadsheets administrative scheduling tools"),
     ],
@@ -102,14 +102,25 @@ def expand_cross_lingual_query(query: str, language: str) -> str:
     """
     Generate an expanded bilingual query representation when non-English queries
     are searched against English course documents.
+    Supports morphological prefix stripping (Ethiopic/Amharic/Tigrinya) and
+    character normalization for production-grade retrieval resilience.
     """
     if not query or language == "en" or language not in _CROSS_LINGUAL_EXPANSIONS:
         return query
 
     import re
-    tokens = set(re.findall(r"[\w']+", query.lower()))
-    additions: list[str] = []
+    raw_tokens = set(re.findall(r"[\w']+", query.lower()))
+    tokens = set(raw_tokens)
 
+    # Amharic and Tigrinya morphological prefix stripping & character alternation
+    if language in ("am", "ti"):
+        for t in list(raw_tokens):
+            stem = re.sub(r"^(የ|በ|ለ|ከ|እንደ|ወደ|ስለ|ዝ)", "", t)
+            tokens.add(stem)
+            tokens.add(stem.replace("ቴ", "ቲ"))
+            tokens.add(stem.replace("ቲ", "ቴ"))
+
+    additions: list[str] = []
     for term_set, expansion in _CROSS_LINGUAL_EXPANSIONS[language]:
         if tokens & term_set:
             additions.append(expansion)
@@ -117,6 +128,32 @@ def expand_cross_lingual_query(query: str, language: str) -> str:
     if additions:
         return f"{query} {' '.join(additions)}"
     return query
+
+
+async def expand_cross_lingual_query_async(query: str, language: str) -> str:
+    """
+    Dynamically translate or project non-English queries into English using
+    Gemini MT, with automatic fallback to morphological lexical expansion.
+    Enables zero-hardcoding semantic retrieval for arbitrary learner questions.
+    """
+    if not query or language == "en":
+        return query
+
+    # 1. Attempt dynamic AI machine translation for deep query understanding
+    try:
+        from routers.translate import translate_texts_with_gemini
+        trans_res = await translate_texts_with_gemini([query], target_lang="en", source_lang=language)
+        if trans_res and query in trans_res:
+            translated_en = trans_res[query].strip()
+            if translated_en and translated_en.lower() != query.lower():
+                logger.info("Dynamic cross-lingual query translation [%s -> en]: '%s' -> '%s'", language, query, translated_en)
+                # Combine original query + translated English representation
+                return f"{query} {translated_en}"
+    except Exception as exc:
+        logger.debug("Dynamic query translation unavailable (%s), falling back to morphological expansion.", exc)
+
+    # 2. Heuristic morphological fallback expansion for offline mode
+    return expand_cross_lingual_query(query, language)
 
 
 # Module-level singletons — loaded once per process
@@ -450,7 +487,8 @@ async def retrieve(
         from config import get_settings
         chroma_path = get_settings().chroma_path
 
+    effective_query = await expand_cross_lingual_query_async(query, language)
     results = await asyncio.to_thread(
-        _retrieve_sync, query, language, chroma_path, n_results, domain
+        _retrieve_sync, effective_query, language, chroma_path, n_results, domain
     )
     return results

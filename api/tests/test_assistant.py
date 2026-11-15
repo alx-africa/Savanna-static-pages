@@ -163,5 +163,65 @@ class TestAccommodationReference(unittest.TestCase):
         self.assertEqual(len(ref), 13)
 
 
+class TestJobApplicationAPI(unittest.TestCase):
+    """Verify production job application submission and accommodation linking."""
+
+    def setUp(self):
+        from fastapi.testclient import TestClient
+        from main import app
+        self.client = TestClient(app)
+
+    def test_apply_success_with_accommodation(self):
+        payload = {
+            "applicant_name": "Abebe Kebede",
+            "email": "abebe@example.com",
+            "resume_url": "https://linkedin.com/in/abebe",
+            "cover_note": "Expert Virtual Assistant",
+            "accommodation_type": "Screen Reader",
+            "language": "am"
+        }
+        res = self.client.post("/jobs/job-001/apply", json=payload)
+        self.assertEqual(res.status_code, 201)
+        data = res.json()
+        self.assertTrue(data["application_id"].startswith("APP-202"))
+        self.assertEqual(data["job_id"], "job-001")
+        self.assertEqual(data["status"], "submitted")
+        self.assertIsNotNone(data["accommodation_reference"])
+        self.assertTrue(data["accommodation_reference"].startswith("ACC-202"))
+
+    def test_apply_without_accommodation(self):
+        payload = {
+            "applicant_name": "Sara Ahmed",
+            "email": "sara@example.com",
+            "resume_url": "https://example.com/cv.pdf"
+        }
+        res = self.client.post("/jobs/job-002/apply", json=payload)
+        self.assertEqual(res.status_code, 201)
+        data = res.json()
+        self.assertTrue(data["application_id"].startswith("APP-202"))
+        self.assertIsNone(data["accommodation_reference"])
+
+    def test_apply_nonexistent_job_returns_404(self):
+        payload = {
+            "applicant_name": "Nobody",
+            "email": "nobody@example.com",
+            "resume_url": "https://example.com/cv.pdf"
+        }
+        res = self.client.post("/jobs/non-existent-999/apply", json=payload)
+        self.assertEqual(res.status_code, 404)
+
+
+class TestAmharicMorphologicalRetriever(unittest.TestCase):
+    """Verify Ethiopic morphological prefix stripping and character normalization in RAG."""
+
+    def test_amharic_prefix_and_spelling_expansion(self):
+        from rag.retriever import expand_cross_lingual_query
+        # "ለቨርቹዋል" has preposition 'ለ-' prefix; "አርቴፊሻል" has 'ቴ' instead of 'ቲ'
+        query = "አርቴፊሻል ኢንተለጀንስ ለቨርቹዋል አሲስታንት ስራ ምን ፋይዳ አለው?"
+        expanded = expand_cross_lingual_query(query, "am")
+        self.assertIn("artificial intelligence", expanded.lower())
+        self.assertIn("virtual assistant", expanded.lower())
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -170,6 +170,27 @@ class JobAlertResponse(BaseModel):
     message: str
 
 
+class JobApplicationRequest(BaseModel):
+    applicant_name: str
+    email: str
+    resume_url: str
+    cover_note: Optional[str] = ""
+    accommodation_type: Optional[str] = None
+    language: Optional[str] = "en"
+
+
+class JobApplicationResponse(BaseModel):
+    application_id: str
+    job_id: str
+    job_title: str
+    applicant_name: str
+    email: str
+    status: str
+    accommodation_reference: Optional[str] = None
+    submitted_at: str
+    message: str
+
+
 # ─── Accommodation ───────────────────────────────────────────────────────────
 
 class AccommodationRequest(BaseModel):

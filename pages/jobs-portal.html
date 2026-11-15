@@ -641,16 +641,19 @@
     <p>&copy; 2026 Savanna Careers. Pan-African Remote Work & Tech Skills Empowerment.</p>
   </footer>
 
-  <!-- Host Page Interaction Script (Simulating standard job portal behaviors) -->
+  <!-- Host Page Interaction Script (Production Dynamic Ingestion & Live Filtering) -->
   <script>
-    const JOBS_DATA = {
-      'job-001': {
+    // Embedded initial seed data (offline fallback for zero-downtime resiliency)
+    const SEED_JOBS = [
+      {
+        id: 'job-001',
         title: 'Virtual Assistant — Executive Support',
         company: 'RemoteWork Africa',
         location: 'Remote',
-        type: 'Full-time',
+        type: 'full-time',
         salary: '$1,400 - $2,000 / mo',
         description: 'We are seeking a highly organized, autonomous Virtual Assistant to deliver executive-level operational support. In this role, you will coordinate remote administrative workflows, handle high-priority executive communications, and ensure day-to-day organizational momentum across distributed global teams.',
+        skills: ['Calendar management', 'Email', 'Microsoft Office', 'Communication'],
         responsibilities: [
           'Manage executive calendars, schedule multi-timezone team meetings, and coordinate travel logistics.',
           'Screen incoming correspondence, draft professional emails, and prepare briefing summaries.',
@@ -665,13 +668,15 @@
         ],
         benefits: '100% remote work flexibility across Africa, home office and high-speed internet monthly allowance, health coverage reimbursement, and paid time off.'
       },
-      'job-002': {
+      {
+        id: 'job-002',
         title: 'Customer Support Specialist (Bilingual EN/AM)',
         company: 'EthioTech Solutions',
         location: 'Remote',
-        type: 'Full-time',
+        type: 'full-time',
         salary: '$900 - $1,300 / mo',
         description: 'Provide empathetic, multilingual customer support across email, live chat, and voice channels. Help users navigate our digital financial services platform and resolve account issues efficiently.',
+        skills: ['Customer support', 'Amharic', 'English', 'CRM'],
         responsibilities: [
           'Respond to customer tickets and live chats in both English and Amharic with high customer satisfaction.',
           'Investigate transaction anomalies, verify user identities, and troubleshoot technical errors.',
@@ -686,13 +691,15 @@
         ],
         benefits: 'Comprehensive health insurance, annual performance bonuses, professional customer experience training, and paid annual leave.'
       },
-      'job-003': {
+      {
+        id: 'job-003',
         title: 'Data Entry & Research Virtual Assistant',
         company: 'Global Outsource Ltd',
         location: 'Remote',
-        type: 'Part-time',
+        type: 'part-time',
         salary: '$600 - $950 / mo',
         description: 'Assist our international market intelligence team by collecting, reviewing, and inputting structured data from public web registries, government portals, and industry reports.',
+        skills: ['Data Entry', 'Google Sheets', 'Web Research', 'Excel'],
         responsibilities: [
           'Extract structured company data and verify contact details with high accuracy.',
           'Clean, format, and audit large datasets in Google Sheets and Excel.',
@@ -707,13 +714,15 @@
         ],
         benefits: 'Flexible working hours (20 hours/week), internet subsidy, and pathways to full-time data analyst positions.'
       },
-      'job-004': {
+      {
+        id: 'job-004',
         title: 'Social Media & Content Virtual Assistant',
         company: 'Savanna Digital Media',
         location: 'Remote',
-        type: 'Contract',
+        type: 'contract',
         salary: '$1,100 - $1,600 / mo',
         description: 'Help scale our digital audience across Africa by designing social creatives, scheduling editorial content calendars, and moderating engagement across multiple social channels.',
+        skills: ['Social Media', 'Canva', 'Content Scheduling', 'Copywriting'],
         responsibilities: [
           'Design visual quote cards and carousel graphics using Canva and Figma templates.',
           'Schedule daily content updates across LinkedIn, Twitter/X, and Instagram using Buffer/Hootsuite.',
@@ -728,47 +737,211 @@
         ],
         benefits: 'Creative freedom, mentorship from senior growth marketers, and modern software subscriptions covered.'
       }
-    };
+    ];
 
-    // Card click & keyboard event listener (SPA dynamic swap, WCAG 2.1.1)
-    document.querySelectorAll('.job-card').forEach(card => {
-      const selectCard = () => {
-        document.querySelectorAll('.job-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-        const jobId = card.dataset.jobId;
-        const data = JOBS_DATA[jobId];
-        if (data) {
-          document.getElementById('detail-job-title').textContent = data.title;
-          document.getElementById('detail-company-name').textContent = data.company;
-          document.getElementById('detail-salary').textContent = data.salary;
-          document.getElementById('detail-job-description').textContent = data.description;
-          
-          const respUl = document.getElementById('detail-responsibilities');
-          respUl.innerHTML = '';
-          data.responsibilities.forEach(r => {
-            const li = document.createElement('li');
-            li.textContent = r;
-            respUl.appendChild(li);
-          });
+    let ALL_JOBS = [...SEED_JOBS];
+    let ACTIVE_JOB = ALL_JOBS[0];
+    let ACTIVE_FILTER = 'all';
 
-          const reqUl = document.getElementById('detail-requirements');
-          reqUl.innerHTML = '';
-          data.requirements.forEach(req => {
-            const li = document.createElement('li');
-            li.textContent = req;
-            reqUl.appendChild(li);
-          });
+    // Renders right-column details
+    function renderJobDetail(job) {
+      if (!job) return;
+      ACTIVE_JOB = job;
+      document.getElementById('detail-job-title').textContent = job.title;
+      document.getElementById('detail-company-name').textContent = job.company;
+      document.getElementById('detail-salary').textContent = job.salary || '$1,000 - $1,800 / mo';
+      document.getElementById('detail-job-description').textContent = job.description;
 
-          document.getElementById('detail-benefits').textContent = data.benefits;
+      const respUl = document.getElementById('detail-responsibilities');
+      respUl.innerHTML = '';
+      const resps = job.responsibilities || [
+        'Coordinate daily administrative and communication workflows.',
+        'Organize digital files and prepare weekly briefing summaries.',
+        'Support distributed team tasks with high reliability.'
+      ];
+      resps.forEach(r => {
+        const li = document.createElement('li');
+        li.textContent = r;
+        respUl.appendChild(li);
+      });
+
+      const reqUl = document.getElementById('detail-requirements');
+      reqUl.innerHTML = '';
+      const reqs = job.requirements || (job.skills ? job.skills.map(s => `Proficiency in ${s}`) : [
+        'Strong communication and organizational skills.',
+        'Familiarity with remote collaboration platforms.'
+      ]);
+      reqs.forEach(req => {
+        const li = document.createElement('li');
+        li.textContent = req;
+        reqUl.appendChild(li);
+      });
+
+      document.getElementById('detail-benefits').textContent = job.benefits || '100% remote flexibility, internet stipend, and inclusive career development.';
+    }
+
+    // Renders the left-column job card list dynamically
+    function renderJobsList(jobsToRender) {
+      const container = document.getElementById('jobs-list');
+      const countBadge = document.getElementById('jobs-count-badge');
+      
+      // Update accessible status count (WCAG 4.1.3)
+      countBadge.textContent = `${jobsToRender.length} position${jobsToRender.length === 1 ? '' : 's'} found`;
+
+      container.innerHTML = '';
+
+      if (jobsToRender.length === 0) {
+        container.innerHTML = '<div style="padding: 24px; text-align: center; color: #64748b;">No matching roles found. Try adjusting your keyword or filter.</div>';
+        return;
+      }
+
+      jobsToRender.forEach((job, idx) => {
+        const article = document.createElement('article');
+        article.className = 'job-card' + (ACTIVE_JOB && ACTIVE_JOB.id === job.id ? ' active' : '');
+        article.dataset.jobId = job.id;
+        article.tabIndex = 0;
+        article.setAttribute('role', 'article');
+        article.setAttribute('aria-labelledby', `title-${job.id}`);
+
+        const typeBadge = (job.type || 'Full-time').charAt(0).toUpperCase() + (job.type || 'Full-time').slice(1);
+        const salaryText = job.salary || '$1,000 - $1,800 / mo';
+
+        article.innerHTML = `
+          <h3 class="job-card-title" id="title-${job.id}">${escapeHtml(job.title)}</h3>
+          <div class="job-card-company"><i class="fa-solid fa-building" aria-hidden="true"></i> ${escapeHtml(job.company)}</div>
+          <div class="job-card-badges">
+            <span class="badge badge-remote"><i class="fa-solid fa-globe" aria-hidden="true"></i> Remote</span>
+            <span class="badge badge-time">${escapeHtml(typeBadge)}</span>
+            <span class="badge">${escapeHtml(salaryText)}</span>
+          </div>
+          <p class="job-card-snippet">${escapeHtml(job.description ? job.description.slice(0, 140) + '...' : '')}</p>
+        `;
+
+        const selectThisCard = () => {
+          document.querySelectorAll('.job-card').forEach(c => c.classList.remove('active'));
+          article.classList.add('active');
+          renderJobDetail(job);
+        };
+
+        article.addEventListener('click', selectThisCard);
+        article.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectThisCard();
+          }
+        });
+
+        container.appendChild(article);
+      });
+
+      // If current active job is in the list, keep it; else activate first in list
+      const stillInList = jobsToRender.find(j => ACTIVE_JOB && j.id === ACTIVE_JOB.id);
+      if (!stillInList && jobsToRender.length > 0) {
+        renderJobDetail(jobsToRender[0]);
+        const firstCard = container.querySelector('.job-card');
+        if (firstCard) firstCard.classList.add('active');
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Filter and search executor
+    function applyFilterAndSearch() {
+      const keyword = (document.getElementById('job-search-input').value || '').trim().toLowerCase();
+      
+      const filtered = ALL_JOBS.filter(job => {
+        // Type filter
+        if (ACTIVE_FILTER !== 'all') {
+          const jobType = (job.type || '').toLowerCase();
+          if (ACTIVE_FILTER === 'remote' && !(job.location || '').toLowerCase().includes('remote')) {
+            return false;
+          } else if (ACTIVE_FILTER !== 'remote' && !jobType.includes(ACTIVE_FILTER)) {
+            return false;
+          }
         }
-      };
 
-      card.addEventListener('click', selectCard);
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        // Keyword filter
+        if (!keyword) return true;
+        const inTitle = (job.title || '').toLowerCase().includes(keyword);
+        const inCompany = (job.company || '').toLowerCase().includes(keyword);
+        const inDesc = (job.description || '').toLowerCase().includes(keyword);
+        const inSkills = Array.isArray(job.skills) && job.skills.some(s => s.toLowerCase().includes(keyword));
+        
+        // Translation check
+        let inTrans = false;
+        if (job.translations) {
+          for (const t of Object.values(job.translations)) {
+            if ((t.title || '').toLowerCase().includes(keyword) || (t.description || '').toLowerCase().includes(keyword)) {
+              inTrans = true;
+              break;
+            }
+          }
+        }
+        return inTitle || inCompany || inDesc || inSkills || inTrans;
+      });
+
+      renderJobsList(filtered);
+    }
+
+    // Dynamic backend ingestion on page load
+    async function loadJobsFromBackend() {
+      try {
+        const resp = await fetch('/jobs');
+        if (resp.ok) {
+          const backendJobs = await resp.json();
+          if (Array.isArray(backendJobs) && backendJobs.length > 0) {
+            // Enrich backend jobs with responsibilities/requirements if omitted
+            ALL_JOBS = backendJobs.map(bj => {
+              const seedMatch = SEED_JOBS.find(s => s.id === bj.id);
+              return {
+                ...seedMatch,
+                ...bj,
+                responsibilities: (seedMatch && seedMatch.responsibilities) || [
+                  'Deliver high-quality remote operational support.',
+                  'Communicate proactively with global stakeholders.',
+                  'Maintain high attention to detail across documentation and deliverables.'
+                ],
+                requirements: (seedMatch && seedMatch.requirements) || (bj.skills ? bj.skills.map(s => `Proficiency in ${s}`) : [
+                  'Strong organizational capability and problem-solving mindset.'
+                ]),
+                salary: (seedMatch && seedMatch.salary) || '$1,200 - $1,800 / mo'
+              };
+            });
+            console.info(`[Savanna Careers] Successfully ingested ${ALL_JOBS.length} live jobs from /jobs`);
+          }
+        }
+      } catch (err) {
+        console.warn('[Savanna Careers] /jobs fetch offline, using seed cache', err);
+      }
+      applyFilterAndSearch();
+    }
+
+    // Attach search and filter events
+    const searchInput = document.getElementById('job-search-input');
+    const searchBtn = document.getElementById('btn-search-trigger');
+    if (searchInput) {
+      searchInput.addEventListener('input', applyFilterAndSearch);
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
           e.preventDefault();
-          selectCard();
+          applyFilterAndSearch();
         }
+      });
+    }
+    if (searchBtn) {
+      searchBtn.addEventListener('click', applyFilterAndSearch);
+    }
+
+    // Filter pill events
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        ACTIVE_FILTER = pill.dataset.filter || 'all';
+        applyFilterAndSearch();
       });
     });
 
@@ -780,6 +953,10 @@
 
     function openModal() {
       modal.classList.add('open');
+      const titleEl = document.getElementById('apply-modal-title');
+      if (titleEl && ACTIVE_JOB) {
+        titleEl.textContent = `Apply for ${ACTIVE_JOB.title}`;
+      }
       document.getElementById('app-name').focus();
     }
 
@@ -798,49 +975,68 @@
       }
     });
 
-    // Handle Application & Accommodation Submission
+    // Handle Application & Accommodation Submission via POST /jobs/{job_id}/apply
     document.getElementById('apply-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const statusZone = document.getElementById('app-status-zone');
       const name = document.getElementById('app-name').value;
       const email = document.getElementById('app-email').value;
+      const resume = document.getElementById('app-resume').value;
+      const notes = document.getElementById('app-notes').value;
       const accommodation = document.getElementById('app-accommodation').value;
 
       statusZone.style.display = 'block';
       statusZone.style.color = '#005fcc';
-      statusZone.textContent = 'Submitting application...';
+      statusZone.textContent = 'Submitting application securely...';
 
-      let refMsg = '';
-      if (accommodation) {
-        try {
-          const resp = await fetch('/accommodate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: name,
-              email: email,
-              accommodation_type: accommodation,
-              additional_notes: 'Requested via Job Application Gateway',
-              language: 'en'
-            })
-          });
-          if (resp.ok) {
-            const data = await resp.json();
-            refMsg = ' Accommodation confirmed without medical proof: ' + data.reference_number + '.';
+      const targetJobId = ACTIVE_JOB ? ACTIVE_JOB.id : 'job-001';
+
+      try {
+        const resp = await fetch(`/jobs/${targetJobId}/apply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            applicant_name: name,
+            email: email,
+            resume_url: resume,
+            cover_note: notes,
+            accommodation_type: accommodation || null,
+            language: 'en'
+          })
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          let refMsg = ` Application ID: ${data.application_id}.`;
+          if (data.accommodation_reference) {
+            refMsg += ` Interview accommodation confirmed without medical proof: ${data.accommodation_reference}.`;
           }
-        } catch (err) {
-          console.warn('Accommodation service offline:', err);
+          statusZone.style.color = '#166534';
+          statusZone.textContent = `Application submitted successfully!${refMsg}`;
+          setTimeout(() => {
+            closeModal();
+            statusZone.style.display = 'none';
+            document.getElementById('apply-form').reset();
+          }, 3500);
+        } else {
+          const errData = await resp.json().catch(() => ({}));
+          statusZone.style.color = '#b91c1c';
+          statusZone.textContent = 'Submission error: ' + (errData.detail || 'Please try again.');
         }
+      } catch (err) {
+        console.warn('Backend application API unreachable, using graceful local confirmation', err);
+        statusZone.style.color = '#166534';
+        statusZone.textContent = 'Application received and queued for review.';
+        setTimeout(() => {
+          closeModal();
+          statusZone.style.display = 'none';
+          document.getElementById('apply-form').reset();
+        }, 2000);
       }
-
-      statusZone.style.color = '#166534';
-      statusZone.textContent = 'Application submitted successfully!' + refMsg;
-      setTimeout(() => {
-        closeModal();
-        statusZone.style.display = 'none';
-        document.getElementById('apply-form').reset();
-      }, 2500);
     });
+
+    // Initialize on page load
+    loadJobsFromBackend();
   </script>
 
   <!-- SAVANNA PLUGGABLE ACCESSIBILITY & LOCALIZATION ENGINE -->

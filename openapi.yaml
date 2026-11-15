@@ -384,6 +384,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /jobs/{job_id}/apply:
+    post:
+      tags:
+      - Career Gateway
+      summary: Submit a job application with optional interview accommodation (No
+        medical proof needed)
+      description: 'Submit an application for a specific job listing.
+
+        Supports no-barrier interview accommodation requests without medical proof.
+
+        Persists application in Redis and alerts operators.'
+      operationId: apply_to_job_jobs__job_id__apply_post
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobApplicationRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobApplicationResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /job-alert:
     post:
       tags:
@@ -1686,6 +1724,82 @@ components:
       - subscription_id
       - message
       title: JobAlertResponse
+    JobApplicationRequest:
+      properties:
+        applicant_name:
+          type: string
+          title: Applicant Name
+        email:
+          type: string
+          title: Email
+        resume_url:
+          type: string
+          title: Resume Url
+        cover_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cover Note
+          default: ''
+        accommodation_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accommodation Type
+        language:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Language
+          default: en
+      type: object
+      required:
+      - applicant_name
+      - email
+      - resume_url
+      title: JobApplicationRequest
+    JobApplicationResponse:
+      properties:
+        application_id:
+          type: string
+          title: Application Id
+        job_id:
+          type: string
+          title: Job Id
+        job_title:
+          type: string
+          title: Job Title
+        applicant_name:
+          type: string
+          title: Applicant Name
+        email:
+          type: string
+          title: Email
+        status:
+          type: string
+          title: Status
+        accommodation_reference:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accommodation Reference
+        submitted_at:
+          type: string
+          title: Submitted At
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+      - application_id
+      - job_id
+      - job_title
+      - applicant_name
+      - email
+      - status
+      - submitted_at
+      - message
+      title: JobApplicationResponse
     LessonItem:
       properties:
         id:

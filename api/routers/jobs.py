@@ -19,7 +19,14 @@ import redis.asyncio as aioredis
 from fastapi import APIRouter, HTTPException, Query
 
 from config import get_settings
-from models import Job, JobAlertRequest, JobAlertResponse, ChatRequest
+from models import (
+    Job,
+    JobAlertRequest,
+    JobAlertResponse,
+    JobApplicationRequest,
+    JobApplicationResponse,
+    ChatRequest,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -293,4 +300,99 @@ async def subscribe_job_alert(body: JobAlertRequest) -> JobAlertResponse:
             f"You are now subscribed to job alerts via {channel_desc}. "
             f"Subscription ID: {sub_id}"
         ),
+    )
+
+
+# ── Job applications ─────────────────────────────────────────────────────────
+
+@router.post(
+    "/{job_id}/apply",
+    response_model=JobApplicationResponse,
+    status_code=201,
+    summary="Submit a job application with optional interview accommodation (No medical proof needed)",
+)
+async def apply_to_job(job_id: str, body: JobApplicationRequest) -> JobApplicationResponse:
+    """
+    Submit an application for a specific job listing.
+    Supports no-barrier interview accommodation requests without medical proof.
+    Persists application in Redis and alerts operators.
+    """
+    raw_jobs = _load_jobs()
+    job_raw = next((r for r in raw_jobs if r.get("id") == job_id), None)
+    if not job_raw:
+        raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+
+    from datetime import datetime, timezone
+    import random
+    import string
+
+    year = datetime.now(timezone.utc).year
+    rand_digits = "".join(random.choices(string.digits, k=4))
+    app_id = f"APP-{year}-{rand_digits}"
+    submitted_at = datetime.now(timezone.utc).isoformat()
+
+    accommodation_ref: Optional[str] = None
+    if body.accommodation_type and body.accommodation_type.strip():
+        from routers.accommodate import _generate_reference, _notify_operator
+        from models import AccommodationRequest
+        accommodation_ref = _generate_reference()
+        # Notify operator of accommodation request attached to job application
+        try:
+            acc_req = AccommodationRequest(
+                name=body.applicant_name,
+                email=body.email,
+                accommodation_type=body.accommodation_type,
+                notes=f"Attached to application for {job_raw.get('title')} ({job_id})",
+                language=body.language or "en",
+            )
+            await _notify_operator(accommodation_ref, acc_req)
+        except Exception as exc:
+            logger.warning("Could not send accommodation notification: %s", exc)
+
+    app_record = {
+        "application_id": app_id,
+        "job_id": job_id,
+        "job_title": job_raw.get("title"),
+        "company": job_raw.get("company"),
+        "applicant_name": body.applicant_name,
+        "email": body.email,
+        "resume_url": body.resume_url,
+        "cover_note": body.cover_note or "",
+        "accommodation_type": body.accommodation_type,
+        "accommodation_reference": accommodation_ref,
+        "submitted_at": submitted_at,
+        "status": "submitted",
+    }
+
+    redis = _get_redis()
+    if redis:
+        try:
+            async with redis:
+                await redis.set(f"job_application:{app_id}", json.dumps(app_record), ex=2592000)
+        except Exception as exc:
+            logger.warning("Could not persist job application %s: %s", app_id, exc)
+
+    logger.info(
+        "[JOB_APPLICATION] app_id=%s job_id=%s name=%s email=%s acc_ref=%s",
+        app_id,
+        job_id,
+        body.applicant_name,
+        body.email,
+        accommodation_ref,
+    )
+
+    msg = f"Your application for {job_raw.get('title')} has been received (ID: {app_id})."
+    if accommodation_ref:
+        msg += f" Your interview accommodation has been confirmed without medical proof (Ref: {accommodation_ref})."
+
+    return JobApplicationResponse(
+        application_id=app_id,
+        job_id=job_id,
+        job_title=job_raw.get("title", ""),
+        applicant_name=body.applicant_name,
+        email=body.email,
+        status="submitted",
+        accommodation_reference=accommodation_ref,
+        submitted_at=submitted_at,
+        message=msg,
     )
