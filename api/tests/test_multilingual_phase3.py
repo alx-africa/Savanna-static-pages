@@ -67,14 +67,16 @@ class TestMultilingualSpeech(unittest.TestCase):
 
     def test_transcribe_unconfigured_provider_returns_503(self):
         # When Whisper or genuine offline ASR is not configured, must return 503 instead of fake transcripts
+        from unittest.mock import patch
         dummy_wav = self._create_dummy_wav()
         files = {"file": ("audio.wav", dummy_wav, "audio/wav")}
         data = {"language": "auto"}
-        resp = self.client.post("/speech/transcribe", files=files, data=data)
-        self.assertEqual(resp.status_code, 503)
-        body = resp.json()
-        detail = body.get("detail", {})
-        self.assertEqual(detail.get("error"), "speech_transcription_unavailable")
+        with patch("routers.speech.speech_service.stt_provider.is_configured", return_value=False):
+            resp = self.client.post("/speech/transcribe", files=files, data=data)
+            self.assertEqual(resp.status_code, 503)
+            body = resp.json()
+            detail = body.get("detail", {})
+            self.assertEqual(detail.get("error"), "speech_transcription_unavailable")
 
     def test_transcribe_empty_file_rejected(self):
         files = {"file": ("empty.wav", b"", "audio/wav")}
