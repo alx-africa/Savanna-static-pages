@@ -958,7 +958,7 @@ async def analyze_image_with_ai(
             f"- visual_elements: (list of 3-5 specific visual icons, objects, or text labels detected in {lang_name})\n"
             f"- pedagogical_context: (2 sentences on why this visual matters for learning and practical application in {lang_name})\n"
             f"- composition_and_palette: (1-2 sentences on layout, colors in {lang_name})\n"
-            f"- summary: (a complete, fluid audio description that FIRST clearly conveys the intent and purpose of the image, followed by the key visual breakdown, so a blind learner grasps both the meaning and the visual context, in {lang_name})"
+            f"- summary: (a complete, fluid audio description that FIRST clearly explains WHAT is visually depicted in the image, followed immediately by the INTENT and PURPOSE of the visual, so a blind learner first knows what the image is, and then understands why it is there, in {lang_name})"
         )
 
         parts: list[dict[str, Any]] = [{"text": system_prompt}]
@@ -1020,7 +1020,7 @@ async def analyze_image_with_ai(
                     f"- visual_elements: (list of 4-6 specific visual icons, objects, or text labels detected)\n"
                     f"- pedagogical_context: (2 sentences on why this visual matters for learning and practical application)\n"
                     f"- composition_and_palette: (1-2 sentences on layout, colors, lighting)\n"
-                    f"- summary: (a complete, fluid audio description that FIRST clearly conveys the intent and purpose of the image, followed by the key visual breakdown, so a blind learner grasps both the meaning and the visual context)"
+                    f"- summary: (a complete, fluid audio description that FIRST clearly explains WHAT is visually depicted in the image, followed immediately by the INTENT and PURPOSE of the visual, so a blind learner first knows what the image is, and then understands why it is there)"
                 )
                 response = await client.chat.completions.create(
                     model="gpt-4o-mini",
@@ -1077,14 +1077,14 @@ async def analyze_image_with_ai(
         "fr": f"L'intention de ce visuel est de renforcer les concepts pédagogiques clés et les flux de travail de {name}."
     }
     generic_summaries = {
-        "en": f"Image Intent: {generic_intents['en']} — Visual Breakdown: contains instructional iconography and accessible structural elements of {name}.",
-        "am": f"የምስሉ ዓላማና ትርጉም፦ {generic_intents['am']}፤ ዝርዝር መግለጫ፦ የ{name}ን ትምህርታዊ ሥዕላዊ መግለጫዎች እና አዶዎችን ይዟል።",
-        "om": f"Kaayyoo Fakkii: {generic_intents['om']} — Qabiyyee: meeshaalee gargaaran {name} of keessaa qaba.",
-        "ti": f"ዕላማ ስእሊ: {generic_intents['ti']} — ዝርዝር: ናይ {name} ምልክታትን መግለጽን የጠቓልል።",
-        "so": f"Ujeeddada: {generic_intents['so']} — Faahfaahinta: qoraal iyo astaamo ku saabsan {name}.",
-        "ar": f"الهدف التعليمي: {generic_intents['ar']} — التفاصيل البصرية: يشتمل على أيقونات إرشادية وتخطيط بصري لعنصر {name}.",
-        "sw": f"Lengo la Picha: {generic_intents['sw']} — Maelezo: ina aikoni na michoro ya {name}.",
-        "fr": f"Intention pédagogique : {generic_intents['fr']} — Description visuelle : comprend des icônes explicatives de {name}.",
+        "en": f"Visual Breakdown: Educational graphic containing instructional iconography and accessible elements of {name}. Visual Intent: {generic_intents['en']}",
+        "am": f"የምስል መግለጫ፦ የ{name}ን ትምህርታዊ ሥዕላዊ መግለጫዎች እና አዶዎችን የያዘ ነው። የምስሉ ዓላማና ትርጉም፦ {generic_intents['am']}",
+        "om": f"Ibsa Fakkii: Meeshaalee fi mallattoolee {name} of keessaa qaba. Kaayyoo Fakkii: {generic_intents['om']}",
+        "ti": f"ስእላዊ መግለጺ: ናይ {name} ትምህርታዊ ምልክታትን ኣሰራርሓን የጠቓልል። ዕላማ ስእሊ: {generic_intents['ti']}",
+        "so": f"Faahfaahinta: Waxay ka kooban tahay astaamo iyo qoraallo ku saabsan {name}. Ujeeddada: {generic_intents['so']}",
+        "ar": f"التفاصيل البصرية: رسم توضيحي يحتوي على أيقونات وتخطيط بصري لعنصر {name}. الهدف التعليمي: {generic_intents['ar']}",
+        "sw": f"Maelezo ya Picha: Kielelezo chenye aikoni na michoro ya {name}. Lengo la Picha: {generic_intents['sw']}",
+        "fr": f"Description visuelle : Graphique pédagogique contenant des icônes explicatives de {name}. Intention pédagogique : {generic_intents['fr']}",
     }
 
     return {

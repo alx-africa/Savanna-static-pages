@@ -64,13 +64,18 @@ async def describe_image(request: DescribeImageRequest) -> DescribeImageResponse
     )
 
     intent = (ai_result.get("intent_and_purpose") or ai_result.get("pedagogical_context") or "").strip()
-    summary_text = (ai_result.get("summary") or ai_result.get("primary_subject", "")).strip()
+    summary_text = (ai_result.get("summary") or "").strip()
 
-    # Synthesize intent together with visual breakdown if not already embedded
-    if intent and intent not in summary_text:
-        intent_cue = "የምስሉ ዓላማና ትርጉም፦ " if lang == "am" else "Intent & Pedagogical Purpose: "
-        visual_cue = "፤ ዝርዝር መግለጫ፦ " if lang == "am" else " — Visual Breakdown: "
-        summary_text = f"{intent_cue}{intent}{visual_cue}{summary_text}"
+    # If AI returned a unified summary (already crafted with Visual FIRST and Intent SECOND),
+    # use it directly so audio speech exactly matches the model's coherent response.
+    # Otherwise, synthesize a structured description placing Visual FIRST, Intent SECOND.
+    if not summary_text:
+        primary = (ai_result.get("primary_subject") or "Educational graphic").strip()
+        if intent:
+            intent_cue = " የዚህ ምስል ዓላማና ትርጉም፦ " if lang == "am" else " The pedagogical intent of this visual is: "
+            summary_text = f"{primary}.{intent_cue}{intent}"
+        else:
+            summary_text = primary
 
     return DescribeImageResponse(
         id=req_id,

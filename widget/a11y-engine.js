@@ -2834,17 +2834,17 @@
         </div>
         <div class="sa11y-ai-breakdown-body">
           <p style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: #14532d;">
-            <strong>🎯 ${lang === 'am' ? 'ዋና ርዕስ' : 'Primary Subject'}:</strong> ${breakdown.primary_subject}
+            <strong>🎯 ${lang === 'am' ? 'የምስሉ ዝርዝር መግለጫ' : 'Visual Description'}:</strong> ${breakdown.primary_subject}
           </p>
+          <div class="sa11y-image-desc-tags" style="margin-bottom: 0.6rem;">${tagsHtml}</div>
           ${breakdown.intent_and_purpose ? `
             <div style="margin: 0 0 0.6rem 0; font-size: 0.92rem; color: #065f46; background: #ecfdf5; border-left: 4px solid #10b981; padding: 8px 12px; border-radius: 4px; line-height: 1.5;">
-              <strong>🎯 ${lang === 'am' ? 'የምስሉ ዓላማና ትርጉም' : 'Visual Intent & Purpose'}:</strong> ${breakdown.intent_and_purpose}
+              <strong>💡 ${lang === 'am' ? 'የምስሉ ዓላማና ትርጉም' : 'Visual Intent & Purpose'}:</strong> ${breakdown.intent_and_purpose}
             </div>
           ` : ''}
-          <div class="sa11y-image-desc-tags" style="margin-bottom: 0.6rem;">${tagsHtml}</div>
-          ${breakdown.pedagogical_context ? `
+          ${breakdown.pedagogical_context && breakdown.pedagogical_context !== breakdown.intent_and_purpose ? `
             <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #166534; line-height: 1.5;">
-              <strong>💡 ${lang === 'am' ? 'ትምህርታዊ ፋይዳ' : 'Pedagogical Context'}:</strong> ${breakdown.pedagogical_context}
+              <strong>🎓 ${lang === 'am' ? 'ትምህርታዊ ፋይዳ' : 'Pedagogical Context'}:</strong> ${breakdown.pedagogical_context}
             </p>
           ` : ''}
           ${breakdown.composition_and_palette ? `
@@ -2923,10 +2923,9 @@
       return;
     }
 
-    // 2. Announce initial arrival cue so the learner knows AI is processing
+    // 2. Announce initial arrival cue to screen reader live region without interrupting audio
     const initialCue = i18n[lang].imgArrivalAnnouncement;
     announce(initialCue);
-    speakVisualDescription(initialCue);
 
     const { src, alt, filename } = extractElementVisualDetails(img);
 
@@ -2943,8 +2942,8 @@
       }
     }
 
-    // Call live AI Vision endpoint with intent-first situation prompt
-    const situationContext = 'This user is blind and cannot see the screen. They need to understand the intent, learning purpose, and core message of this visual alongside what is depicted. First convey the intent and purpose of the visual, then describe the key visual elements and text so they hear and grasp the complete pedagogical meaning as a normal element.';
+    // Call live AI Vision endpoint: Visual explanation FIRST, Intent & Pedagogical purpose SECOND
+    const situationContext = 'This user is blind and cannot see the screen. They need to understand what this visual depicts and its educational intent. FIRST clearly describe what is visually depicted in the image, and SECOND clearly explain the intent, pedagogical purpose, and core message of the visual.';
     if (typeof fetch === 'function') {
       const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl) || 'http://localhost:8000';
       fetch(apiUrl + '/describe-image', {
