@@ -971,6 +971,25 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    PHASE 5: VISION & AI IMAGE DESCRIPTION FOR BLIND & LOW-VISION LEARNERS
    ═══════════════════════════════════════════════════════════════════════════ */
+/* Accessible Tab Navigation for Images (Screen Reader Focus) */
+img[tabindex="0"] {
+  cursor: pointer;
+  transition: outline 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+img[tabindex="0"]:focus-visible {
+  outline: 4px solid var(--sa11y-primary, #0284c7) !important;
+  outline-offset: 4px !important;
+  box-shadow: 0 0 0 6px rgba(2, 132, 199, 0.25) !important;
+  border-radius: 6px;
+}
+
+[data-sa11y-contrast="high"] img[tabindex="0"]:focus-visible {
+  outline: 4px solid #facc15 !important;
+  outline-offset: 4px !important;
+  box-shadow: 0 0 0 6px #000000 !important;
+}
+
 .sa11y-img-wrapper {
   position: relative;
   display: inline-block;

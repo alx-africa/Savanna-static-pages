@@ -136,7 +136,25 @@ async function testAccessibilityEngine() {
   if (!descCard) throw new Error('Phase 5 AI Image Description card not rendered.');
   console.log('✔ Phase 5 AI Image Description card rendered with pedagogical description.');
 
-  // 6. Run axe-core audit on the fully adapted page
+  // 6. Screen Reader Tab-To-Image Focus & Automatic AI Description
+  const testImg = window.document.querySelector('#curriculum_navigation_content img');
+  if (!testImg || testImg.getAttribute('tabindex') !== '0') {
+    throw new Error('Image not in sequential Tab navigation order (missing tabindex="0").');
+  }
+  if (testImg.getAttribute('role') !== 'img') {
+    throw new Error('Image missing role="img" for screen reader recognition.');
+  }
+  console.log('✔ Screen reader image Tab navigation verified (tabindex="0", role="img").');
+
+  // Simulate screen reader tabbing into the image (focus event)
+  testImg.focus();
+  await new Promise(r => setTimeout(r, 60));
+  if (!testImg.dataset.aiDescription) {
+    throw new Error('AI description was not cached on image dataset upon Tab arrival.');
+  }
+  console.log('✔ Screen reader Tab arrival triggered AI description and audio synthesis.');
+
+  // 7. Run axe-core audit on the fully adapted page
   axe.configure({
     rules: [
       { id: 'color-contrast', enabled: false }, // jsdom does not compute full RGB styles

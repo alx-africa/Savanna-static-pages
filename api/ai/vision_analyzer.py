@@ -450,13 +450,16 @@ async def analyze_image_with_ai(
                 from openai import AsyncOpenAI
                 client = AsyncOpenAI(api_key=settings.openai_api_key)
                 system_prompt = (
-                    f"You are an expert AI Accessibility Specialist analyzing images for blind learners. "
-                    f"Analyze this image and return a JSON object in {lang} language with exactly these keys:\n"
+                    f"This user is visually impaired / blind and cannot see the screen. "
+                    f"Describe this educational visual thoroughly for non-visual comprehension so they can hear it as a normal element. "
+                    f"State clearly who or what is depicted, read out any text, diagram workflows, and icon labels, "
+                    f"and explain its pedagogical meaning in the context of the course concept. "
+                    f"Return a JSON object in {lang} language with exactly these keys:\n"
                     f"- primary_subject: (1-2 sentences on main visual subject)\n"
                     f"- visual_elements: (list of 4-6 specific visual icons, objects, or text labels detected)\n"
                     f"- pedagogical_context: (2 sentences on why this visual matters for learning)\n"
                     f"- composition_and_palette: (1-2 sentences on layout, colors, lighting)\n"
-                    f"- summary: (comprehensive 3-sentence audio description for screen readers)"
+                    f"- summary: (natural, fluid audio description that a blind person hears when arriving on this element)"
                 )
                 response = await client.chat.completions.create(
                     model="gpt-4o-mini",

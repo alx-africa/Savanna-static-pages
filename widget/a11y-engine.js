@@ -100,6 +100,8 @@
       imgDescReadAloud: '🔊 Read Aloud',
       imgDescClose: 'Close Description',
       imgDescAnnounce: 'Reading visual description aloud...',
+      imgArrivalAnnouncement: 'Graphic focused. Analyzing visual elements with AI...',
+      imgArrivalCached: 'Graphic focused. Playing AI visual description.',
     },
     am: {
       triggerLabel: 'የተደራሽነት ምርጫዎች እና የማስተካከያ ቅንብሮች',
@@ -163,6 +165,8 @@
       imgDescReadAloud: '🔊 በድምፅ አድምጥ',
       imgDescClose: 'ማብራሪያውን ዝጋ',
       imgDescAnnounce: 'የምስሉ ማብራሪያ በድምፅ እየተነበበ ነው...',
+      imgArrivalAnnouncement: 'ምስል ላይ ደርሰዋል። AI ምስሉን በመተንተን ላይ ነው...',
+      imgArrivalCached: 'ምስል ላይ ደርሰዋል። የAI ምስል መግለጫ እየተነበበ ነው...',
     }
   };
 
@@ -685,6 +689,83 @@
     }
   }
 
+  function handleImageTabArrival(img) {
+    if (!img) return;
+    const lang = currentLang;
+
+    // 1. If already analyzed by AI, speak immediately as a normal element
+    if (img.dataset.aiDescription) {
+      announce(img.dataset.aiDescription);
+      speakVisualDescription(img.dataset.aiDescription);
+      return;
+    }
+
+    // 2. Announce initial arrival cue so the learner knows AI is processing
+    const initialCue = i18n[lang].imgArrivalAnnouncement;
+    announce(initialCue);
+    speakVisualDescription(initialCue);
+
+    const src = (img.getAttribute('src') || '').toLowerCase();
+    const alt = (img.getAttribute('alt') || '').toLowerCase();
+    const filename = src.split('/').pop() || '';
+
+    function onDescriptionReady(description) {
+      img.dataset.aiDescription = description;
+      img.setAttribute('aria-label', `${img.getAttribute('alt') || 'Graphic'}. AI Description: ${description}`);
+      img.setAttribute('aria-description', description);
+
+      // Only speak if the blind user is still focused on this image
+      if (document.activeElement === img) {
+        announce(description);
+        speakVisualDescription(description);
+      }
+    }
+
+    // Call live AI Vision endpoint with blind user context prompt
+    if (typeof fetch === 'function') {
+      const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl) || 'http://localhost:8000';
+      fetch(apiUrl + '/describe-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename,
+          url: src,
+          language: lang,
+          context: 'This user is blind and arrived on this image via keyboard Tab navigation. Describe it so they hear it as a normal element.'
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        onDescriptionReady(data.description);
+      })
+      .catch(() => {
+        let matched = null;
+        for (const [key, d] of Object.entries(CLIENT_IMAGE_DESCRIPTIONS)) {
+          if (src.includes(key) || alt.includes(key)) {
+            matched = d;
+            break;
+          }
+        }
+        const descText = matched 
+          ? (matched[lang] || matched.en)
+          : (lang === 'am' ? `የትምህርት ይዘት ምስል፡ ${alt || filename}` : `Educational lesson visual: ${alt || filename}`);
+        onDescriptionReady(descText);
+      });
+    } else {
+      let matched = null;
+      for (const [key, d] of Object.entries(CLIENT_IMAGE_DESCRIPTIONS)) {
+        if (src.includes(key) || alt.includes(key)) {
+          matched = d;
+          break;
+        }
+      }
+      const descText = matched 
+        ? (matched[lang] || matched.en)
+        : (lang === 'am' ? `የትምህርት ይዘት ምስል፡ ${alt || filename}` : `Educational lesson visual: ${alt || filename}`);
+      onDescriptionReady(descText);
+    }
+  }
+
   function adaptBlindAndScreenReader(enable) {
     // 1. Enrich Curriculum Navigation Items
     const navItems = document.querySelectorAll('.list-group-item');
@@ -719,7 +800,11 @@
       const existingCard = parent ? parent.querySelector('.sa11y-image-desc-card') : null;
       if (existingCard) existingCard.remove();
 
-      if (!enable) return;
+      if (!enable) {
+        img.removeAttribute('tabindex');
+        img.removeAttribute('role');
+        return;
+      }
 
       const src = img.getAttribute('src') || '';
       const alt = (img.getAttribute('alt') || '').trim();
@@ -734,8 +819,28 @@
           : 'Photograph of Evon, Virtual Assistant specialist at work');
       }
 
-      // Allow keyboard focus on curriculum images
+      // Allow screen reader users to reach images in Tab order like any other element
       img.tabIndex = 0;
+      img.setAttribute('role', 'img');
+
+      // Bind Tab focus arrival, blur, and keydown listeners
+      if (!img.dataset.sa11yBound) {
+        img.dataset.sa11yBound = 'true';
+        img.addEventListener('focus', function () {
+          handleImageTabArrival(this);
+        });
+        img.addEventListener('blur', function () {
+          if (window.speechSynthesis && window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+          }
+        });
+        img.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            describeImage(this);
+          }
+        });
+      }
 
       // Inject accessible "Describe Image (Alt+I)" button for content images
       if (src && !src.includes('arrow') && !src.includes('logo') && !src.includes('icon')) {
