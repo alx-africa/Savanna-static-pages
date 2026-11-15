@@ -60,9 +60,17 @@ async def describe_image(request: DescribeImageRequest) -> DescribeImageResponse
         visual_elements=ai_result.get("visual_elements", []),
         pedagogical_context=ai_result.get("pedagogical_context", ""),
         composition_and_palette=ai_result.get("composition_and_palette", ""),
+        intent_and_purpose=ai_result.get("intent_and_purpose") or ai_result.get("pedagogical_context", ""),
     )
 
-    summary_text = ai_result.get("summary") or ai_result.get("primary_subject", "")
+    intent = (ai_result.get("intent_and_purpose") or ai_result.get("pedagogical_context") or "").strip()
+    summary_text = (ai_result.get("summary") or ai_result.get("primary_subject", "")).strip()
+
+    # Synthesize intent together with visual breakdown if not already embedded
+    if intent and intent not in summary_text:
+        intent_cue = "የምስሉ ዓላማና ትርጉም፦ " if lang == "am" else "Intent & Pedagogical Purpose: "
+        visual_cue = "፤ ዝርዝር መግለጫ፦ " if lang == "am" else " — Visual Breakdown: "
+        summary_text = f"{intent_cue}{intent}{visual_cue}{summary_text}"
 
     return DescribeImageResponse(
         id=req_id,

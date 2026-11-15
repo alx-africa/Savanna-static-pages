@@ -950,13 +950,15 @@ async def analyze_image_with_ai(
         system_prompt = (
             f"{situation}\n"
             f"You are an expert accessibility vision engine for blind and low-vision learners.\n"
-            f"Provide a structured, pedagogical visual breakdown in {lang_name} ({lang}) language.\n"
-            f"Return a JSON object with exactly these keys:\n"
+            f"CRITICAL PEDAGOGICAL REQUIREMENT: Blind learners need to understand WHY this visual exists (its intentional purpose, pedagogical intent, and core takeaway) alongside what is depicted. Do NOT merely describe raw shapes or colors without context.\n"
+            f"Always explain the underlying intent and purpose of the visual together with the visual explanation.\n"
+            f"Provide a structured, pedagogical visual breakdown in {lang_name} ({lang}) language as a JSON object with exactly these keys:\n"
             f"- primary_subject: (1-2 sentences on main visual subject in {lang_name})\n"
+            f"- intent_and_purpose: (2 sentences clearly explaining the intentional purpose and educational meaning of this image: why it was included and what concept or workflow it communicates to the learner, in {lang_name})\n"
             f"- visual_elements: (list of 3-5 specific visual icons, objects, or text labels detected in {lang_name})\n"
-            f"- pedagogical_context: (2 sentences on why this visual matters for learning/understanding in {lang_name})\n"
+            f"- pedagogical_context: (2 sentences on why this visual matters for learning and practical application in {lang_name})\n"
             f"- composition_and_palette: (1-2 sentences on layout, colors in {lang_name})\n"
-            f"- summary: (natural, fluid audio description that a blind person hears when arriving on this element in {lang_name})"
+            f"- summary: (a complete, fluid audio description that FIRST clearly conveys the intent and purpose of the image, followed by the key visual breakdown, so a blind learner grasps both the meaning and the visual context, in {lang_name})"
         )
 
         parts: list[dict[str, Any]] = [{"text": system_prompt}]
@@ -1008,16 +1010,17 @@ async def analyze_image_with_ai(
                 client = AsyncOpenAI(api_key=settings.openai_api_key)
                 situation = context or "This user is visually impaired / blind and cannot see the screen."
                 system_prompt = (
-                    f"{situation} "
-                    f"Describe this educational visual thoroughly for non-visual comprehension so they can hear it as a normal element. "
-                    f"State clearly who or what is depicted, read out any text, diagram workflows, and icon labels, "
-                    f"and explain its pedagogical meaning in the context of the course concept. "
+                    f"{situation}\n"
+                    f"You are an expert accessibility vision engine for blind and low-vision learners.\n"
+                    f"CRITICAL PEDAGOGICAL REQUIREMENT: Blind learners need to understand WHY this visual exists (its intentional purpose, pedagogical intent, and core takeaway) alongside what is depicted. Do NOT merely describe raw shapes or colors without context.\n"
+                    f"Always explain the underlying intent and purpose of the visual together with the visual explanation.\n"
                     f"Return a JSON object in {lang} language with exactly these keys:\n"
                     f"- primary_subject: (1-2 sentences on main visual subject)\n"
+                    f"- intent_and_purpose: (2 sentences clearly explaining the intentional purpose and educational meaning of this image: why it was included and what concept or workflow it communicates to the learner)\n"
                     f"- visual_elements: (list of 4-6 specific visual icons, objects, or text labels detected)\n"
-                    f"- pedagogical_context: (2 sentences on why this visual matters for learning)\n"
+                    f"- pedagogical_context: (2 sentences on why this visual matters for learning and practical application)\n"
                     f"- composition_and_palette: (1-2 sentences on layout, colors, lighting)\n"
-                    f"- summary: (natural, fluid audio description that a blind person hears when arriving on this element)"
+                    f"- summary: (a complete, fluid audio description that FIRST clearly conveys the intent and purpose of the image, followed by the key visual breakdown, so a blind learner grasps both the meaning and the visual context)"
                 )
                 response = await client.chat.completions.create(
                     model="gpt-4o-mini",
@@ -1063,19 +1066,30 @@ async def analyze_image_with_ai(
         "sw": f"Uchambuzi wa AI wa Picha: Kielelezo cha {name}",
         "fr": f"Analyse Visuelle par IA : Graphique pédagogique {name}",
     }
+    generic_intents = {
+        "en": f"The intent of this graphic is to visually reinforce the instructional concepts, key workflows, and real-world application of {name}.",
+        "am": f"የዚህ ምስል ዓላማ የ{name}ን ዋና ትምህርታዊ ፅንሰ-ሃሳቦች፣ የስራ ሂደቶች እና ተግባራዊ ፋይዳ ለተማሪው በግልጽ ማስተዋወቅ ነው።",
+        "om": f"Kaayyoon fakkii kanaa yaad-rimee fi hojmaata {name} barataaf ifa gochuudha.",
+        "ti": f"ዕላማ ናይዚ ስእሊ ንትምህርታዊ ጽንሰ-ሓሳብን ኣሰራርሓን {name} ብግልጺ ምፍላጥ እዩ።",
+        "so": f"Ujeeddada sawirkan waa inuu xoojiyo fahamka iyo hab-socodka shaqada ee {name}.",
+        "ar": f"الهدف من هذا الرسم التوضيحي هو تعزيز المفاهيم التعليمية وسير العمل لعنصر {name}.",
+        "sw": f"Madhumuni ya picha hii ni kuimarisha dhana kuu za mafunzo na mtiririko wa kazi wa {name}.",
+        "fr": f"L'intention de ce visuel est de renforcer les concepts pédagogiques clés et les flux de travail de {name}."
+    }
     generic_summaries = {
-        "en": f"AI breakdown of {name}. Contains instructional icons and visual layout elements designed to reinforce curriculum concepts.",
-        "am": f"የ{name} የAI ምስል ትንተና፤ የትምህርት ፅንሰ-ሃሳቦችን ለማጠናከር የተዘጋጁ ሥዕላዊ መግለጫዎችን እና አዶዎችን ይዟል።",
-        "om": f"Qaaccessa AI {name}. Qabiyyee barnootaa ifa godhuuf meeshaalee gargaaran of keessaa qaba.",
-        "ti": f"ናይ {name} AI ስእላዊ ትንተና፤ ንትምህርቲ ዘገልግሉ መሳርሒታትን ምልክታትን የጠቓልል።",
-        "so": f"Falanqaynta AI ee {name}. Waxay ka kooban tahay astaamo iyo qoraal xoojinaya fahamka koorsada.",
-        "ar": f"تحليل الذكاء الاصطناعي لعنصر {name}. يشتمل على أيقونات إرشادية وتخطيط بصري يعزز استيعاب مفاهيم المنهاج.",
-        "sw": f"Uchambuzi wa AI wa {name}. Ina aikoni na michoro inayosaidia kuelewa masomo ya kozi.",
-        "fr": f"Analyse par IA de {name}. Comprend des icônes explicatives et une disposition visuelle conçue pour renforcer les concepts.",
+        "en": f"Image Intent: {generic_intents['en']} — Visual Breakdown: contains instructional iconography and accessible structural elements of {name}.",
+        "am": f"የምስሉ ዓላማና ትርጉም፦ {generic_intents['am']}፤ ዝርዝር መግለጫ፦ የ{name}ን ትምህርታዊ ሥዕላዊ መግለጫዎች እና አዶዎችን ይዟል።",
+        "om": f"Kaayyoo Fakkii: {generic_intents['om']} — Qabiyyee: meeshaalee gargaaran {name} of keessaa qaba.",
+        "ti": f"ዕላማ ስእሊ: {generic_intents['ti']} — ዝርዝር: ናይ {name} ምልክታትን መግለጽን የጠቓልል።",
+        "so": f"Ujeeddada: {generic_intents['so']} — Faahfaahinta: qoraal iyo astaamo ku saabsan {name}.",
+        "ar": f"الهدف التعليمي: {generic_intents['ar']} — التفاصيل البصرية: يشتمل على أيقونات إرشادية وتخطيط بصري لعنصر {name}.",
+        "sw": f"Lengo la Picha: {generic_intents['sw']} — Maelezo: ina aikoni na michoro ya {name}.",
+        "fr": f"Intention pédagogique : {generic_intents['fr']} — Description visuelle : comprend des icônes explicatives de {name}.",
     }
 
     return {
         "primary_subject": generic_subjects.get(lang, generic_subjects["en"]),
+        "intent_and_purpose": generic_intents.get(lang, generic_intents["en"]),
         "visual_elements": [f"{name} illustration", "Instructional iconography", "High-contrast layout", "Curriculum typography"],
         "pedagogical_context": (
             f"Reinforces learner comprehension of {name} through multi-sensory accessible formatting."

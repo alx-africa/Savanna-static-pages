@@ -2836,6 +2836,11 @@
           <p style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: #14532d;">
             <strong>🎯 ${lang === 'am' ? 'ዋና ርዕስ' : 'Primary Subject'}:</strong> ${breakdown.primary_subject}
           </p>
+          ${breakdown.intent_and_purpose ? `
+            <div style="margin: 0 0 0.6rem 0; font-size: 0.92rem; color: #065f46; background: #ecfdf5; border-left: 4px solid #10b981; padding: 8px 12px; border-radius: 4px; line-height: 1.5;">
+              <strong>🎯 ${lang === 'am' ? 'የምስሉ ዓላማና ትርጉም' : 'Visual Intent & Purpose'}:</strong> ${breakdown.intent_and_purpose}
+            </div>
+          ` : ''}
           <div class="sa11y-image-desc-tags" style="margin-bottom: 0.6rem;">${tagsHtml}</div>
           ${breakdown.pedagogical_context ? `
             <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #166534; line-height: 1.5;">
@@ -2938,8 +2943,8 @@
       }
     }
 
-    // Call live AI Vision endpoint with situation prompt
-    const situationContext = 'This user cannot see so describe the image for a blind learner who cannot see the visual. Detail the primary subject, all visual elements and text, pedagogical context, and layout so they hear it as a normal element.';
+    // Call live AI Vision endpoint with intent-first situation prompt
+    const situationContext = 'This user is blind and cannot see the screen. They need to understand the intent, learning purpose, and core message of this visual alongside what is depicted. First convey the intent and purpose of the visual, then describe the key visual elements and text so they hear and grasp the complete pedagogical meaning as a normal element.';
     if (typeof fetch === 'function') {
       const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl) || 'http://localhost:8000';
       fetch(apiUrl + '/describe-image', {

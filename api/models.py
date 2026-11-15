@@ -233,6 +233,7 @@ class VisualBreakdown(BaseModel):
     visual_elements: list[str] = []
     pedagogical_context: str
     composition_and_palette: str
+    intent_and_purpose: Optional[str] = None
 
 
 class DescribeImageRequest(BaseModel):
