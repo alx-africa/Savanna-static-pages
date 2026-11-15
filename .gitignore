@@ -1,10 +1,7 @@
-.gitignore
-.DS_Store
-_tooling
-*.zip
 .env
 .env.*
-!.env.example
-/backend/node_modules/
-/tests/browser/node_modules/
-/backend/output/
+*.env
+__pycache__/
+*.pyc
+venv/
+.venv/
