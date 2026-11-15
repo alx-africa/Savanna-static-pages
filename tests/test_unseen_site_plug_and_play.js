@@ -187,6 +187,42 @@ async function runPlugAndPlayVerification() {
       'Aria-label must restore to exact pristine English');
   });
 
+  await test('Dropping in widget.js on unseen agritech site extracts live context and binds Alt+A hotkey', async () => {
+    const dom = new JSDOM(unseenThirdPartyWebsiteHtml, {
+      url: 'https://kilimanjaro-solar-agritech.co.tz/portal',
+      runScripts: 'dangerously'
+    });
+    const win = dom.window;
+    win.fetch = global.fetch;
+
+    const widgetJs = fs.readFileSync(path.join(__dirname, '../widget/widget.js'), 'utf8');
+    const script = win.document.createElement('script');
+    script.dataset.apiUrl = 'http://localhost:8000';
+    script.textContent = widgetJs;
+    win.document.body.appendChild(script);
+
+    await sleep(200);
+
+    const trigger = win.document.getElementById('savanna-trigger');
+    assert(!!trigger, 'Floating trigger button must be injected into unseen page');
+    assert.strictEqual(trigger.getAttribute('accesskey'), 'a', 'Trigger must have accesskey="a"');
+    assert(trigger.getAttribute('aria-label').includes('Alt+A'), 'Trigger aria-label must communicate Alt+A shortcut');
+
+    // Simulate Alt + A keydown to toggle assistant
+    const altAEvent = new win.KeyboardEvent('keydown', {
+      key: 'a',
+      code: 'KeyA',
+      altKey: true,
+      bubbles: true,
+      cancelable: true
+    });
+    win.dispatchEvent(altAEvent);
+
+    const container = win.document.getElementById('savanna-iframe-container');
+    assert(container.classList.contains('savanna-open'), 'Pressing Alt+A must open the assistant container on unseen site');
+    assert.strictEqual(trigger.getAttribute('aria-expanded'), 'true', 'Trigger aria-expanded must be true');
+  });
+
   console.log('====================================================');
   console.log(`Results: ${passed} / ${total} tests passed (${Math.round((passed / total) * 100)}%)`);
   console.log('====================================================');

@@ -159,7 +159,7 @@
 
     // Find active or nearest heading in viewport
     let activeHeading = '';
-    const headings = Array.from(document.querySelectorAll('h1, h2, h3, [role="heading"]'));
+    const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, [role="heading"]'));
     if (headings.length > 0) {
       let closest = headings[0];
       let minDistance = Infinity;
@@ -187,13 +187,13 @@
       }
     } catch (_) {}
 
-    // Page summary excerpt from main, article, or content
+    // Universal content excerpt from semantic main, article, or content containers
     let summary = '';
-    const mainContent = document.querySelector('main, article, [role="main"], #content, .content, .savanna-styles') || document.body;
+    const mainContent = document.querySelector('main, article, [role="main"], #content, #main-content, .course-content, .lesson-content, .entry-content, .post-content, .content, .savanna-styles') || document.body;
     if (mainContent) {
       try {
         const clone = mainContent.cloneNode(true);
-        const toRemove = clone.querySelectorAll('script, style, #savanna-iframe-container, #savanna-trigger, nav, header, footer');
+        const toRemove = clone.querySelectorAll('script, style, noscript, svg, #savanna-iframe-container, #savanna-trigger, nav, header, footer, [role="navigation"], [role="banner"], [role="contentinfo"]');
         toRemove.forEach(function (el) { el.remove(); });
         summary = (clone.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 1500);
       } catch (_) {}
