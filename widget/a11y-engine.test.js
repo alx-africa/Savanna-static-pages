@@ -30,11 +30,22 @@ async function testAccessibilityEngine() {
       <style>${engineCss}</style>
     </head>
     <body>
+      <div class="header d-flex align-items-center position-fixed top-0 w-100">
+        <a class="logo-container p-1" href="#">
+          <div class="logo mx-auto" style="background-image: url(&quot;../assets/img/holberton-logo-full-alx.png&quot;)"></div>
+        </a>
+      </div>
       <main id="content">
         <h1>VA Foundations &amp; Professional Identity</h1>
         <div id="curriculum_navigation_content">
           <p>This is a test lesson for accessibility evaluation, cognitive plain-language simplification, and motor controls. It contains comprehensive educational descriptions to test adaptive learning features.</p>
           <p><img src="../assets/img/VA-Content-Banner.png" alt="VA-Content-Banner" width="600" height="200" /></p>
+          <figure>
+            <img src="../assets/img/1lhlc1k4XRfVWDFTjczeaSoRpKlMY3dAX.png" alt="Evon afro" width="400" height="400" />
+          </figure>
+          <div class="graduation-badge">
+            <img src="../assets/img/graduation-badge-alx.svg" alt="Graduation badge" width="100" height="100" />
+          </div>
         </div>
         <div class="list-group">
           <div class="list-group-item active">Lesson 1: Introduction</div>
@@ -153,6 +164,26 @@ async function testAccessibilityEngine() {
     throw new Error('AI description was not cached on image dataset upon Tab arrival.');
   }
   console.log('✔ Screen reader Tab arrival triggered AI description and audio synthesis.');
+
+  // 6b. Verify Graduation Badge and Holberton Logo are fully accessible
+  const badgeImg = window.document.querySelector('img[src*="graduation-badge"]');
+  if (!badgeImg || badgeImg.getAttribute('tabindex') !== '0') {
+    throw new Error('Graduation badge missing tabindex="0".');
+  }
+  badgeImg.focus();
+  await new Promise(r => setTimeout(r, 60));
+  if (!badgeImg.dataset.aiDescription) {
+    throw new Error('Graduation badge failed to receive AI visual description upon Tab arrival.');
+  }
+  console.log('✔ Graduation badge Tab arrival verified with AI breakdown.');
+
+  const logoContainer = window.document.querySelector('a.logo-container');
+  if (!logoContainer || !logoContainer.getAttribute('aria-label')) {
+    throw new Error('Holberton/ALX logo container missing accessible aria-label.');
+  }
+  logoContainer.focus();
+  await new Promise(r => setTimeout(r, 60));
+  console.log('✔ Holberton/ALX institutional logo container verified with accessible label:', logoContainer.getAttribute('aria-label'));
 
   // 7. Run axe-core audit on the fully adapted page
   axe.configure({

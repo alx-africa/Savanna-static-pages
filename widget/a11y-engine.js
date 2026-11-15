@@ -541,6 +541,26 @@
       en: "Circular graduation milestone achievement medallion in gold and navy blue, showing a mortarboard cap and stating 'Reach 70% to be eligible for graduation'.",
       am: "በወርቃማ እና ሰማያዊ ቀለሞች የተሠራ ክብ የምረቃ ሜዳልያ ምልክት፤ የምረቃ ቆብ ምስል የያዘ ሲሆን፣ 'ለምረቃ ብቁ ለመሆን 70% ይድረሱ' የሚል መመሪያ ይዟል።",
       elements: ['Graduation Medallion', '70% Threshold', 'Mortarboard Cap', 'Certification']
+    },
+    'holberton-logo-full-alx': {
+      en: "Official institutional logo for ALX and Holberton School, featuring bold crimson red and charcoal typography and geometric accents, signifying pan-African tech education excellence.",
+      am: "የALX እና ሆልበርተን ትምህርት ቤት ይፋዊ የድርጅት አርማ፤ ቀይ እና ጥቁር ቀለማት ያሉት የአፍሪካ መሪ የቴክኖሎጂ ስልጠና መድረክ መለያ።",
+      elements: ['ALX Monogram', 'Holberton Tech School', 'Crimson Geometric Accent', 'Career Validation']
+    },
+    'homepage-v1-paced-embed': {
+      en: "Savanna LMS paced curriculum roadmap displaying weekly lesson milestones, module progress bars, and upcoming assignment deadlines.",
+      am: "የሳቫና የትምህርት ጉዞ ሳምንታዊ የጊዜ ሰሌዳ እና የሂደት ፍሰት፤ የሳምንት ትምህርቶችን፣ የሂደት አሞሌዎችን እና የፈተና ማስረከቢያ ቀናትን ያሳያል።",
+      elements: ['Curriculum Roadmap', 'Weekly Milestones', 'Module Progress', 'Calendar Deadlines']
+    },
+    'olivia-reynolds': {
+      en: "Professional educator portrait of Olivia Reynolds, lead instructor for Executive Virtual Assistant operations.",
+      am: "የኦሊቪያ ሬይኖልድስ ሙያዊ ፎቶግራፍ፤ የአስፈፃሚ ቨርቹዋል ረዳት ዋና አሰልጣኝ እና መምህርት።",
+      elements: ['Instructor Headshot', 'Executive Educator', 'Professional Guidance', 'Mentorship']
+    },
+    'ryan-hayes': {
+      en: "Professional mentor portrait of Ryan Hayes, technical coach in remote workflows and workflow management.",
+      am: "የራያን ሄይስ ሙያዊ ፎቶግራፍ፤ በርቀት የስራ ሂደቶች እና የስራ አስተዳደር ቴክኒካል አማካሪ።",
+      elements: ['Technical Coach', 'Remote Workflows', 'Mentor Portrait', 'Workflow Specialist']
     }
   };
 
@@ -555,18 +575,40 @@
     } catch (_) {}
   }
 
+  function extractElementVisualDetails(targetEl) {
+    if (!targetEl) return { src: '', alt: '', filename: '' };
+    let src = (targetEl.getAttribute('src') || '').toLowerCase();
+    if (!src) {
+      // Check style background-image or child element with background-image
+      const bg = targetEl.style.backgroundImage || 
+        (window.getComputedStyle ? window.getComputedStyle(targetEl).backgroundImage : '') || '';
+      const match = bg.match(/url\(['"]?([^'"]+)['"]?\)/);
+      if (match) {
+        src = match[1].toLowerCase();
+      } else {
+        const childBg = targetEl.querySelector('[style*="background-image"], .logo');
+        if (childBg) {
+          const cBg = childBg.style.backgroundImage || (window.getComputedStyle ? window.getComputedStyle(childBg).backgroundImage : '') || '';
+          const cMatch = cBg.match(/url\(['"]?([^'"]+)['"]?\)/);
+          if (cMatch) src = cMatch[1].toLowerCase();
+        }
+      }
+    }
+    const alt = (targetEl.getAttribute('alt') || targetEl.getAttribute('aria-label') || targetEl.title || '').toLowerCase();
+    const filename = src.split('/').pop().split('?')[0] || '';
+    return { src, alt, filename };
+  }
+
   function describeImage(img) {
     if (!img) return;
     const parent = img.parentElement;
-    const existing = parent.querySelector('.sa11y-image-desc-card');
+    const existing = parent ? parent.querySelector('.sa11y-image-desc-card') : null;
     if (existing) {
       existing.remove();
       return;
     }
 
-    const src = (img.getAttribute('src') || '').toLowerCase();
-    const alt = (img.getAttribute('alt') || '').toLowerCase();
-    const filename = src.split('/').pop() || '';
+    const { src, alt, filename } = extractElementVisualDetails(img);
     const lang = currentLang;
 
     // Create container card with AI loading state
@@ -587,7 +629,7 @@
     `;
 
     // Insert card after image or its describe button
-    const btn = parent.querySelector('.sa11y-describe-img-btn');
+    const btn = parent ? parent.querySelector('.sa11y-describe-img-btn') : null;
     if (btn) {
       btn.insertAdjacentElement('afterend', card);
     } else {
@@ -705,23 +747,23 @@
     announce(initialCue);
     speakVisualDescription(initialCue);
 
-    const src = (img.getAttribute('src') || '').toLowerCase();
-    const alt = (img.getAttribute('alt') || '').toLowerCase();
-    const filename = src.split('/').pop() || '';
+    const { src, alt, filename } = extractElementVisualDetails(img);
 
     function onDescriptionReady(description) {
       img.dataset.aiDescription = description;
-      img.setAttribute('aria-label', `${img.getAttribute('alt') || 'Graphic'}. AI Description: ${description}`);
+      const initialLabel = img.getAttribute('alt') || img.getAttribute('aria-label') || 'Graphic';
+      img.setAttribute('aria-label', `${initialLabel}. AI Description: ${description}`);
       img.setAttribute('aria-description', description);
 
       // Only speak if the blind user is still focused on this image
-      if (document.activeElement === img) {
+      if (document.activeElement === img || img.contains(document.activeElement)) {
         announce(description);
         speakVisualDescription(description);
       }
     }
 
-    // Call live AI Vision endpoint with blind user context prompt
+    // Call live AI Vision endpoint with situation prompt
+    const situationContext = 'This user cannot see so describe the image for a blind learner who cannot see the visual. Detail the primary subject, all visual elements and text, pedagogical context, and layout so they hear it as a normal element.';
     if (typeof fetch === 'function') {
       const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl) || 'http://localhost:8000';
       fetch(apiUrl + '/describe-image', {
@@ -731,7 +773,7 @@
           filename,
           url: src,
           language: lang,
-          context: 'This user is blind and arrived on this image via keyboard Tab navigation. Describe it so they hear it as a normal element.'
+          context: situationContext
         })
       })
       .then(res => res.json())
@@ -792,8 +834,12 @@
     });
 
     // 2. Enhance Uninformative Image Alt Tags & Inject AI Image Inspector Buttons
-    const images = document.querySelectorAll('img');
-    images.forEach(img => {
+    const images = Array.from(document.querySelectorAll('img'));
+    const bgVisuals = Array.from(document.querySelectorAll('.logo, a.logo-container, [style*="background-image: url"], [style*="background-image:url"]'));
+    const allVisualElements = [...images, ...bgVisuals];
+
+    allVisualElements.forEach(img => {
+      const isImg = img.tagName === 'IMG';
       const parent = img.parentElement;
       const existingBtn = parent ? parent.querySelector('.sa11y-describe-img-btn') : null;
       if (existingBtn) existingBtn.remove();
@@ -801,59 +847,112 @@
       if (existingCard) existingCard.remove();
 
       if (!enable) {
-        img.removeAttribute('tabindex');
-        img.removeAttribute('role');
+        if (isImg) {
+          img.removeAttribute('tabindex');
+          img.removeAttribute('role');
+        }
         return;
       }
 
-      const src = img.getAttribute('src') || '';
-      const alt = (img.getAttribute('alt') || '').trim();
+      const { src, alt } = extractElementVisualDetails(img);
 
-      if (alt === 'VA-Content-Banner' || src.includes('VA-Content-Banner')) {
-        img.setAttribute('alt', currentLang === 'am' 
+      if (alt === 'va-content-banner' || src.includes('va-content-banner')) {
+        const label = currentLang === 'am' 
           ? 'የቨርቹዋል አሲስታንት የትምህርት ፅንሰ-ሃሳብ አጠቃላይ እይታ ባነር' 
-          : 'Virtual Assistant concept overview banner illustrating global distributed remote work');
-      } else if (alt === 'Evon afro' || src.includes('1lhlc1k4XRfVWDFTjczeaSoRpKlMY3dAX')) {
-        img.setAttribute('alt', currentLang === 'am'
+          : 'Virtual Assistant concept overview banner illustrating global distributed remote work';
+        if (isImg) img.setAttribute('alt', label);
+        img.setAttribute('aria-label', label);
+      } else if (alt === 'evon afro' || src.includes('1lhlc1k4xrfvwdftjczeasorpklmy3dax')) {
+        const label = currentLang === 'am'
           ? 'የቨርቹዋል አሲስታንት ባለሙያ ምስል'
-          : 'Photograph of Evon, Virtual Assistant specialist at work');
+          : 'Photograph of Evon, Virtual Assistant specialist at work';
+        if (isImg) img.setAttribute('alt', label);
+        img.setAttribute('aria-label', label);
+      } else if (src.includes('graduation-badge-alx') || alt.includes('graduation') || alt.includes('badge')) {
+        const label = currentLang === 'am'
+          ? 'የALX የቨርቹዋል ረዳት የምረቃ ሜዳልያ ባጅ - ለምረቃ ብቁ ለመሆን 70% ይድረሱ'
+          : 'ALX Virtual Assistant Graduation Milestone Badge - Reach 70% to be eligible for graduation';
+        if (isImg) img.setAttribute('alt', label);
+        img.setAttribute('aria-label', label);
+      } else if (src.includes('holberton-logo-full-alx') || src.includes('alx-navy') || img.classList.contains('logo') || img.classList.contains('logo-container')) {
+        const label = currentLang === 'am'
+          ? 'የALX እና ሆልበርተን ትምህርት ቤት አርማ'
+          : 'ALX and Holberton School Institutional Logo';
+        if (isImg) img.setAttribute('alt', label);
+        img.setAttribute('aria-label', label);
+      } else if (src.includes('homepage-v1-paced-embed')) {
+        const label = currentLang === 'am'
+          ? 'የሳቫና ሳምንታዊ የትምህርት ሂደት እና የጊዜ ሰሌዳ ፍሰት'
+          : 'Savanna LMS weekly paced curriculum roadmap and schedule';
+        if (isImg) img.setAttribute('alt', label);
+        img.setAttribute('aria-label', label);
+      } else if (src.includes('tools-')) {
+        const label = currentLang === 'am'
+          ? 'የቨርቹዋል ረዳት የቴክኖሎጂ እና የAI መሣሪያዎች ንጽጽር'
+          : 'Virtual Assistant AI and productivity tools suite comparison';
+        if (isImg) img.setAttribute('alt', label);
+        img.setAttribute('aria-label', label);
+      }
+
+      const linkParent = img.tagName === 'A' ? img : img.closest('a');
+
+      // Ensure proper accessible labeling
+      if (linkParent && linkParent !== img) {
+        const ariaLbl = img.getAttribute('aria-label') || img.getAttribute('alt') || '';
+        if (ariaLbl && !linkParent.getAttribute('aria-label')) {
+          linkParent.setAttribute('aria-label', ariaLbl);
+        }
       }
 
       // Allow screen reader users to reach images in Tab order like any other element
-      img.tabIndex = 0;
-      img.setAttribute('role', 'img');
+      // (Never nest interactive tabindex inside an anchor link to prevent nested-interactive violations)
+      if (!linkParent) {
+        if (!img.getAttribute('tabindex')) {
+          img.tabIndex = 0;
+        }
+        if (!img.getAttribute('role')) {
+          img.setAttribute('role', 'img');
+        }
+      }
 
-      // Bind Tab focus arrival, blur, and keydown listeners
-      if (!img.dataset.sa11yBound) {
-        img.dataset.sa11yBound = 'true';
-        img.addEventListener('focus', function () {
+      // Bind Tab focus arrival, blur, and keydown listeners to the interactive target
+      const focusTarget = linkParent || img;
+      if (!focusTarget.dataset.sa11yBound) {
+        focusTarget.dataset.sa11yBound = 'true';
+        focusTarget.addEventListener('focus', function () {
           handleImageTabArrival(this);
         });
-        img.addEventListener('blur', function () {
+        focusTarget.addEventListener('blur', function () {
           if (window.speechSynthesis && window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
           }
         });
-        img.addEventListener('keydown', function (e) {
+        focusTarget.addEventListener('keydown', function (e) {
           if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
+            if (this.tagName !== 'A') e.preventDefault();
             describeImage(this);
           }
         });
       }
 
       // Inject accessible "Describe Image (Alt+I)" button for content images
-      if (src && !src.includes('arrow') && !src.includes('logo') && !src.includes('icon')) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'sa11y-describe-img-btn';
-        btn.setAttribute('aria-label', (currentLang === 'am') 
-          ? `የምስሉን ዝርዝር መግለጫ አድምጥ፡ ${img.getAttribute('alt') || ''}` 
-          : `Hear visual description of image: ${img.getAttribute('alt') || ''}`);
-        btn.innerHTML = `👁️ ${i18n[currentLang].btnDescribeImg}`;
-        btn.addEventListener('click', () => describeImage(img));
+      // (Place button outside any parent link to guarantee 0 nested-interactive violations)
+      if (src && !src.includes('dropdown-arrow') && !src.includes('green-x') && !src.includes('white-x') && !src.includes('navy-x')) {
+        const insertionTarget = linkParent || img;
+        const existingAfter = insertionTarget.nextElementSibling;
+        if (!existingAfter || !existingAfter.classList.contains('sa11y-describe-img-btn')) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'sa11y-describe-img-btn';
+          const ariaLbl = img.getAttribute('aria-label') || img.getAttribute('alt') || '';
+          btn.setAttribute('aria-label', (currentLang === 'am') 
+            ? `የምስሉን ዝርዝር መግለጫ አድምጥ፡ ${ariaLbl}` 
+            : `Hear visual description of image: ${ariaLbl}`);
+          btn.innerHTML = `👁️ ${i18n[currentLang].btnDescribeImg}`;
+          btn.addEventListener('click', () => describeImage(img));
 
-        img.insertAdjacentElement('afterend', btn);
+          insertionTarget.insertAdjacentElement('afterend', btn);
+        }
       }
     });
   }
@@ -1837,9 +1936,7 @@
   const observer = new MutationObserver(() => {
     if (mutationTimeout) clearTimeout(mutationTimeout);
     mutationTimeout = setTimeout(() => {
-      if (activeProfile && activeProfile.screenReader) {
-        adaptBlindAndScreenReader(true);
-      }
+      adaptBlindAndScreenReader(true);
     }, 100);
   });
   observer.observe(document.body, { childList: true, subtree: true });
@@ -1853,6 +1950,9 @@
   /* ── 12. Initial Mount & Check ────────────────────────────────────────── */
   function initEngine() {
     createTriggerButton();
+
+    // Enable image keyboard Tab navigation and visual accessibility by default
+    adaptBlindAndScreenReader(true);
 
     // Check if user has already configured or skipped
     const stored = getStoredProfile();

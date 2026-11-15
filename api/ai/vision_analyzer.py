@@ -395,6 +395,474 @@ DOMAIN_AI_BREAKDOWNS: dict[str, dict[str, Any]] = {
             },
         },
     },
+    "graduation_badge": {
+        "keywords": ["graduation-badge-alx", "graduation", "badge", "va-1"],
+        "elements": [
+            "ALX Graduation Milestone Medallion",
+            "Gold Laurel Wreath and Achievement Star",
+            "Academic Mortarboard Cap Silhouette",
+            "VA-1 Course Code Inscribed in Medallion Center",
+            "70% Minimum Threshold Requirement Indicator",
+        ],
+        "breakdown": {
+            "en": {
+                "primary_subject": "Official ALX Virtual Assistant Graduation Milestone Badge (VA-1)",
+                "visual_elements": [
+                    "Circular metallic gold and navy blue achievement medallion",
+                    "Center emblem showing the academic mortarboard graduation cap",
+                    "Bold white typography reading 'VA-1'",
+                    "Milestone requirement text: 'Reach 70% to be eligible for graduation'",
+                    "High-contrast vector badge graphic embedded in the progress gauge",
+                ],
+                "pedagogical_context": (
+                    "Represents the core academic validation milestone of the Savanna Virtual Assistant program. "
+                    "Achieving 70% mastery unlocks course completion, validating professional readiness for employer matching."
+                ),
+                "composition_and_palette": (
+                    "Vector circle with dual concentric rings. Primary colors: Burnished Gold (#d97706), Midnight Navy (#0f172a), and Pure White (#ffffff). "
+                    "Crisp vector contrast designed to be instantly readable at both icon size (32px) and modal showcase size (184px)."
+                ),
+                "summary": (
+                    "AI Visual Breakdown: Official ALX graduation milestone achievement badge for 'VA-1'. "
+                    "Primary Subject: Golden circular graduation medallion with academic mortarboard cap. "
+                    "Visual Elements: 'VA-1' course code, 70% milestone threshold indicator, and navy/gold trim. "
+                    "Pedagogical Meaning: Signals that 70% mastery is required to earn the professional Virtual Assistant credential."
+                ),
+            },
+            "am": {
+                "primary_subject": "የALX የቨርቹዋል ረዳት የምረቃ ሜዳልያ ባጅ (VA-1)",
+                "visual_elements": [
+                    "በወርቃማ እና በባህር ኃይል ሰማያዊ ቀለም የተሠራ ክብ የምስክር ወረቀት ሜዳልያ",
+                    "የምረቃ ቆብ ምስል የያዘ ማዕከላዊ አርማ",
+                    "ደማቅ ነጭ ጽሑፍ 'VA-1' በሚል የተቀረጸ",
+                    "የ70% የማጠናቀቂያ መስፈርት ማሳሰቢያ፡ 'ለምረቃ ብቁ ለመሆን 70% ይድረሱ'",
+                ],
+                "pedagogical_context": (
+                    "የቨርቹዋል ረዳት ፕሮግራሙን ዋና የውጤት ምዕራፍ ያሳያል። ተማሪዎች 70% ሲያገኙ የሙያ ማረጋገጫ የምስክር ወረቀት ለመቀበል ብቁ ይሆናሉ።"
+                ),
+                "composition_and_palette": (
+                    "ክብ ቅርጽ ያለው የወርቅ (#d97706) እና ጥቁር ሰማያዊ (#0f172a) ቅንብር፤ ከፍተኛ የንፅፅር ደረጃ ያለው ግልጽ ምስል።"
+                ),
+                "summary": (
+                    "የAI ምስል ትንተና፡ የALX የምረቃ ሜዳልያ አርማ ለ'VA-1'። "
+                    "ዋና ርዕስ፡ የወርቅ የምረቃ ሜዳልያ ከምረቃ ቆብ ጋር። "
+                    "የእይታ አካላት፡ 'VA-1' ጽሑፍ እና የ70% የማጠናቀቂያ መስፈርት። "
+                    "ትምህርታዊ ፋይዳ፡ ተማሪው 70% ሲደርስ የምረቃ ማረጋገጫ እንደሚያገኝ ያሳውቃል።"
+                ),
+            },
+            "om": {
+                "primary_subject": "Badhaasa Eebbaa ALX Gargaaraa Dijitaalaa (VA-1)",
+                "visual_elements": [
+                    "Meedaaliyaa geengoo warqee fi cuquliisa",
+                    "Mallattoo koofiyyaa eebbaa gidduutti",
+                    "Qubee adii guddaa 'VA-1'",
+                    "Ulaagaa eebbaa: 'Eebbaaf ga'uuf 70% guutuu qabdu'",
+                ],
+                "pedagogical_context": (
+                    "Milkaa'ina barnootaa agarsiisa; eebbaaf ga'uuf qabxii 70% argachuun akka barbaachisu ibsa."
+                ),
+                "composition_and_palette": (
+                    "Geengoo warqee fi cuquliisaa ifaa fi qulqulluu ta'e."
+                ),
+                "summary": (
+                    "Qaaccessa AI: Badhaasa eebbaa ALX kan VA-1. Meedaaliyaa warqee koofiyyaa eebbaa fi ulaagaa 70% of keessaa qabu."
+                ),
+            },
+            "ti": {
+                "primary_subject": "ናይ ALX ቨርቹዋል ሓጋዚ ናይ ምረቓ ባጅ (VA-1)",
+                "visual_elements": [
+                    "ክቢ ናይ ወርቅን ሰማያውን ሕብሪ ዘለዎ ናይ ምረቓ ሜዳልያ",
+                    "ኣብ ማእከል ዘሎ ናይ ምረቓ ቆቢዕ ምልክት",
+                    "ብደማቕ ጻዕዳ ፊደላት 'VA-1' ተጻሒፉ",
+                    "መምርሒ፡ 'ንብቕዓት ምረቓ 70% ምብጻሕ የድሊ'",
+                ],
+                "pedagogical_context": (
+                    "ተማሃሮ ንምረቓ ብቑዓት ክኾኑ ናይ 70% ብቕዓት ከም ዘድልዮም ዘመልክት ናይ ዓወት ምልክት እዩ።"
+                ),
+                "composition_and_palette": (
+                    "ናይ ወርቅን ድሙቕ ሰማያውን ክቢ ቅርጺ ብጽሩይ ንጹር ዲዛይን።"
+                ),
+                "summary": (
+                    "ናይ AI ስእላዊ ትንተና፡ ናይ ALX ምረቓ ባጅ VA-1። ናይ ወርቂ ሜዳልያ ምስ ምረቓ ቆቢዕን 70% ብቕዓት መምርሕን።"
+                ),
+            },
+            "ar": {
+                "primary_subject": "وسام التخرج وإنجاز مسار المساعد الافتراضي من ALX (VA-1)",
+                "visual_elements": [
+                    "ميدالية إنجاز دائرية باللون الذهبي والكحلي الأنيق",
+                    "شعار قبعة التخرج الأكاديمية في المنتصف",
+                    "رمز المساق باللون الأبيض البارز 'VA-1'",
+                    "نص الشرط الأكاديمي: 'حقق 70% لتكون مؤهلاً للتخرج'",
+                ],
+                "pedagogical_context": (
+                    "يمثل المعيار الأساسي للتحقق من إتقان المهارات في برنامج المساعد الافتراضي، حيث يمنح الوصول إلى 70% شهادة الاعتماد الرسمية."
+                ),
+                "composition_and_palette": (
+                    "تكوين دائري متقن بألوان الذهب الكلاسيكي والأزرق الملكي لتعزيز مشاعر الفخر والإنجاز."
+                ),
+                "summary": (
+                    "تحليل الذكاء الاصطناعي: شارة التخرج لمساق VA-1 من ALX. وسام ذهبي يتضمن قبعة التخرج ونسبة 70% المطلوبة للاجتياز."
+                ),
+            },
+            "so": {
+                "primary_subject": "Astaanta Qalin-jabinta ee ALX Kaaliyaha Fog (VA-1)",
+                "visual_elements": [
+                    "Bilad wareegsan oo dahab iyo buluug ah",
+                    "Koofiyadda qalin-jabinta oo dhexda kaga taal",
+                    "Qoraalka 'VA-1' oo caddaan ah",
+                    "Shuruudda: 'Gaadh 70% si aad ugu qalanto qalin-jabinta'",
+                ],
+                "pedagogical_context": (
+                    "Waxay muujinaysaa heerka guusha looga baahan yahay ardayga si uu u helo shahaadada xirfadda."
+                ),
+                "composition_and_palette": (
+                    "Midabada dahabka iyo buluugga mugdiga ah ee muujinaya heerka sare."
+                ),
+                "summary": (
+                    "Falanqaynta AI: Astaanta qalin-jabinta ALX ee koorsada VA-1 oo leh shuruudda 70%."
+                ),
+            },
+            "sw": {
+                "primary_subject": "Beji ya Mahafali ya ALX ya Msaidizi Halisi (VA-1)",
+                "visual_elements": [
+                    "Nishani ya duara ya dhahabu na bluu iliyokolea",
+                    "Kofia ya mahafali katikati ya nishani",
+                    "Maandishi meupe yaliyo wazi 'VA-1'",
+                    "Maelekezo: 'Fikia 70% ili kufuzu mahafali'",
+                ],
+                "pedagogical_context": (
+                    "Inaonyesha alama kuu ya ufaulu inayomwezesha mwanafunzi kupata cheti rasmi cha uwezo wa kikazi."
+                ),
+                "composition_and_palette": (
+                    "Muundo thabiti wa duara yenye rangi ya dhahabu na samawati ya heshima."
+                ),
+                "summary": (
+                    "Uchambuzi wa AI: Beji rasmi ya mahafali ya ALX ya VA-1 yenye sharti la ufaulu wa 70%."
+                ),
+            },
+            "fr": {
+                "primary_subject": "Badge Officiel de Diplomation ALX Assistant Virtuel (VA-1)",
+                "visual_elements": [
+                    "Médaillon circulaire or et bleu marine de réussite",
+                    "Toque de remise des diplômes au centre",
+                    "Code de cours 'VA-1' en typographie blanche épurée",
+                    "Condition d'éligibilité : 'Atteignez 70% pour être éligible à la diplomation'",
+                ],
+                "pedagogical_context": (
+                    "Symbolise la validation finale du parcours d'assistant virtuel garantissant l'accès aux certifications professionnelles."
+                ),
+                "composition_and_palette": (
+                    "Design vectoriel circulaire aux tons or métallique et bleu marine institutionnel."
+                ),
+                "summary": (
+                    "Analyse par IA : Badge de diplomation ALX VA-1. Médaillon doré avec chapeau académique et mention du seuil de réussite de 70%."
+                ),
+            },
+        },
+    },
+    "holberton_alx_logo": {
+        "keywords": ["holberton-logo-full-alx", "holberton", "logo-full-alx", "logo-navy", "alx-navy", "alx"],
+        "elements": [
+            "Official Institutional Brand Emblem of ALX and Holberton School",
+            "Geometric Crimson Chevron Motif Signifying Forward Momentum",
+            "Bold High-Legibility Holberton & ALX Monogram Typography",
+            "Transparent Alpha Channel Background for Responsive Placement",
+        ],
+        "breakdown": {
+            "en": {
+                "primary_subject": "Official ALX and Holberton School Institutional Logo",
+                "visual_elements": [
+                    "ALX bold typographic logo",
+                    "Holberton School tech accelerator brandmark",
+                    "Geometric red and charcoal corporate branding accents",
+                    "Clean high-contrast vector composition",
+                ],
+                "pedagogical_context": (
+                    "Connects the Savanna LMS curriculum to the pan-African ALX network and Holberton tech education ecosystem, "
+                    "reassuring learners of accredited, world-class career training."
+                ),
+                "composition_and_palette": (
+                    "Horizontal corporate brandmark with crimson red (#e11d48) and dark graphite (#0f172a). "
+                    "Optimized for high-contrast accessibility on header navigation bars."
+                ),
+                "summary": (
+                    "AI Visual Breakdown: Institutional logo for ALX and Holberton School. "
+                    "Primary Subject: Official pan-African educational brand emblem. "
+                    "Visual Elements: ALX & Holberton typography with crimson geometric accents. "
+                    "Pedagogical Meaning: Validates official career training on the Savanna platform."
+                ),
+            },
+            "am": {
+                "primary_subject": "የALX እና ሆልበርተን ትምህርት ቤት ይፋዊ የድርጅት አርማ",
+                "visual_elements": [
+                    "ደማቅ የALX የጽሑፍ አርማ",
+                    "የሆልበርተን የቴክኖሎጂ አካዳሚ ዓርማ",
+                    "ደማቅ ቀይ እና ጥቁር የዲዛይን ቅንብር",
+                ],
+                "pedagogical_context": (
+                    "ትምህርቱን ከመላው አፍሪካ የALX እና የሆልበርተን የቴክኖሎጂ ስልጠና ትስስር ጋር ያገናኛል፤ አለም አቀፍ ደረጃውን የጠበቀ እውቅና እንዳለው ያረጋግጣል።"
+                ),
+                "composition_and_palette": (
+                    "አግድም የድርጅት አርማ፤ ቀይ (#e11d48) እና ጥቁር ሰማያዊ ቀለማት።"
+                ),
+                "summary": (
+                    "የAI ምስል ትንተና፡ የALX እና ሆልበርተን ይፋዊ አርማ። የአፍሪካ መሪ የቴክኖሎጂ ስልጠና መድረክ መለያ።"
+                ),
+            },
+            "om": {
+                "primary_subject": "Asxaa ALX fi Mana Barumsaa Holberton",
+                "visual_elements": ["Qubee ALX", "Mallattoo Holberton", "Halluu diimaa fi gurraacha"],
+                "pedagogical_context": "Sagantaa leenjii teeknolojii sadarkaa addunyaa ALX wajjin walitti hidha.",
+                "composition_and_palette": "Mallattoo ifaa fi qulqulluu.",
+                "summary": "Qaaccessa AI: Asxaa seera qabeessa ALX fi Holberton.",
+            },
+            "ti": {
+                "primary_subject": "ወግዓዊ ኣርማ ALXን ቤት ትምህርቲ ሆልበርተንን",
+                "visual_elements": ["ደማቕ ናይ ALX ጽሑፍ", "ናይ ሆልበርተን ምልክት", "ቀይሕን ጸሊምን ሕብርታት"],
+                "pedagogical_context": "ናይዚ ትምህርቲ ዓለምለኻዊ ተፈላጥነትን ምስ ALX ዘለዎ ምትእስሳርን የረጋግጽ።",
+                "composition_and_palette": "ጽሩይ ናይ ቬክተር ኣርማ።",
+                "summary": "ናይ AI ትንተና፡ ወግዓዊ ኣርማ ALXን ሆልበርተንን።",
+            },
+            "ar": {
+                "primary_subject": "الشعار المؤسسي الرسمي لـ ALX ومدرسة هولبرتون للتقنية",
+                "visual_elements": [
+                    "رمز علامة ALX بخط عريض وواضح",
+                    "شعار مدرسة هولبرتون التكنولوجية",
+                    "تدرجات اللونين الأحمر القاني والرمادي الداكن",
+                ],
+                "pedagogical_context": (
+                    "يربط المحتوى التعليمي بشبكة ALX الرائدة في إفريقيا وبرامج هولبرتون العالمية، مما يعزز ثقة المتعلم في قيمة التدريب."
+                ),
+                "composition_and_palette": "شعار أفقي متوازن بألوان أنيقة تمنح انطباعًا بالريادة والابتكار.",
+                "summary": "تحليل الذكاء الاصطناعي: الشعار الرسمي لمؤسستي ALX وهولبرتون.",
+            },
+            "so": {
+                "primary_subject": "Astaanta Rasmiga ah ee ALX iyo Dugsiga Holberton",
+                "visual_elements": ["Qoraalka ALX", "Astaanta Holberton", "Midabada casaan iyo madow"],
+                "pedagogical_context": "Waxay caddaynaysaa tababarka heerka caalami ee ardaydu qaadanayaan.",
+                "composition_and_palette": "Naqshad casri ah oo nadiif ah.",
+                "summary": "Falanqaynta AI: Astaanta guud ee ALX iyo Holberton.",
+            },
+            "sw": {
+                "primary_subject": "Nembo Rasmi ya Taasisi ya ALX na Shule ya Holberton",
+                "visual_elements": ["Mwandiko wa ALX", "Nembo ya Holberton", "Rangi ya nyekundu na kijivu cheusi"],
+                "pedagogical_context": "Inathibitisha uhusiano wa mafunzo haya na mtandao mashuhuri wa kiteknolojia wa ALX barani Afrika.",
+                "composition_and_palette": "Nembo safi ya ushirika yenye uwiano thabiti.",
+                "summary": "Uchambuzi wa AI: Nembo ya taasisi ya ALX na Holberton School.",
+            },
+            "fr": {
+                "primary_subject": "Logo Institutionnel Officiel d'ALX et Holberton School",
+                "visual_elements": ["Typographie audacieuse ALX", "Symbole Holberton School", "Accents rouge cramoisi et ardoise"],
+                "pedagogical_context": "Rattache le parcours Savanna au réseau d'accélération technologique panafricain d'ALX et Holberton.",
+                "composition_and_palette": "Identité visuelle moderne à fort contraste.",
+                "summary": "Analyse par IA : Logo institutionnel officiel d'ALX et d'Holberton School.",
+            },
+        },
+    },
+    "tools_gpt_grammarly": {
+        "keywords": ["tools-gpt-grammarly", "tools-image", "tools"],
+        "elements": [
+            "OpenAI ChatGPT Emerald Swirl Logo",
+            "Grammarly Circular Green 'G' Icon",
+            "Side-by-Side Tool Comparison Cards",
+            "AI Drafting and Grammar Refinement Workflow Indicators",
+        ],
+        "breakdown": {
+            "en": {
+                "primary_subject": "AI Productivity Tools for Virtual Assistants: ChatGPT & Grammarly",
+                "visual_elements": [
+                    "OpenAI ChatGPT emerald green spiral icon representing generative writing",
+                    "Grammarly circular green 'G' logo representing editing and tone enhancement",
+                    "Side-by-side workflow cards highlighting drafting vs refining",
+                    "Modern digital application badges",
+                ],
+                "pedagogical_context": (
+                    "Instructs Virtual Assistants on how to combine AI software tools: using ChatGPT for rapid first-draft ideation "
+                    "and research, followed by Grammarly for executive tone, clarity, and grammatical precision."
+                ),
+                "composition_and_palette": (
+                    "Two-column comparative visual card. Dominant colors: OpenAI teal (#10a37f), Grammarly emerald (#15803d), and crisp neutral gray. "
+                    "Balanced icon layout showing collaborative coexistence of complementary AI tools."
+                ),
+                "summary": (
+                    "AI Visual Breakdown: Software tools infographic comparing ChatGPT and Grammarly. "
+                    "Primary Subject: Generative drafting and editorial refinement tools for Virtual Assistants. "
+                    "Visual Elements: OpenAI spiral and Grammarly green logos. "
+                    "Pedagogical Meaning: Demonstrates combining AI drafting with grammar checking to produce executive-grade client deliverables."
+                ),
+            },
+            "am": {
+                "primary_subject": "ለቨርቹዋል ረዳቶች አስፈላጊ የAI መሣሪያዎች፡ ChatGPT እና Grammarly",
+                "visual_elements": [
+                    "የOpenAI ChatGPT አረንጓዴ የክብ ምልክት ለጽሁፍ ረቂቅ ማዘጋጃ",
+                    "የGrammarly አረንጓዴ 'G' ምልክት ለሰዋሰው እና ቃላት ማስተካከያ",
+                    "ጎን ለጎን የተደረጉ የንጽጽር ካርዶች",
+                ],
+                "pedagogical_context": (
+                    "ቨርቹዋል ረዳቶች የAI መሣሪያዎችን እንዴት አጣምረው መጠቀም እንዳለባቸው ያስተምራል፤ ChatGPT ለፈጣን ረቂቅ፣ Grammarly ለጥራት እና ሰዋሰው እርማት።"
+                ),
+                "composition_and_palette": (
+                    "ሁለት አምድ ያለው ንጽጽር፤ አረንጓዴ (#10a37f) እና ጥቁር ግራጫ ቀለማት።"
+                ),
+                "summary": (
+                    "የAI ምስል ትንተና፡ የChatGPT እና Grammarly የሶፍትዌር ንጽጽር አርማ። ረዳቶች ጥራት ያለው ስራ ለማቅረብ AIን እንዴት እንደሚጠቀሙ ያብራራል።"
+                ),
+            },
+            "om": {
+                "primary_subject": "Meeshaalee AI Gargaaraa Dijitaalaa: ChatGPT fi Grammarly",
+                "visual_elements": ["Mallattoo ChatGPT", "Mallattoo Grammarly", "Kaardii wal-bira qabaa"],
+                "pedagogical_context": "Barreessuu fi sirreessuu irratti AI akkamitti akka gargaaru barsiisa.",
+                "composition_and_palette": "Halluu magariisaa fi qulqullina olaanaa.",
+                "summary": "Qaaccessa AI: Meeshaalee ChatGPT fi Grammarly hojii gargaaraa dijitaalaatiif.",
+            },
+            "ti": {
+                "primary_subject": "መሳርሒታት AI ንቨርቹዋል ሓጋዚ፡ ChatGPTን Grammarlyን",
+                "visual_elements": ["ምልክት ChatGPT", "ምልክት Grammarly", "ናይ ንጽጽር ሰሌዳ"],
+                "pedagogical_context": "ንጽሑፍ ምድላውን ሰዋስው ምእራምን ዘገልግሉ ናይ AI ቴክኖሎጂታት የረድእ።",
+                "composition_and_palette": "ቀጠልያ ሕብርታትን ጽሩይ ዲዛይንን።",
+                "summary": "ናይ AI ትንተና፡ መሳርሒታት ChatGPTን Grammarlyን ንስራሕ ሓጋዚ።",
+            },
+            "ar": {
+                "primary_subject": "أدوات الذكاء الاصطناعي للمساعد الافتراضي: ChatGPT و Grammarly",
+                "visual_elements": [
+                    "أيقونة ChatGPT الحلزونية باللون الأخضر المميز للصياغة الأولية",
+                    "شعار Grammarly الدائري للتدقيق اللغوي وضبط النبرة المهنية",
+                    "بطاقتان متجاورتان للمقارنة والتكامل بين الأداتين",
+                ],
+                "pedagogical_context": (
+                    "يوضح كيفية الجمع بين الذكاء الاصطناعي التوليدي والتدقيق اللغوي الاحترافي لتقديم مخرجات عمل استثنائية للعملاء."
+                ),
+                "composition_and_palette": "تصميم ثنائي متوازن بتدرجات الأخضر التقني والرمادي المريح للعين.",
+                "summary": "تحليل الذكاء الاصطناعي: مقارنة بصرية بين ChatGPT و Grammarly لتعزيز إنتاجية المساعد الافتراضي.",
+            },
+            "so": {
+                "primary_subject": "Qalabka AI ee Kaaliyaha Fog: ChatGPT iyo Grammarly",
+                "visual_elements": ["Astaanta ChatGPT", "Astaanta Grammarly", "Qaybaha is-barbardhigga"],
+                "pedagogical_context": "Waxay baraysaa sida loo adeegsado AI si loo qoro loona saxo qoraallada shaqada.",
+                "composition_and_palette": "Midab cagaar ah iyo qaab casri ah.",
+                "summary": "Falanqaynta AI: Isbarbardhigga qalabka ChatGPT iyo Grammarly.",
+            },
+            "sw": {
+                "primary_subject": "Zana za AI za Tija kwa Wasaidizi Halisi: ChatGPT na Grammarly",
+                "visual_elements": ["Nembo ya kijani ya ChatGPT", "Nembo ya Grammarly ya kusahihisha", "Kadi za kulinganisha"],
+                "pedagogical_context": "Inafundisha namna ya kutumia AI kuandaa na kuhakiki maandishi ya kikazi kwa wateja.",
+                "composition_and_palette": "Muundo safi wenye rangi za kijani na kijivu.",
+                "summary": "Uchambuzi wa AI: Zana za ChatGPT na Grammarly za kuongeza tija ya usaidizi halisi.",
+            },
+            "fr": {
+                "primary_subject": "Outils d'IA pour Assistants Virtuels : ChatGPT et Grammarly",
+                "visual_elements": ["Logo vert émeraude de ChatGPT", "Icône circulaire Grammarly", "Disposition comparative"],
+                "pedagogical_context": "Enseigne la complémentarité entre la rédaction assistée par IA et la révision linguistique professionnelle.",
+                "composition_and_palette": "Présentation bicolore épurée vert et gris.",
+                "summary": "Analyse par IA : Comparaison visuelle des outils ChatGPT et Grammarly pour la productivité bureautique.",
+            },
+        },
+    },
+    "homepage_paced_embed": {
+        "keywords": ["homepage-v1-paced-embed", "homepage", "embed", "track-"],
+        "elements": [
+            "Paced Weekly Curriculum Progress Roadmap",
+            "Module Status Indicators and Milestone Schedule",
+            "Interactive Lesson Activity Cards",
+            "Pacing Calendar with Weekly Submission Deadlines",
+        ],
+        "breakdown": {
+            "en": {
+                "primary_subject": "Savanna LMS Paced Curriculum Progress Roadmap and Schedule",
+                "visual_elements": [
+                    "Multi-week schedule grid detailing virtual assistant modules",
+                    "Progress tracking bars displaying completion percentages",
+                    "Status indicators for validated vs in-progress assignments",
+                    "Interactive milestone cards with calendar dates",
+                ],
+                "pedagogical_context": (
+                    "Provides visual time-management structure for learners in cohort-paced tracks, "
+                    "ensuring steady progression through sequential learning objectives."
+                ),
+                "composition_and_palette": (
+                    "Modular dashboard UI card with cobalt blue (#2563eb), slate gray, and emerald success accents. "
+                    "Structured into accessible rows with generous whitespace and clear typographic hierarchy."
+                ),
+                "summary": (
+                    "AI Visual Breakdown: Course schedule and pacing dashboard for the Savanna Virtual Assistant cohort. "
+                    "Primary Subject: Weekly milestone progression and lesson completion timeline. "
+                    "Visual Elements: Calendar grid, module progress bars, and validated completion indicators. "
+                    "Pedagogical Meaning: Helps learners plan weekly study hours and track upcoming project deadlines."
+                ),
+            },
+            "am": {
+                "primary_subject": "የሳቫና የትምህርት ጉዞ የጊዜ ሰሌዳ እና የሳምንት ሂደት ፍሰት",
+                "visual_elements": [
+                    "የሳምንታት የትምህርት ክፍለ ጊዜ ሰንጠረዥ",
+                    "የተጠናቀቁ እና ያልተጠናቀቁ ተግባራትን የሚያሳዩ የሂደት አሞሌዎች",
+                    "የቀን መቁጠሪያ እና የፈተና ማስረከቢያ ቀናት",
+                ],
+                "pedagogical_context": (
+                    "ተማሪዎች በሳምንት ውስጥ የሚያከናውኗቸውን ትምህርቶች እና ፕሮጀክቶች በጊዜ ገደብ እንዲያቅዱ ይረዳል።"
+                ),
+                "composition_and_palette": (
+                    "ሰማያዊ (#2563eb) እና አረንጓዴ ቀለሞች ያሉት ዘመናዊ የዳሽቦርድ ገጽታ።"
+                ),
+                "summary": (
+                    "የAI ምስል ትንተና፡ የትምህርት ጉዞ የጊዜ ሰሌዳ ዳሽቦርድ። የተማሪውን ሳምንታዊ ሂደት እና የፈተና ቀናት ያሳያል።"
+                ),
+            },
+            "om": {
+                "primary_subject": "Sagantaa fi Karoora Barnootaa Saavaanaa",
+                "visual_elements": ["Gabatee yeroo torbanii", "Agarsiiftuu hojii raawwatamee", "Kalandarii qormaataa"],
+                "pedagogical_context": "Barattoonni yeroo isaanii sirriitti akka qindeeffatan gargaara.",
+                "composition_and_palette": "Bifa cuquliisa fi magariisa ifaa ta'e.",
+                "summary": "Qaaccessa AI: Karoora yeroo fi guddina barnootaa.",
+            },
+            "ti": {
+                "primary_subject": "ናይ ሳቫና ናይ ትምህርቲ መደብን ሰሌዳ ግዜን",
+                "visual_elements": ["ናይ ሰሙናት ናይ ትምህርቲ ሰሌዳ", "ናይ ዕማማት መወድኢ መምርሒ", "ናይ ፈተና መዓልታት"],
+                "pedagogical_context": "ተማሃሮ ግዜኦም ብግቡእ መዲቦም ንክመሃሩ ዘተባብዕ እዩ።",
+                "composition_and_palette": "ሰማያውን ቀጠልያን ሕብርታት ዘለዎ ናይ ዳሽቦርድ መልክዕ።",
+                "summary": "ናይ AI ትንተና፡ ናይ ሳምንታዊ ትምህርቲ ሰሌዳን ናይ ምዕባለ መዐቀኒን።",
+            },
+            "ar": {
+                "primary_subject": "خارطة طريق التقدم والجدول الزمني لمنهاج سافانا الموجه",
+                "visual_elements": [
+                    "شبكة زمنية توضح الوحدات الدراسية الموزعة على الأسابيع",
+                    "أشرطة تقدم تعرض نسب إنجاز الأنشطة",
+                    "مؤشرات حالة المهام المكتملة وتواريخ التسليم",
+                ],
+                "pedagogical_context": (
+                    "يمنح المتعلم هيكلاً واضحًا لإدارة الوقت وتنظيم وتيرة الدراسة والالتزام بمواعيد التقييمات الأسبوعية."
+                ),
+                "composition_and_palette": "واجهة لوحة تحكم عصرية باللونين الأزرق والرمادي مع إشارات إنجاز خضراء.",
+                "summary": "تحليل الذكاء الاصطناعي: لوحة تتبع الجدول الزمني لمسار المساعد الافتراضي.",
+            },
+            "so": {
+                "primary_subject": "Jadwalka Horumarka Koorsada ee Savanna",
+                "visual_elements": ["Jadwalka toddobaadlaha ah", "Astaamaha shaqooyinka dhammaaday", "Taariikhda imtixaannada"],
+                "pedagogical_context": "Waxay ka caawisaa ardayda inay maamulaan waqtigooda oo ay la socdaan hawlaha u haray.",
+                "composition_and_palette": "Muuqaal nadiif ah oo buluug iyo cagaar ah.",
+                "summary": "Falanqaynta AI: Jadwalka iyo horumarka koorsada.",
+            },
+            "sw": {
+                "primary_subject": "Ratiba na Mwongozo wa Maendeleo ya Masomo ya Savanna",
+                "visual_elements": ["Jedwali la masomo ya kila wiki", "Pau za kuonyesha hatua za kukamilika", "Tarehe za mitihani"],
+                "pedagogical_context": "Humwezesha mwanafunzi kupanga vyema ratiba yake ya kujifunza kulingana na wiki za kozi.",
+                "composition_and_palette": "Muundo nadhifu wa kidijitali wenye rangi ya bluu na kijani ya mafanikio.",
+                "summary": "Uchambuzi wa AI: Ratiba ya mafunzo na ufuatiliaji wa maendeleo ya mwanafunzi.",
+            },
+            "fr": {
+                "primary_subject": "Feuille de Route Pédagogique et Calendrier de Progression Savanna",
+                "visual_elements": [
+                    "Grille hebdomadaire détaillée des modules d'apprentissage",
+                    "Barres de progression avec pourcentages d'achèvement",
+                    "Dates limites de remise des travaux et évaluations",
+                ],
+                "pedagogical_context": (
+                    "Structure l'apprentissage au rythme de la cohorte et permet une gestion optimale du temps d'étude."
+                ),
+                "composition_and_palette": "Tableau de bord ergonomique aux accents bleu cobalt et vert de réussite.",
+                "summary": "Analyse par IA : Calendrier de progression hebdomadaire et suivi des étapes clés du parcours.",
+            },
+        },
+    },
 }
 
 
@@ -449,8 +917,9 @@ async def analyze_image_with_ai(
             try:
                 from openai import AsyncOpenAI
                 client = AsyncOpenAI(api_key=settings.openai_api_key)
+                situation = context or "This user is visually impaired / blind and cannot see the screen."
                 system_prompt = (
-                    f"This user is visually impaired / blind and cannot see the screen. "
+                    f"{situation} "
                     f"Describe this educational visual thoroughly for non-visual comprehension so they can hear it as a normal element. "
                     f"State clearly who or what is depicted, read out any text, diagram workflows, and icon labels, "
                     f"and explain its pedagogical meaning in the context of the course concept. "
