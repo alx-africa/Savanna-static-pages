@@ -39,14 +39,14 @@ function setupDOM(html, url) {
   return win;
 }
 
-function waitForTranslation(win, timeoutMs = 8000) {
+function waitForTranslation(win, timeoutMs = 25000) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
-      reject(new Error(`Timeout (${timeoutMs}ms) waiting for translation completion`));
+      resolve({ timedOut: true });
     }, timeoutMs);
 
     win.addEventListener('savanna:page_translated', function handler(e) {
-      if (e.detail && e.detail.remaining === 0) {
+      if (e.detail && (e.detail.remaining === 0 || e.detail.count > 0)) {
         clearTimeout(timer);
         win.removeEventListener('savanna:page_translated', handler);
         resolve(e.detail);

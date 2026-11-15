@@ -33,6 +33,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from config import get_settings
+from utils.linguistic_validator import LinguisticValidator, ValidationResult
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/translate", tags=["Translation"])
@@ -181,14 +182,20 @@ async def _translate_with_gemini(
 
     if target_lang == "ti":
         guidelines += (
-            "\nCRITICAL TIGRINYA (ትግርኛ) LINGUISTIC ACCURACY RULES:\n"
+            "\nCRITICAL TIGRINYA (ትግርኛ) LINGUISTIC ACCURACY & CONTRASTIVE ANCHORS:\n"
             "- Strictly generate authentic Tigrinya (ትግርኛ). Do NOT output Amharic (አማርኛ).\n"
-            "- Possession: Use 'ናይ' (e.g. 'ናይ ቨርቹዋል ረዳኢ'), NEVER use the Amharic prefix 'የ-'.\n"
+            "- Possession: Use 'ናይ' (e.g. 'ናይ ቨርቹዋል ረዳኢ'), NEVER use Amharic prefix 'የ-'.\n"
             "- Copula: Use 'እዩ / እያ / እዮም' ('is / are'), NEVER use Amharic 'ነው / ናት / ናቸው'.\n"
             "- Interrogatives: Use 'እንታይ' ('what', NOT 'ምን'), 'ኣበይ' ('where', NOT 'የት'), 'ስለምንታይ' ('why', NOT 'ለምን').\n"
             "- Conjunction: Use suffix '-ን' or 'ምስ' ('and'), NEVER use Amharic 'እና'.\n"
             "- Noun forms: Use 'ረዳኢ / ረዳእቲ' for 'assistant / assistants' (NOT Amharic 'ረዳት / ረዳቶች').\n"
-            "- Relative verbs: Use prefix 'ዝ-' (e.g. 'ዝሰርሑ'), NEVER Amharic prefix 'የሚ-' (e.g. 'የሚሰሩት').\n"
+            "- Relative verbs: Use prefix 'ዝ-' (e.g. 'ዝሰርሑ'), NEVER Amharic prefix 'የሚ-' (e.g. 'የሚሰሩት').\n\n"
+            "CONTRASTIVE FEW-SHOT ANCHORS:\n"
+            '  * "Where Do Virtual Assistants Work?" -> "ቨርቹዋል ረዳእቲ ኣብ ኣበይ ይዓይዩ?" (REJECTED AMHARIC: "ቨርቹዋል ረዳቶች የት ነው የሚሰሩት?")\n'
+            '  * "What is a Virtual Assistant?" -> "ቨርቹዋል ረዳኢ (VA) ማለት እንታይ እዩ?" (REJECTED AMHARIC: "ቨርቹዋል ረዳት ማለት ምን ማለት ነው?")\n'
+            '  * "Evolution of the VA Role" -> "ምዕባለ ተራ ቨርቹዋል ረዳኢ" (REJECTED AMHARIC: "የቨርቹዋል ረዳት ሚና እድገትና ለውጥ")\n'
+            '  * "Why Become a Virtual Assistant?" -> "ስለምንታይ ኢኻ ቨርቹዋል ረዳኢ ክትከውን ትደሊ?" (REJECTED AMHARIC: "ለምን ቨርቹዋል ረዳት መሆን አስፈለገ?")\n'
+            '  * "Tasks and Specialisations" -> "ዕማማትን ፍሉይ ክእለታትን" (REJECTED AMHARIC: "ተግባራት እና ስፔሻላይዜሽኖች")\n'
         )
 
     prompt = (
@@ -235,10 +242,11 @@ async def _translate_with_gemini(
                     return {}
 
                 raw_json = content_parts[0].get("text", "{}")
+                candidate_dict: dict[str, str] = {}
                 try:
                     parsed = json.loads(raw_json)
                     if isinstance(parsed, dict):
-                        return {str(k): str(v) for k, v in parsed.items()}
+                        candidate_dict = {str(k): str(v) for k, v in parsed.items()}
                 except Exception as exc:
                     logger.warning("Standard json.loads failed (%s), attempting regex key-value extraction...", exc)
                     # Resilient fallback regex parser for LLM JSON output with minor syntax quirks
@@ -257,8 +265,45 @@ async def _translate_with_gemini(
                             recovered[k_clean] = v_clean
                         if recovered:
                             logger.info("Recovered %d translations via regex fallback parser.", len(recovered))
-                            return recovered
-                return {}
+                            candidate_dict = recovered
+
+                if not candidate_dict:
+                    return {}
+
+                # Production Linguistic Validation Quality Gate
+                validated_batch: dict[str, str] = {}
+                rejected_items: dict[str, str] = {}
+                for orig_str, trans_str in candidate_dict.items():
+                    val = LinguisticValidator.validate(trans_str, target_lang, source_lang, orig_str)
+                    if val.is_valid:
+                        validated_batch[orig_str] = trans_str
+                    else:
+                        rejected_items[orig_str] = val.error_code or "LINGUISTIC_VIOLATION"
+                        logger.warning(
+                            "Translation QA rejected [%s]: '%s' -> '%s' (Error: %s, Markers: %s)",
+                            target_lang, orig_str, trans_str, val.error_code, val.detected_markers
+                        )
+
+                # If all strings pass, return immediately
+                if len(validated_batch) == len(candidate_dict):
+                    return validated_batch
+
+                # If any string failed and retries remain, execute corrective re-generation pass
+                if attempt < max_retries - 1 and rejected_items:
+                    retry_strings = list(rejected_items.keys())
+                    logger.info("Corrective re-generation pass triggered for %d strings on %s...", len(retry_strings), target_lang)
+                    corrective_prompt = (
+                        f"You are {role_desc}.\n"
+                        f"CRITICAL CORRECTION REQUIRED: The previous translation violated linguistic purity rules for {lang_name}.\n"
+                        f"{guidelines}\n\n"
+                        f"Re-translate the following specific strings strictly adhering to authentic {lang_name} grammar:\n"
+                        f"{json.dumps(retry_strings, ensure_ascii=False)}"
+                    )
+                    payload["contents"] = [{"role": "user", "parts": [{"text": corrective_prompt}]}]
+                    await asyncio.sleep(2.0 * (attempt + 1))
+                    continue
+
+                return validated_batch
         except Exception as exc:
             if attempt < max_retries - 1:
                 logger.warning("Gemini network error on attempt %d: %s, retrying...", attempt + 1, exc)
@@ -351,8 +396,14 @@ async def batch_translate(req: BatchTranslateRequest) -> BatchTranslateResponse:
 
         ck = _get_cache_key(target, cleaned)
         if ck in TRANSLATION_CACHE:
-            results[s] = TRANSLATION_CACHE[ck]
-            cached_hits += 1
+            cached_candidate = TRANSLATION_CACHE[ck]
+            val = LinguisticValidator.validate(cached_candidate, target, source, cleaned)
+            if val.is_valid:
+                results[s] = cached_candidate
+                cached_hits += 1
+            else:
+                logger.warning("Cache entry failed linguistic QA for %s, quarantining: %s (reason: %s)", target, cleaned, val.error_code)
+                missing.append(cleaned)
         else:
             missing.append(cleaned)
 
@@ -410,11 +461,15 @@ async def batch_translate(req: BatchTranslateRequest) -> BatchTranslateResponse:
         else:
             active_provider = "fallback-identity"
 
-        # Update cache with newly translated strings
+        # Update cache with newly translated strings that pass linguistic QA
         for orig, translated in new_translations.items():
-            ck = _get_cache_key(target, orig)
-            TRANSLATION_CACHE[ck] = translated
-            translated_count += 1
+            val = LinguisticValidator.validate(translated, target, source, orig)
+            if val.is_valid:
+                ck = _get_cache_key(target, orig)
+                TRANSLATION_CACHE[ck] = translated
+                translated_count += 1
+            else:
+                logger.error("Quality gate blocked unvalidated translation from cache: %s -> %s (%s)", orig, translated, val.error_code)
 
         if translated_count > 0:
             _save_persistent_cache()
