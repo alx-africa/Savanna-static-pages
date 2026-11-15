@@ -222,6 +222,160 @@
   color: var(--sa11y-text-muted);
 }
 
+/* Step Indicator Pill */
+.sa11y-step-pill {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 9999px;
+  background: var(--sa11y-card-active-bg);
+  color: var(--sa11y-primary);
+  border: 1px solid var(--sa11y-card-active-border);
+  margin-bottom: 0.5rem;
+}
+
+/* Wizard Step Tabs */
+.sa11y-wizard-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 1.5rem 0 1.5rem;
+  background: var(--sa11y-surface);
+  border-bottom: 1px solid var(--sa11y-border);
+}
+
+.sa11y-tab {
+  all: unset;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 3px solid transparent;
+  color: var(--sa11y-text-muted);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.sa11y-tab:hover {
+  color: var(--sa11y-text);
+}
+
+.sa11y-tab.sa11y-tab-active {
+  color: var(--sa11y-primary);
+  border-bottom-color: var(--sa11y-primary);
+}
+
+.sa11y-tab:focus-visible {
+  outline: 2px solid var(--sa11y-focus-ring);
+  outline-offset: -2px;
+}
+
+/* Step Panels */
+.sa11y-step-panel[hidden] {
+  display: none !important;
+}
+
+/* High Contrast Language Selection Grid (Step 1) */
+.sa11y-lang-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+}
+
+@media (max-width: 580px) {
+  .sa11y-lang-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sa11y-lang-card {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--sa11y-bg);
+  border: 2px solid var(--sa11y-border);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  min-height: 4.25rem;
+}
+
+.sa11y-lang-card:hover {
+  border-color: var(--sa11y-primary);
+  background: var(--sa11y-surface);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.sa11y-lang-card.sa11y-selected {
+  border-color: var(--sa11y-card-active-border);
+  background: var(--sa11y-card-active-bg);
+  outline: 2px solid var(--sa11y-primary);
+}
+
+.sa11y-lang-card:focus-visible {
+  outline: 3px solid var(--sa11y-focus-ring);
+  outline-offset: 3px;
+}
+
+.sa11y-flag-svg {
+  width: 38px;
+  height: 26px;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+  display: block;
+}
+
+.sa11y-lang-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sa11y-lang-native {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--sa11y-text);
+  line-height: 1.25;
+}
+
+.sa11y-lang-en {
+  font-size: 0.8rem;
+  color: var(--sa11y-text-muted);
+  line-height: 1.25;
+  margin-top: 0.15rem;
+}
+
+.sa11y-lang-check {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--sa11y-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.sa11y-lang-card.sa11y-selected .sa11y-lang-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
 /* Modal Actions Footer */
 .sa11y-modal-footer {
   padding: 1rem 1.5rem;
@@ -232,6 +386,13 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.sa11y-footer-left,
+.sa11y-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .sa11y-btn {
@@ -256,6 +417,17 @@
   background: rgba(0, 0, 0, 0.05);
 }
 
+.sa11y-btn-outline {
+  border: 1px solid var(--sa11y-border);
+  color: var(--sa11y-text);
+  background: var(--sa11y-bg);
+}
+
+.sa11y-btn-outline:hover {
+  background: var(--sa11y-surface);
+  border-color: var(--sa11y-primary);
+}
+
 .sa11y-btn-primary {
   background: var(--sa11y-primary);
   color: #ffffff;
@@ -263,6 +435,10 @@
 
 .sa11y-btn-primary:hover {
   background: var(--sa11y-primary-hover);
+}
+
+.sa11y-btn[hidden] {
+  display: none !important;
 }
 
 .sa11y-btn:focus-visible,

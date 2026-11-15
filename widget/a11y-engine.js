@@ -12,6 +12,7 @@
 
   const STORAGE_KEY = 'savanna_a11y_profile';
   const LANG_KEY = 'savanna_lang';
+  const ONBOARDING_COMPLETED_KEY = 'savanna_onboarding_completed';
 
   /* ── 1. Resolve Script & CSS paths ───────────────────────────────────── */
   const currentScript = document.currentScript ||
@@ -39,6 +40,767 @@
   const storedLang = localStorage.getItem(LANG_KEY);
   let currentLang = ALL_LANGUAGES.includes(storedLang) ? storedLang : 'en';
 
+  /* ── 2b. Visual Language Options & Badges (Crisp High-Contrast SVGs) ─── */
+  const LANGUAGE_OPTIONS = [
+    {
+      code: 'en',
+      native: 'English',
+      english: 'English',
+      badge: 'EN',
+      color: '#005fcc',
+      iconSvg: '<svg viewBox="0 0 36 24" class="sa11y-flag-svg" aria-hidden="true"><rect width="36" height="24" rx="3" fill="#00247d"/><path d="M0,0 L36,24 M36,0 L0,24" stroke="#ffffff" stroke-width="4"/><path d="M0,0 L36,24 M36,0 L0,24" stroke="#cf142b" stroke-width="2.5"/><path d="M18,0 V24 M0,12 H36" stroke="#ffffff" stroke-width="6"/><path d="M18,0 V24 M0,12 H36" stroke="#cf142b" stroke-width="3.5"/></svg>'
+    },
+    {
+      code: 'am',
+      native: 'አማርኛ',
+      english: 'Amharic',
+      badge: 'አማ',
+      color: '#078930',
+      iconSvg: '<svg viewBox="0 0 36 24" class="sa11y-flag-svg" aria-hidden="true"><rect width="36" height="8" fill="#078930" rx="3 3 0 0"/><rect y="8" width="36" height="8" fill="#fcdd09"/><rect y="16" width="36" height="8" fill="#da121a" rx="0 0 3 3"/><circle cx="18" cy="12" r="5" fill="#0f47af"/><polygon points="18,8.2 19.1,10.8 21.8,11.2 19.8,12.8 20.4,15.5 18,14.1 15.6,15.5 16.2,12.8 14.2,11.2 16.9,10.8" fill="#fcdd09"/></svg>'
+    },
+    {
+      code: 'om',
+      native: 'Afaan Oromoo',
+      english: 'Oromo',
+      badge: 'OM',
+      color: '#d91b24',
+      iconSvg: '<svg viewBox="0 0 36 24" class="sa11y-flag-svg" aria-hidden="true"><rect width="36" height="8" fill="#da121a" rx="3 3 0 0"/><rect y="8" width="36" height="8" fill="#ffffff"/><rect y="16" width="36" height="8" fill="#000000" rx="0 0 3 3"/><circle cx="18" cy="12" r="4.5" fill="#da121a"/><circle cx="18" cy="12" r="2.5" fill="#fcdd09"/></svg>'
+    },
+    {
+      code: 'ti',
+      native: 'ትግርኛ',
+      english: 'Tigrinya',
+      badge: 'ትግ',
+      color: '#128a42',
+      iconSvg: '<svg viewBox="0 0 36 24" class="sa11y-flag-svg" aria-hidden="true"><rect width="36" height="24" rx="3" fill="#0066b2"/><polygon points="0,0 36,12 0,24" fill="#da121a"/><polygon points="0,0 36,0 36,12" fill="#078930"/><polygon points="0,24 36,24 36,12" fill="#0066b2"/><circle cx="9" cy="12" r="3" fill="#fcdd09"/></svg>'
+    },
+    {
+      code: 'so',
+      native: 'Soomaali',
+      english: 'Somali',
+      badge: 'SO',
+      color: '#4189dd',
+      iconSvg: '<svg viewBox="0 0 36 24" class="sa11y-flag-svg" aria-hidden="true"><rect width="36" height="24" rx="3" fill="#4189dd"/><polygon points="18,6 19.7,10.2 24.2,10.5 20.7,13.3 21.8,17.7 18,15 14.2,17.7 15.3,13.3 11.8,10.5 16.3,10.2" fill="#ffffff"/></svg>'
+    },
+    {
+      code: 'ar',
+      native: 'العربية',
+      english: 'Arabic (RTL)',
+      badge: 'AR',
+      color: '#006233',
+      iconSvg: '<svg viewBox="0 0 36 24" class="sa11y-flag-svg" aria-hidden="true"><rect width="36" height="24" rx="3" fill="#006233"/><circle cx="17" cy="12" r="5" fill="#ffffff"/><circle cx="18.5" cy="12" r="4.2" fill="#006233"/><polygon points="18,9.5 18.8,11.2 20.5,11.4 19.1,12.5 19.5,14.2 18,13.2 16.5,14.2 16.9,12.5 15.5,11.4 17.2,11.2" fill="#ffffff"/></svg>'
+    },
+    {
+      code: 'sw',
+      native: 'Kiswahili',
+      english: 'Swahili',
+      badge: 'SW',
+      color: '#1eb53a',
+      iconSvg: '<svg viewBox="0 0 36 24" class="sa11y-flag-svg" aria-hidden="true"><rect width="36" height="24" rx="3" fill="#1eb53a"/><polygon points="0,24 36,0 36,6 6,24" fill="#fcdd09"/><polygon points="0,24 36,0 36,4 4,24" fill="#000000"/><polygon points="36,0 36,24 0,24" fill="#00a3dd"/></svg>'
+    },
+    {
+      code: 'fr',
+      native: 'Français',
+      english: 'French',
+      badge: 'FR',
+      color: '#002395',
+      iconSvg: '<svg viewBox="0 0 36 24" class="sa11y-flag-svg" aria-hidden="true"><rect width="12" height="24" rx="3 0 0 3" fill="#002395"/><rect x="12" width="12" height="24" fill="#ffffff"/><rect x="24" width="12" height="24" rx="0 3 3 0" fill="#ed2939"/></svg>'
+    }
+  ];
+
+  /* ── 2c. Pluggable Live DOM Content Translation Dictionary ─────────────── */
+  const DOM_TRANSLATIONS = {
+  "Savanna static pages": {
+    "en": "Savanna static pages",
+    "am": "ሳቫና የትምህርት መድረክ ገጾች",
+    "om": "Fuulota Saavannaa",
+    "ti": "ናይ ሳቫና ትምህርታዊ ገጻት",
+    "so": "Bogagga Madasha Savanna",
+    "ar": "صفحات منصة سافانا التعليمية",
+    "sw": "Kurasa za jukwaa la Savanna",
+    "fr": "Pages de la plateforme Savanna"
+  },
+  "Learner homepage — v1 paced": {
+    "en": "Learner homepage — v1 paced",
+    "am": "የተማሪ መነሻ ገጽ — በጊዜ የተገደበ",
+    "om": "Fuula Jalqabaa Barataa — Yeroon Murtaa’e",
+    "ti": "ናይ ተምሃራይ መበገሲ ገጽ — ብግዜ ዝተወሰነ",
+    "so": "Bogga Hore ee Ardayga — Xaddidan",
+    "ar": "الصفحة الرئيسية للمتعلم — وتيرة محددة",
+    "sw": "Ukurasa wa mwanafunzi — Kasi ya pamoja",
+    "fr": "Accueil apprenant — Rythme guidé"
+  },
+  "Learner homepage — v1 self-paced": {
+    "en": "Learner homepage — v1 self-paced",
+    "am": "የተማሪ መነሻ ገጽ — በራስ ፍጥነት የሚመራ",
+    "om": "Fuula Jalqabaa Barataa — Ofiin Geggeeffamu",
+    "ti": "ናይ ተምሃራይ መበገሲ ገጽ — ብናይ ባዕልኻ ፍጥነት",
+    "so": "Bogga Hore ee Ardayga — Xawaarahaaga",
+    "ar": "الصفحة الرئيسية للمتعلم — وتيرة ذاتية",
+    "sw": "Ukurasa wa mwanafunzi — Kasi ya binafsi",
+    "fr": "Accueil apprenant — Rythme autonome"
+  },
+  "Concept page with curriculum navigation": {
+    "en": "Concept page with curriculum navigation",
+    "am": "የጽንሰ-ሀሳብ ገጽ ከስርዓተ-ትምህርት አሰሳ ጋር",
+    "om": "Fuula Yaad-rimee fi Kallattii Barnootaa",
+    "ti": "ናይ ጽንሰ-ሓሳብ ገጽ ምስ ስርዓተ-ትምህርቲ ዳህሳስ",
+    "so": "Bogga fikradda oo leh hage manhaj",
+    "ar": "صفحة المفاهيم مع تصفح المنهج",
+    "sw": "Ukurasa wa dhana na mwongozo wa mtaala",
+    "fr": "Page de concept avec navigation curriculaire"
+  },
+  "Live Help — Operator Dashboard": {
+    "en": "Live Help — Operator Dashboard",
+    "am": "ቀጥታ ድጋፍ — የአስተባባሪ ዳሽቦርድ",
+    "om": "Deeggarsa Kallattii — Daashboordii Hojjataa",
+    "ti": "ቀጥታ ደገፍ — ናይ ኣተሓባባሪ ዳሽቦርድ",
+    "so": "Caawimaad Toos ah — Dashboard-ka Hawl-wadeenka",
+    "ar": "المساعدة المباشرة — لوحة تحكم المشرف",
+    "sw": "Msaada wa Moja kwa Moja — Dashibodi ya Opereta",
+    "fr": "Aide en direct — Tableau de bord opérateur"
+  },
+  "Access my learning": {
+    "en": "Access my learning",
+    "am": "ትምህርቴን ይድረሱ",
+    "om": "Barnoota koo banaa",
+    "ti": "ትምህርተይ ዕሰሉ",
+    "so": "Gal waxbarashadayda",
+    "ar": "الوصول إلى تعلمي",
+    "sw": "Fikia masomo yangu",
+    "fr": "Accéder à mes cours"
+  },
+  "My Planning": {
+    "en": "My Planning",
+    "am": "የእኔ እቅድ",
+    "om": "Karoora koo",
+    "ti": "ውጥነይ",
+    "so": "Qorshahayga",
+    "ar": "جدولي الدراسي",
+    "sw": "Mipango yangu",
+    "fr": "Mon planning"
+  },
+  "Projects": {
+    "en": "Projects",
+    "am": "ፕሮጀክቶች",
+    "om": "Pirojektoota",
+    "ti": "ፕሮጀክትታት",
+    "so": "Mashaariicda",
+    "ar": "المشاريع",
+    "sw": "Miradi",
+    "fr": "Projets"
+  },
+  "QA Reviews I can make": {
+    "en": "QA Reviews I can make",
+    "am": "የእኩዮች ግምገማዎች (QA)",
+    "om": "Gamaaggama QA gochuu danda’u",
+    "ti": "ናይ ብጾት ገምጋማት (QA)",
+    "so": "Dib u eegista QA ee aan samayn karo",
+    "ar": "مراجعات الجودة المتاحة",
+    "sw": "Mapitio ya QA ninayoweza kufanya",
+    "fr": "Revues QA disponibles"
+  },
+  "Evaluation quizzes": {
+    "en": "Evaluation quizzes",
+    "am": "የግምገማ ፈተናዎች",
+    "om": "Qormaata madaallii",
+    "ti": "ናይ ምዘና ፈተናታት",
+    "so": "Kediska qiimeynta",
+    "ar": "اختبارات التقييم",
+    "sw": "Maswali ya tathmini",
+    "fr": "Quiz d'évaluation"
+  },
+  "My courses": {
+    "en": "My courses",
+    "am": "የእኔ ኮርሶች",
+    "om": "Koorsoota koo",
+    "ti": "ኮርሰታተይ",
+    "so": "Koorsooyinkayga",
+    "ar": "دوراتي التدريبية",
+    "sw": "Kozi zangu",
+    "fr": "Mes cours"
+  },
+  "Concepts": {
+    "en": "Concepts",
+    "am": "ጽንሰ-ሀሳቦች",
+    "om": "Yaad-rimeewwan",
+    "ti": "ጽንሰ-ሓሳባት",
+    "so": "Fikradaha",
+    "ar": "المفاهيم",
+    "sw": "Dhana",
+    "fr": "Concepts"
+  },
+  "Conference rooms": {
+    "en": "Conference rooms",
+    "am": "የስብሰባ ክፍሎች",
+    "om": "Kutaa waltajjii",
+    "ti": "ናይ ኣኼባ ኣደራሻት",
+    "so": "Qolalka shirarka",
+    "ar": "قاعات الاجتماعات",
+    "sw": "Vyumba vya mkutano",
+    "fr": "Salles de conférence"
+  },
+  "Servers": {
+    "en": "Servers",
+    "am": "ሰርቨሮች",
+    "om": "Sarvaroota",
+    "ti": "ሰርቨራት",
+    "so": "Adeegayaasha",
+    "ar": "الخوادم",
+    "sw": "Seva",
+    "fr": "Serveurs"
+  },
+  "Sandboxes": {
+    "en": "Sandboxes",
+    "am": "የሙከራ ሳጥኖች (Sandboxes)",
+    "om": "Saanduqa qorannoo",
+    "ti": "ናይ ፈተነ ባይታታት",
+    "so": "Aagaga tijaabada",
+    "ar": "بيئات الاختبار التجريبية",
+    "sw": "Mazingira ya majaribio",
+    "fr": "Bacs à sable"
+  },
+  "Video on demand": {
+    "en": "Video on demand",
+    "am": "ተፈላጊ ቪዲዮዎች",
+    "om": "Viidiyoo filannoon",
+    "ti": "ብሕቶ ዝቐርብ ቪድዮ",
+    "so": "Fiidiyow dalab ah",
+    "ar": "فيديو حسب الطلب",
+    "sw": "Video kwa ombi",
+    "fr": "Vidéo à la demande"
+  },
+  "Peers": {
+    "en": "Peers",
+    "am": "አብረውኝ የሚማሩ (እኩዮች)",
+    "om": "Hiriyaa barnootaa",
+    "ti": "መዛኑ (መማህርተይ)",
+    "so": "Ardayda kale",
+    "ar": "الأقران والزملاء",
+    "sw": "Wenzangu",
+    "fr": "Pairs"
+  },
+  "My Profile": {
+    "en": "My Profile",
+    "am": "የእኔ መገለጫ",
+    "om": "Piroofaayilii koo",
+    "ti": "መገለጺ መንነተይ",
+    "so": "Xogtayda shakhsiga ah",
+    "ar": "ملفي الشخصي",
+    "sw": "Wasifu wangu",
+    "fr": "Mon profil"
+  },
+  "Average": {
+    "en": "Average",
+    "am": "አማካይ",
+    "om": "Giddu-galeessa",
+    "ti": "ማእከላይ ውጽኢት",
+    "so": "Celcelis",
+    "ar": "المعدل",
+    "sw": "Wastani",
+    "fr": "Moyenne"
+  },
+  "Resume": {
+    "en": "Resume",
+    "am": "ቀጥል",
+    "om": "Itti fufi",
+    "ti": "ቀጽል",
+    "so": "Sii wad",
+    "ar": "استئناف",
+    "sw": "Endelea",
+    "fr": "Reprendre"
+  },
+  "Upcoming events": {
+    "en": "Upcoming events",
+    "am": "የሚመጡ ሁነቶች",
+    "om": "Taateewwan dhufan",
+    "ti": "ዝመጹ መደባት",
+    "so": "Dhacdooyinka soo socda",
+    "ar": "الأحداث القادمة",
+    "sw": "Matukio yajayo",
+    "fr": "Événements à venir"
+  },
+  "See all my events": {
+    "en": "See all my events",
+    "am": "ሁሉንም ሁነቶች ተመልከት",
+    "om": "Taateewwan koo hunda ilaali",
+    "ti": "ኲሎም መደባተይ ርአ",
+    "so": "Arag dhammaan dhacdooyinka",
+    "ar": "عرض جميع أحداثي",
+    "sw": "Tazama matukio yangu yote",
+    "fr": "Voir tous mes événements"
+  },
+  "Course Progression": {
+    "en": "Course Progression",
+    "am": "የኮርስ ሂደት",
+    "om": "Adeemsa koorsii",
+    "ti": "ዕቤት ኮርስ",
+    "so": "Horumarka koorsada",
+    "ar": "التقدم في الدورة",
+    "sw": "Maendeleo ya kozi",
+    "fr": "Progression du cours"
+  },
+  "Course Overview": {
+    "en": "Course Overview",
+    "am": "የኮርስ አጠቃላይ እይታ",
+    "om": "Ibsa waliigalaa koorsii",
+    "ti": "ሓፈሻዊ ትሕዝቶ ኮርስ",
+    "so": "Dulmarka koorsada",
+    "ar": "نظرة عامة على الدورة",
+    "sw": "Muhtasari wa kozi",
+    "fr": "Aperçu du cours"
+  },
+  "Continue this course": {
+    "en": "Continue this course",
+    "am": "ይህን ኮርስ ይቀጥሉ",
+    "om": "Koorsii kana itti fufaa",
+    "ti": "ነዚ ኮርስ ቀጽልዎ",
+    "so": "Sii wad koorsadan",
+    "ar": "متابعة هذه الدورة",
+    "sw": "Endelea na kozi hii",
+    "fr": "Continuer ce cours"
+  },
+  "Continue where you left off": {
+    "en": "Continue where you left off",
+    "am": "ካቆሙበት ይቀጥሉ",
+    "om": "Bakka dhaabdanii itti fufaa",
+    "ti": "ካብቲ ዘቋረጽኩምዎ ቀጽሉ",
+    "so": "Ka sii wad meeshii aad joojisay",
+    "ar": "تابع من حيث توقفت",
+    "sw": "Endelea pale ulipoishia",
+    "fr": "Reprendre là où vous vous êtes arrêté"
+  },
+  "Reach 70% to be eligible for graduation": {
+    "en": "Reach 70% to be eligible for graduation",
+    "am": "ለምረቃ ብቁ ለመሆን 70% ይድረሱ",
+    "om": "Eebbaaf ga’aa ta’uuf 70% qaqqabaa",
+    "ti": "ንምረቓ ብቑዕ ንምዃን 70% ብጽሑ",
+    "so": "Gaadh 70% si aad ugu qalanto qalin-jabinta",
+    "ar": "احصل على 70% للتأهل للتخرج",
+    "sw": "Fikisha 70% ili ustahili kuhitimu",
+    "fr": "Atteignez 70% pour être éligible à la graduation"
+  },
+  "Graduation Requirements": {
+    "en": "Graduation Requirements",
+    "am": "የምረቃ መስፈርቶች",
+    "om": "Ulaagaalee Eebbaa",
+    "ti": "ናይ ምረቓ ረቋሒታት",
+    "so": "Shuruudaha Qalin-jabinta",
+    "ar": "متطلبات التخرج",
+    "sw": "Mahitaji ya Mahafali",
+    "fr": "Exigences de diplomation"
+  },
+  "Current score": {
+    "en": "Current score",
+    "am": "የአሁኑ ውጤት",
+    "om": "Qabxii ammaa",
+    "ti": "ናይ ሕጂ ነጥቢ",
+    "so": "Dhibcaha hadda",
+    "ar": "الدرجة الحالية",
+    "sw": "Alama ya sasa",
+    "fr": "Score actuel"
+  },
+  "In progress": {
+    "en": "In progress",
+    "am": "በሂደት ላይ",
+    "om": "Hojiirra jira",
+    "ti": "ኣብ ከይዲ ዘሎ",
+    "so": "Socda",
+    "ar": "قيد التنفيذ",
+    "sw": "Inaendelea",
+    "fr": "En cours"
+  },
+  "Completed": {
+    "en": "Completed",
+    "am": "ተጠናቋል",
+    "om": "Xumurameera",
+    "ti": "ተወዲኡ",
+    "so": "Dhammaystiran",
+    "ar": "مكتمل",
+    "sw": "Imekamilika",
+    "fr": "Terminé"
+  },
+  "Not started": {
+    "en": "Not started",
+    "am": "አልተጀመረም",
+    "om": "Hin jalqabamne",
+    "ti": "ኣይተጀመረን",
+    "so": "Aan la bilaabin",
+    "ar": "لم يبدأ بعد",
+    "sw": "Haijaanza",
+    "fr": "Non commencé"
+  },
+  "Mark as complete": {
+    "en": "Mark as complete",
+    "am": "ተግባር ጨርስ",
+    "om": "Xumuri",
+    "ti": "ተወዲኡ በል",
+    "so": "Calaamadee in la dhameeyay",
+    "ar": "تحديد كمكتمل",
+    "sw": "Weka alama kuwa imekamilika",
+    "fr": "Marquer comme terminé"
+  },
+  "WR 100: Fundamentals of Effective Communication": {
+    "en": "WR 100: Fundamentals of Effective Communication",
+    "am": "WR 100፡ ውጤታማ የግንኙነት መሰረታዊ መርሆዎች",
+    "om": "WR 100: Bu’uura Qunnamtii Bu’a-qabeessaa",
+    "ti": "WR 100፡ መሰረታት ውጽኢታዊ ርክብ",
+    "so": "WR 100: Aasaaska Xidhiidhka Waxtarka Leh",
+    "ar": "WR 100: أساسيات التواصل الفعال",
+    "sw": "WR 100: Misingi ya Mawasiliano Yenye Ufanisi",
+    "fr": "WR 100: Fondements d'une communication efficace"
+  },
+  "Fundamentals of Effective Communication": {
+    "en": "Fundamentals of Effective Communication",
+    "am": "ውጤታማ የግንኙነት መሰረታዊ መርሆዎች",
+    "om": "Bu’uura Qunnamtii Bu’a-qabeessaa",
+    "ti": "መሰረታት ውጽኢታዊ ርክብ",
+    "so": "Aasaaska Xidhiidhka Waxtarka Leh",
+    "ar": "أساسيات التواصل الفعال",
+    "sw": "Misingi ya Mawasiliano Yenye Ufanisi",
+    "fr": "Fondements d'une communication efficace"
+  },
+  "VA Foundations & Professional Identity": {
+    "en": "VA Foundations & Professional Identity",
+    "am": "የቨርቹዋል ረዳት መሰረታዊ ዕውቀት እና የሙያ ማንነት",
+    "om": "Bu’uura Gargaaraa Fageenyaa fi Eenyummaa Ogummaa",
+    "ti": "መሰረታት ቨርቹዋል ረዳኢን ሞያዊ መንነትን",
+    "so": "Aasaaska Caawiyaha Fog iyo Aqoonsiga Xirfadeed",
+    "ar": "أساسيات المساعد الافتراضي والهوية المهنية",
+    "sw": "Misingi ya Msaidizi Halisi na Utambulisho wa Kitaalamu",
+    "fr": "Fondations de l'assistant virtuel et identité professionnelle"
+  },
+  "The Future of the VA Industry": {
+    "en": "The Future of the VA Industry",
+    "am": "የቨርቹዋል ረዳት ኢንዱስትሪ የወደፊት ጉዞ",
+    "om": "Gara Fuulduraa Indaastirii Gargaaraa Fageenyaa",
+    "ti": "መጻኢ ናይ ቨርቹዋል ረዳኢ ኢንዱስትሪ",
+    "so": "Mustaqbalka Warshadaha Caawiyaha Fog",
+    "ar": "مستقبل صناعة المساعد الافتراضي",
+    "sw": "Mustakabali wa Sekta ya Msaidizi Halisi",
+    "fr": "L'avenir de l'industrie des assistants virtuels"
+  },
+  "Lesson 1: Introduction": {
+    "en": "Lesson 1: Introduction",
+    "am": "ትምህርት 1፡ መግቢያ",
+    "om": "Barnoota 1: Seensa",
+    "ti": "ትምህርቲ 1፡ መእተዊ",
+    "so": "Casharka 1: Hordhac",
+    "ar": "الدرس 1: مقدمة",
+    "sw": "Somo la 1: Utangulizi",
+    "fr": "Leçon 1: Introduction"
+  },
+  "Lesson 2: Tools and Workflows": {
+    "en": "Lesson 2: Tools and Workflows",
+    "am": "ትምህርት 2፡ መሳሪያዎች እና የአሰራር ሂደቶች",
+    "om": "Barnoota 2: Meeshaalee fi Adeemsa Hojii",
+    "ti": "ትምህርቲ 2፡ መሳርሒታትን ኣሰራርሓታትን",
+    "so": "Casharka 2: Qalabka iyo Hababka Shaqada",
+    "ar": "الدرس 2: الأدوات وسير العمل",
+    "sw": "Somo la 2: Zana na Mtiririko wa Kazi",
+    "fr": "Leçon 2: Outils et flux de travail"
+  },
+  "AI Foundations for Work": {
+    "en": "AI Foundations for Work",
+    "am": "አርቴፊሻል ኢንተለጀንስ (AI) ለስራ ቦታ",
+    "om": "Bu’uura AI Hojiif",
+    "ti": "መሰረታት AI ንስራሕ",
+    "so": "Aasaaska AI ee Shaqada",
+    "ar": "أساسيات الذكاء الاصطناعي للعمل",
+    "sw": "Misingi ya AI kwa Kazi",
+    "fr": "Fondations de l'IA pour le travail"
+  },
+  "Markdown guide": {
+    "en": "Markdown guide",
+    "am": "የማርክዳውን አጠቃቀም መመሪያ",
+    "om": "Qajeelfama Maarkidaawun",
+    "ti": "ናይ ማርክዳውን መምርሒ",
+    "so": "Hagaha Markdown",
+    "ar": "دليل ماركداون",
+    "sw": "Mwongozo wa Markdown",
+    "fr": "Guide Markdown"
+  },
+  "Search": {
+    "en": "Search",
+    "am": "ፈልግ",
+    "om": "Barbaadi",
+    "ti": "ድለይ",
+    "so": "Raadi",
+    "ar": "بحث",
+    "sw": "Tafuta",
+    "fr": "Rechercher"
+  },
+  "Help": {
+    "en": "Help",
+    "am": "እርዳታ",
+    "om": "Gargaarsa",
+    "ti": "ሓገዝ",
+    "so": "Caawimaad",
+    "ar": "مساعدة",
+    "sw": "Msaada",
+    "fr": "Aide"
+  },
+  "Settings": {
+    "en": "Settings",
+    "am": "ቅንብሮች",
+    "om": "Qindaa’inoota",
+    "ti": "ቅጥዕታት",
+    "so": "Hagaajinta",
+    "ar": "الإعدادات",
+    "sw": "Mipangilio",
+    "fr": "Paramètres"
+  },
+  "Log in": {
+    "en": "Log in",
+    "am": "ግባ",
+    "om": "Seeni",
+    "ti": "እቶ",
+    "so": "Gal",
+    "ar": "تسجيل الدخول",
+    "sw": "Ingia",
+    "fr": "Connexion"
+  },
+  "Log out": {
+    "en": "Log out",
+    "am": "ውጣ",
+    "om": "Ba’i",
+    "ti": "ውጻእ",
+    "so": "Ka bax",
+    "ar": "تسجيل الخروج",
+    "sw": "Ondoka",
+    "fr": "Déconnexion"
+  },
+  "Submit": {
+    "en": "Submit",
+    "am": "አስገባ",
+    "om": "Galchi",
+    "ti": "ኣእቱ",
+    "so": "Geli",
+    "ar": "إرسال",
+    "sw": "Wasilisha",
+    "fr": "Soumettre"
+  },
+  "Cancel": {
+    "en": "Cancel",
+    "am": "ሰርዝ",
+    "om": "Dhiisi",
+    "ti": "ሰርዝ",
+    "so": "Jooji",
+    "ar": "إلغاء",
+    "sw": "Ghairi",
+    "fr": "Annuler"
+  },
+  "Close": {
+    "en": "Close",
+    "am": "ዝጋ",
+    "om": "Cufi",
+    "ti": "ዕጸው",
+    "so": "Xidh",
+    "ar": "إغلاق",
+    "sw": "Funga",
+    "fr": "Fermer"
+  },
+  "Save": {
+    "en": "Save",
+    "am": "አስቀምጥ",
+    "om": "Olkaayi",
+    "ti": "ኣቐምጥ",
+    "so": "Kaydi",
+    "ar": "حفظ",
+    "sw": "Hifadhi",
+    "fr": "Enregistrer"
+  },
+  "Next": {
+    "en": "Next",
+    "am": "ቀጣይ",
+    "om": "Itti aani",
+    "ti": "ቀጻሊ",
+    "so": "Xiga",
+    "ar": "التالي",
+    "sw": "Ifuatayo",
+    "fr": "Suivant"
+  },
+  "Back": {
+    "en": "Back",
+    "am": "ተመለስ",
+    "om": "Duubatti",
+    "ti": "ተመለስ",
+    "so": "Dib",
+    "ar": "رجوع",
+    "sw": "Rudi",
+    "fr": "Retour"
+  },
+  "Syllabus": {
+    "en": "Syllabus",
+    "am": "ስርዓተ-ትምህርት",
+    "om": "Silabasii",
+    "ti": "ስርዓተ-ትምህርቲ",
+    "so": "Manhaja",
+    "ar": "المنهج الدراسي",
+    "sw": "Muhtasari wa Somo",
+    "fr": "Programme"
+  },
+  "Resources": {
+    "en": "Resources",
+    "am": "የትምህርት ግብዓቶች",
+    "om": "Qabeenyaalee",
+    "ti": "ጸጋታት ትምህርቲ",
+    "so": "Khayraadka",
+    "ar": "الموارد التعليمية",
+    "sw": "Nyenzo za masomo",
+    "fr": "Ressources"
+  }
+};
+
+  /* ── 2d. Dynamic DOM Content Translation Engine ───────────────────────── */
+  const originalTextMap = new WeakMap();
+
+  function translateHostPage(lang) {
+    if (!lang || !ALL_LANGUAGES.includes(lang)) lang = 'en';
+
+    // 1. Update document element language and direction (RTL for Arabic)
+    if (document.documentElement) {
+      document.documentElement.lang = lang;
+      document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+    }
+
+    if (!document.body) return;
+
+    // 2. TreeWalker over non-internal text nodes
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: function(node) {
+          if (!node.nodeValue || !node.nodeValue.trim()) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          
+          if (parent.closest(
+            '#savanna-a11y-modal-backdrop, #savanna-a11y-trigger, #savanna-trigger, #savanna-modal-backdrop, ' +
+            '#sa11y-reading-ruler, #sa11y-motor-toolbar, #savanna-a11y-announcer, #sa11y-live-region, ' +
+            '#sa11y-shortcuts-backdrop, script, style, code, pre'
+          )) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+
+    const textNodes = [];
+    while (walker.nextNode()) {
+      textNodes.push(walker.currentNode);
+    }
+
+    for (const node of textNodes) {
+      if (!originalTextMap.has(node)) {
+        originalTextMap.set(node, node.nodeValue);
+      }
+      const orig = originalTextMap.get(node);
+
+      if (lang === 'en') {
+        node.nodeValue = orig;
+        continue;
+      }
+
+      const trimmed = orig.trim();
+      const leadingWs = orig.match(/^\s*/)[0];
+      const trailingWs = orig.match(/\s*$/)[0];
+
+      // Exact match in dictionary
+      if (DOM_TRANSLATIONS[trimmed] && DOM_TRANSLATIONS[trimmed][lang]) {
+        node.nodeValue = leadingWs + DOM_TRANSLATIONS[trimmed][lang] + trailingWs;
+        continue;
+      }
+
+      // Pattern: Week N
+      const weekMatch = trimmed.match(/^Week\s+(\d+)$/i);
+      if (weekMatch) {
+        const n = weekMatch[1];
+        const patterns = {
+          am: 'ሳምንት ' + n,
+          om: 'Torban ' + n,
+          ti: 'ሰሙን ' + n,
+          so: 'Toddobaadka ' + n,
+          ar: 'الأسبوع ' + n,
+          sw: 'Wiki ' + n,
+          fr: 'Semaine ' + n
+        };
+        if (patterns[lang]) {
+          node.nodeValue = leadingWs + patterns[lang] + trailingWs;
+          continue;
+        }
+      }
+
+      // Pattern: Module N
+      const modMatch = trimmed.match(/^Module\s+(\d+)$/i);
+      if (modMatch) {
+        const n = modMatch[1];
+        const patterns = {
+          am: 'ሞጁል ' + n,
+          om: 'Mojuulii ' + n,
+          ti: 'ሞጁል ' + n,
+          so: 'Cutubka ' + n,
+          ar: 'الوحدة ' + n,
+          sw: 'Moduli ' + n,
+          fr: 'Module ' + n
+        };
+        if (patterns[lang]) {
+          node.nodeValue = leadingWs + patterns[lang] + trailingWs;
+          continue;
+        }
+      }
+
+      // Substring phrase replacement
+      let replacedText = orig;
+      let didReplace = false;
+      for (const [key, map] of Object.entries(DOM_TRANSLATIONS)) {
+        if (key.length >= 4 && map[lang] && replacedText.includes(key)) {
+          replacedText = replacedText.split(key).join(map[lang]);
+          didReplace = true;
+        }
+      }
+      if (didReplace) {
+        node.nodeValue = replacedText;
+      }
+    }
+
+    // Update aria-labels and placeholder attributes
+    const interactiveEls = document.querySelectorAll('[aria-label], input[placeholder]');
+    interactiveEls.forEach(el => {
+      if (el.closest(
+        '#savanna-a11y-modal-backdrop, #savanna-a11y-trigger, #savanna-trigger, #savanna-modal-backdrop, ' +
+        '#sa11y-reading-ruler, #sa11y-motor-toolbar, #savanna-a11y-announcer, #sa11y-live-region, #sa11y-shortcuts-backdrop'
+      )) {
+        return;
+      }
+
+      if (el.hasAttribute('aria-label')) {
+        if (!el.dataset.sa11yOrigAria) el.dataset.sa11yOrigAria = el.getAttribute('aria-label');
+        const origAria = el.dataset.sa11yOrigAria.trim();
+        if (lang === 'en') {
+          el.setAttribute('aria-label', el.dataset.sa11yOrigAria);
+        } else if (DOM_TRANSLATIONS[origAria] && DOM_TRANSLATIONS[origAria][lang]) {
+          el.setAttribute('aria-label', DOM_TRANSLATIONS[origAria][lang]);
+        }
+      }
+
+      if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+        if (!el.dataset.sa11yOrigPlaceholder) el.dataset.sa11yOrigPlaceholder = el.getAttribute('placeholder');
+        const origPh = el.dataset.sa11yOrigPlaceholder.trim();
+        if (lang === 'en') {
+          el.setAttribute('placeholder', el.dataset.sa11yOrigPlaceholder);
+        } else if (DOM_TRANSLATIONS[origPh] && DOM_TRANSLATIONS[origPh][lang]) {
+          el.setAttribute('placeholder', DOM_TRANSLATIONS[origPh][lang]);
+        }
+      }
+    });
+  }
+
+
   const BCP47_A11Y = {
     en: 'en-US',
     am: 'am-ET',
@@ -52,6 +814,16 @@
 
   const i18n = {
     en: {
+      step1Title: 'Choose your preferred language',
+      step1Subtitle: 'Select how you want the platform to communicate with you. The page content updates instantly.',
+      stepBadge1: 'Step 1 of 2: Language Preference',
+      stepBadge2: 'Step 2 of 2: Accessibility Accommodations',
+      btnNextStep: 'Next: Choose Accommodations ➔',
+      btnBackStep: '⬅️ Back to Languages',
+      tabLanguages: '1. Language',
+      tabAccommodations: '2. Accommodations',
+      optStandardTitle: 'Standard Interface (No accommodations)',
+      optStandardDesc: 'Standard layout and styling without additional assistive tools enabled.',
       triggerLabel: 'Accessibility preferences and accommodation settings',
       modalTitle: 'How would you like to experience your learning?',
       modalSubtitle: 'Customize your learning interface. Select all that help you learn best.',
@@ -130,6 +902,16 @@
       shortcutGotIt: 'Got it',
     },
     am: {
+      step1Title: "የመማሪያ ቋንቋዎን ይምረጡ",
+      step1Subtitle: "መድረኩ ለእርስዎ የሚቀርብበትን ቋንቋ ይምረጡ። የገጹ ይዘት ወዲያውኑ ይቀየራል።",
+      stepBadge1: "ደረጃ 1 ከ 2፡ የቋንቋ ምርጫ",
+      stepBadge2: "ደረጃ 2 ከ 2፡ የተደራሽነት ፍላጎቶች",
+      btnNextStep: "ቀጣይ፡ የተደራሽነት ምርጫዎች ➔",
+      btnBackStep: "⬅️ ወደ ቋንቋዎች ተመለስ",
+      tabLanguages: "1. ቋንቋ",
+      tabAccommodations: "2. የተደራሽነት አማራጮች",
+      optStandardTitle: "መደበኛ እይታ (ልዩ ማስተካከያ አያስፈልገኝም)",
+      optStandardDesc: "መደበኛ የገጽ ገጽታና ፊደላት ያለ ተጨማሪ አጋዥ መሳሪያዎች።",
       triggerLabel: 'የተደራሽነት ምርጫዎች እና የማስተካከያ ቅንብሮች',
       modalTitle: 'ትምህርትዎን በምን ዓይነት መልኩ መከታተል ይፈልጋሉ?',
       modalSubtitle: 'የትምህርት በይነገጽዎን ያብጁ። ለእርስዎ የሚስማሙትን ሁሉ ይምረጡ።',
@@ -208,6 +990,16 @@
       shortcutGotIt: 'ተረዳሁ',
     },
     om: {
+      step1Title: "Afaan ittiin barachuu barbaaddan filadhaa",
+      step1Subtitle: "Haala platformiin isiniif dhiyaatu filadhaa. Qabiyyichi battalumatti jijjiirama.",
+      stepBadge1: "Sadarkaa 1ffaa 2 keessaa: Filannoo Afaanii",
+      stepBadge2: "Sadarkaa 2ffaa 2 keessaa: Deeggarsa Qaqqabiinsaa",
+      btnNextStep: "Itti fufi: Qaqqabiinsa Filadhu ➔",
+      btnBackStep: "⬅️ Gara Afaanotaatti Deebi’i",
+      tabLanguages: "1. Afaan",
+      tabAccommodations: "2. Qaqqabiinsa",
+      optStandardTitle: "Muuxannoo Idilee (Madaqsuu hin barbaadu)",
+      optStandardDesc: "Haala dhiyaannaa fi qubee idilee meeshaalee gargaarsaa dabalataa malee.",
       triggerLabel: 'Filannoowwan qaqqabiinsaa fi qindaa’inoota madaqsuu',
       modalTitle: 'Barnoota keessan haala akkamiin hordofuu barbaaddu?',
       modalSubtitle: 'Fuula barnootaa keessan fooyyeffadhaa. Waan barachuuf isin gargaaru hundumaa filadhaa.',
@@ -282,6 +1074,16 @@
       shortcutGotIt: 'Hubadheera',
     },
     ti: {
+      step1Title: "ትመርጽዎ ናይ ትምህርቲ ቋንቋ ምረጹ",
+      step1Subtitle: "እቲ መድረኽ ብኸመይ ክቐርበልኩም ከም እትደልዩ ምረጹ። ትሕዝቶኡ ብኡንብኡ ይቕየር።",
+      stepBadge1: "ደረጃ 1 ካብ 2፡ ናይ ቋንቋ ምርጫ",
+      stepBadge2: "ደረጃ 2 ካብ 2፡ ናይ ተበጻሕነት ምምችቻው",
+      btnNextStep: "ቀጽል፡ ናይ ተበጻሕነት ምርጫታት ➔",
+      btnBackStep: "⬅️ ናብ ቋንቋታት ተመለስ",
+      tabLanguages: "1. ቋንቋ",
+      tabAccommodations: "2. ተበጻሕነት",
+      optStandardTitle: "ስሩዕ ተመክሮ (ፍሉይ ምምችቻው ኣየድልየንን)",
+      optStandardDesc: "ስሩዕ ቅርጺ ገጽን ፊደላትን ብዘይ ተወሳኺ ናይ ሓገዝ መሳርሒታት።",
       triggerLabel: 'ናይ ተበጻሕነት ምርጫታትን ምምችቻው ቅጥዕታትን',
       modalTitle: 'ትምህርትኹም ብኸመይ ክትከታተሉ ትደልዩ?',
       modalSubtitle: 'ናይ ትምህርቲ መተግበሪ ገጽኩም ኣመዓራርዩ። ዝበለጸ ንኽትመሃሩ ዝሕግዙኹም ኲሎም ምረጹ።',
@@ -356,6 +1158,16 @@
       shortcutGotIt: 'ተረዲኡኒ',
     },
     so: {
+      step1Title: "Dooro luuqadda aad doorbiddo",
+      step1Subtitle: "Dooro sida madashu kuula xidhiidhi lahayd. Nuxurka boggu isla markiiba wuu isbeddelayaa.",
+      stepBadge1: "Tallaabada 1 ee 2: Xulashada Luuqadda",
+      stepBadge2: "Tallaabada 2 ee 2: Fududeynta Helitaanka",
+      btnNextStep: "Xiga: Dooro Fududeynta ➔",
+      btnBackStep: "⬅️ Ku noqo Luuqadaha",
+      tabLanguages: "1. Luuqadda",
+      tabAccommodations: "2. Fududeynta",
+      optStandardTitle: "Khibrad Caadi ah (Uma baahna fududeyn)",
+      optStandardDesc: "Qaabka caadiga ah iyada oo aan la shidin qalab dheeraad ah.",
       triggerLabel: 'Dookhyada fududeynta iyo habeynta adeegga',
       modalTitle: 'Sidee ayaad jeclaan lahayd inaad wax u barato?',
       modalSubtitle: 'Habeey muuqaalkaaga waxbarasho. Dooro wax kasta oo waxbarashadaada fududeynaya.',
@@ -430,6 +1242,16 @@
       shortcutGotIt: 'Waan Fahmay',
     },
     ar: {
+      step1Title: "اختر لغتك المفضلة للتعلم",
+      step1Subtitle: "حدد كيف تريد للمنصة أن تتواصل معك. يتغير محتوى الصفحة على الفور.",
+      stepBadge1: "الخطوة 1 من 2: تفضيل اللغة",
+      stepBadge2: "الخطوة 2 من 2: التسهيلات التيسيرية وإمكانية الوصول",
+      btnNextStep: "التالي: خيارات إمكانية الوصول ➔",
+      btnBackStep: "⬅️ الرجوع إلى اللغات",
+      tabLanguages: "1. اللغة",
+      tabAccommodations: "2. التسهيلات التيسيرية",
+      optStandardTitle: "واجهة قياسية متوازنة (دون تسهيلات إضافية)",
+      optStandardDesc: "التصميم والخطوط القياسية دون تفعيل أدوات مساعدة إضافية.",
       triggerLabel: 'تفضيلات إمكانية الوصول وإعدادات الملاءمة',
       modalTitle: 'كيف تفضل خوض تجربتك التعليمية؟',
       modalSubtitle: 'خصّص واجهة تعلّمك. اختر جميع الخيارات التي تساعدك على التعلّم بشكل أفضل.',
@@ -504,6 +1326,16 @@
       shortcutGotIt: 'حسناً، فهمت',
     },
     sw: {
+      step1Title: "Chagua lugha unayopendelea",
+      step1Subtitle: "Chagua jinsi jukwaa linavyopaswa kuwasiliana nawe. Maudhui ya ukurasa hubadilika mara moja.",
+      stepBadge1: "Hatua ya 1 ya 2: Mapendeleo ya Lugha",
+      stepBadge2: "Hatua ya 2 ya 2: Marekebisho ya Ufikiaji",
+      btnNextStep: "Ifuatayo: Chagua Marekebisho ➔",
+      btnBackStep: "⬅️ Rudi kwenye Lugha",
+      tabLanguages: "1. Lugha",
+      tabAccommodations: "2. Marekebisho",
+      optStandardTitle: "Muonekano wa Kawaida (Bila marekebisho)",
+      optStandardDesc: "Mpangilio na maandishi ya kawaida bila zana za ziada za usaidizi.",
       triggerLabel: 'Mapendeleo ya ufikiaji na mipangilio ya marekebisho',
       modalTitle: 'Je, ungependa kupata uzoefu gani wa kujifunza?',
       modalSubtitle: 'Binafsisha kiolesura chako cha kujifunza. Chagua vyote vinavyokusaidia kujifunza vizuri.',
@@ -578,6 +1410,16 @@
       shortcutGotIt: 'Nimeelewa',
     },
     fr: {
+      step1Title: "Choisissez votre langue d’apprentissage",
+      step1Subtitle: "Sélectionnez la langue d’interaction. Le contenu de la page s’adapte instantanément.",
+      stepBadge1: "Étape 1 sur 2 : Préférence de langue",
+      stepBadge2: "Étape 2 sur 2 : Aménagements d’accessibilité",
+      btnNextStep: "Suivant : Choisir les aménagements ➔",
+      btnBackStep: "⬅️ Retour aux langues",
+      tabLanguages: "1. Langue",
+      tabAccommodations: "2. Aménagements",
+      optStandardTitle: "Interface standard (aucun aménagement)",
+      optStandardDesc: "Mise en page et typographie par défaut sans outils d’assistance activés.",
       triggerLabel: 'Préférences d’accessibilité et paramètres d’adaptation',
       modalTitle: 'Comment souhaitez-vous vivre votre apprentissage ?',
       modalSubtitle: 'Personnalisez votre interface d’apprentissage. Sélectionnez tout ce qui vous aide à mieux apprendre.',
@@ -739,6 +1581,7 @@
   /* ── 6. Build Dynamic Onboarding Dialog Modal ─────────────────────────── */
   let modalBackdrop = null;
   let previouslyFocusedElement = null;
+  let currentStep = 1; // 1: Language Selection, 2: Accommodations
 
   function buildOnboardingModal() {
     if (document.getElementById('savanna-a11y-modal-backdrop')) {
@@ -759,92 +1602,148 @@
       <div class="sa11y-modal" role="dialog" aria-modal="true" aria-labelledby="sa11y-modal-title" aria-describedby="sa11y-modal-desc" dir="${isRtl ? 'rtl' : 'ltr'}" lang="${currentLang}">
         <div class="sa11y-modal-header">
           <div class="sa11y-title-group">
+            <div class="sa11y-header-top">
+              <span id="sa11y-step-badge" class="sa11y-step-pill">${currentStep === 1 ? t.stepBadge1 : t.stepBadge2}</span>
+            </div>
             <h2 id="sa11y-modal-title">
-              <span aria-hidden="true">♿</span>
-              <span>${t.modalTitle}</span>
+              <span id="sa11y-modal-icon" aria-hidden="true">${currentStep === 1 ? '🌐' : '♿'}</span>
+              <span class="txt-title">${currentStep === 1 ? t.step1Title : t.modalTitle}</span>
             </h2>
-            <p id="sa11y-modal-desc">${t.modalSubtitle}</p>
+            <p id="sa11y-modal-desc">${currentStep === 1 ? t.step1Subtitle : t.modalSubtitle}</p>
           </div>
           <button type="button" id="sa11y-lang-btn" class="sa11y-lang-switch" aria-label="Toggle language">
             ${t.langToggle}
           </button>
         </div>
 
+        <!-- Wizard Step Tabs for direct navigation -->
+        <div class="sa11y-wizard-tabs" role="tablist" aria-label="Onboarding Steps">
+          <button type="button" role="tab" id="sa11y-tab-step1" class="sa11y-tab ${currentStep === 1 ? 'sa11y-tab-active' : ''}" aria-selected="${currentStep === 1}">
+            ${t.tabLanguages}
+          </button>
+          <button type="button" role="tab" id="sa11y-tab-step2" class="sa11y-tab ${currentStep === 2 ? 'sa11y-tab-active' : ''}" aria-selected="${currentStep === 2}">
+            ${t.tabAccommodations}
+          </button>
+        </div>
+
         <div class="sa11y-modal-body">
-          <div class="sa11y-notice">
-            ${t.noticeText}
+          <!-- Step 1: Language Selection Panel -->
+          <div id="sa11y-step-1-panel" class="sa11y-step-panel" ${currentStep === 1 ? '' : 'hidden'} role="region" aria-label="Language options">
+            <div class="sa11y-lang-grid" role="radiogroup" aria-label="Choose speaking language">
+              ${LANGUAGE_OPTIONS.map(opt => `
+                <button type="button" role="radio" class="sa11y-lang-card ${opt.code === currentLang ? 'sa11y-selected' : ''}" data-lang="${opt.code}" aria-checked="${opt.code === currentLang}">
+                  <div class="sa11y-lang-badge-wrap">
+                    ${opt.iconSvg}
+                  </div>
+                  <div class="sa11y-lang-text">
+                    <span class="sa11y-lang-native">${opt.native}</span>
+                    <span class="sa11y-lang-en">${opt.english} (${opt.code.toUpperCase()})</span>
+                  </div>
+                  <div class="sa11y-lang-check" aria-hidden="true">✓</div>
+                </button>
+              `).join('')}
+            </div>
           </div>
 
-          <div class="sa11y-options-grid" role="group" aria-label="Accessibility options">
-            <!-- 1. Screen Reader / Blind -->
-            <label class="sa11y-card" id="card-sr">
-              <input type="checkbox" id="chk-sr" name="screenReader">
-              <div class="sa11y-card-content">
-                <div class="sa11y-card-title">
-                  <span aria-hidden="true">👁️</span>
-                  <span class="txt-title">${t.optScreenReaderTitle}</span>
-                </div>
-                <div class="sa11y-card-desc txt-desc">${t.optScreenReaderDesc}</div>
-              </div>
-            </label>
+          <!-- Step 2: Disability / Accessibility Accommodations Panel -->
+          <div id="sa11y-step-2-panel" class="sa11y-step-panel" ${currentStep === 2 ? '' : 'hidden'} role="region" aria-label="Accessibility accommodation options">
+            <div class="sa11y-notice">
+              ${t.noticeText}
+            </div>
 
-            <!-- 2. Deaf / Hard of Hearing -->
-            <label class="sa11y-card" id="card-captions">
-              <input type="checkbox" id="chk-captions" name="captionsTranscripts">
-              <div class="sa11y-card-content">
-                <div class="sa11y-card-title">
-                  <span aria-hidden="true">🦻</span>
-                  <span class="txt-title">${t.optCaptionsTitle}</span>
+            <div class="sa11y-options-grid" role="group" aria-label="Accessibility accommodation options">
+              <!-- 1. Screen Reader / Blind -->
+              <label class="sa11y-card" id="card-sr">
+                <input type="checkbox" id="chk-sr" name="screenReader">
+                <div class="sa11y-card-content">
+                  <div class="sa11y-card-title">
+                    <span aria-hidden="true">👁️</span>
+                    <span class="txt-title">${t.optScreenReaderTitle}</span>
+                  </div>
+                  <div class="sa11y-card-desc txt-desc">${t.optScreenReaderDesc}</div>
                 </div>
-                <div class="sa11y-card-desc txt-desc">${t.optCaptionsDesc}</div>
-              </div>
-            </label>
+              </label>
 
-            <!-- 3. Low Vision / Contrast -->
-            <label class="sa11y-card" id="card-contrast">
-              <input type="checkbox" id="chk-contrast" name="highContrast">
-              <div class="sa11y-card-content">
-                <div class="sa11y-card-title">
-                  <span aria-hidden="true">🔍</span>
-                  <span class="txt-title">${t.optContrastTitle}</span>
+              <!-- 2. Deaf / Hard of Hearing -->
+              <label class="sa11y-card" id="card-captions">
+                <input type="checkbox" id="chk-captions" name="captionsTranscripts">
+                <div class="sa11y-card-content">
+                  <div class="sa11y-card-title">
+                    <span aria-hidden="true">🦻</span>
+                    <span class="txt-title">${t.optCaptionsTitle}</span>
+                  </div>
+                  <div class="sa11y-card-desc txt-desc">${t.optCaptionsDesc}</div>
                 </div>
-                <div class="sa11y-card-desc txt-desc">${t.optContrastDesc}</div>
-              </div>
-            </label>
+              </label>
 
-            <!-- 4. Motor / Keyboard / Switch -->
-            <label class="sa11y-card" id="card-motor">
-              <input type="checkbox" id="chk-motor" name="motorAssistance">
-              <div class="sa11y-card-content">
-                <div class="sa11y-card-title">
-                  <span aria-hidden="true">⌨️</span>
-                  <span class="txt-title">${t.optMotorTitle}</span>
+              <!-- 3. Low Vision / Contrast -->
+              <label class="sa11y-card" id="card-contrast">
+                <input type="checkbox" id="chk-contrast" name="highContrast">
+                <div class="sa11y-card-content">
+                  <div class="sa11y-card-title">
+                    <span aria-hidden="true">🔍</span>
+                    <span class="txt-title">${t.optContrastTitle}</span>
+                  </div>
+                  <div class="sa11y-card-desc txt-desc">${t.optContrastDesc}</div>
                 </div>
-                <div class="sa11y-card-desc txt-desc">${t.optMotorDesc}</div>
-              </div>
-            </label>
+              </label>
 
-            <!-- 5. Cognitive / ADHD / Dyslexia -->
-            <label class="sa11y-card" id="card-cognitive">
-              <input type="checkbox" id="chk-cognitive" name="cognitiveSupport">
-              <div class="sa11y-card-content">
-                <div class="sa11y-card-title">
-                  <span aria-hidden="true">🧠</span>
-                  <span class="txt-title">${t.optCognitiveTitle}</span>
+              <!-- 4. Motor / Keyboard / Switch -->
+              <label class="sa11y-card" id="card-motor">
+                <input type="checkbox" id="chk-motor" name="motorAssistance">
+                <div class="sa11y-card-content">
+                  <div class="sa11y-card-title">
+                    <span aria-hidden="true">⌨️</span>
+                    <span class="txt-title">${t.optMotorTitle}</span>
+                  </div>
+                  <div class="sa11y-card-desc txt-desc">${t.optMotorDesc}</div>
                 </div>
-                <div class="sa11y-card-desc txt-desc">${t.optCognitiveDesc}</div>
-              </div>
-            </label>
+              </label>
+
+              <!-- 5. Cognitive / ADHD / Dyslexia -->
+              <label class="sa11y-card" id="card-cognitive">
+                <input type="checkbox" id="chk-cognitive" name="cognitiveSupport">
+                <div class="sa11y-card-content">
+                  <div class="sa11y-card-title">
+                    <span aria-hidden="true">🧠</span>
+                    <span class="txt-title">${t.optCognitiveTitle}</span>
+                  </div>
+                  <div class="sa11y-card-desc txt-desc">${t.optCognitiveDesc}</div>
+                </div>
+              </label>
+
+              <!-- 6. Standard Experience -->
+              <label class="sa11y-card" id="card-standard">
+                <input type="checkbox" id="chk-standard" name="standard">
+                <div class="sa11y-card-content">
+                  <div class="sa11y-card-title">
+                    <span aria-hidden="true">👤</span>
+                    <span class="txt-title">${t.optStandardTitle}</span>
+                  </div>
+                  <div class="sa11y-card-desc txt-desc">${t.optStandardDesc}</div>
+                </div>
+              </label>
+            </div>
           </div>
         </div>
 
         <div class="sa11y-modal-footer">
-          <button type="button" id="sa11y-skip-btn" class="sa11y-btn sa11y-btn-ghost">
-            ${t.btnSkip}
-          </button>
-          <button type="button" id="sa11y-save-btn" class="sa11y-btn sa11y-btn-primary">
-            ${t.btnSave}
-          </button>
+          <div class="sa11y-footer-left">
+            <button type="button" id="sa11y-back-btn" class="sa11y-btn sa11y-btn-outline" ${currentStep === 1 ? 'hidden' : ''}>
+              ${t.btnBackStep}
+            </button>
+            <button type="button" id="sa11y-skip-btn" class="sa11y-btn sa11y-btn-ghost">
+              ${t.btnSkip}
+            </button>
+          </div>
+          <div class="sa11y-footer-right">
+            <button type="button" id="sa11y-next-btn" class="sa11y-btn sa11y-btn-primary" ${currentStep === 1 ? '' : 'hidden'}>
+              ${t.btnNextStep}
+            </button>
+            <button type="button" id="sa11y-save-btn" class="sa11y-btn sa11y-btn-primary" ${currentStep === 2 ? '' : 'hidden'}>
+              ${t.btnSave}
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -852,6 +1751,69 @@
     document.body.appendChild(backdrop);
     bindModalEvents(backdrop);
     return backdrop;
+  }
+
+  function showStep(stepNumber, backdrop) {
+    currentStep = stepNumber;
+    const bd = backdrop || modalBackdrop;
+    if (!bd) return;
+
+    const step1Panel = bd.querySelector('#sa11y-step-1-panel');
+    const step2Panel = bd.querySelector('#sa11y-step-2-panel');
+    const tab1 = bd.querySelector('#sa11y-tab-step1');
+    const tab2 = bd.querySelector('#sa11y-tab-step2');
+    const backBtn = bd.querySelector('#sa11y-back-btn');
+    const nextBtn = bd.querySelector('#sa11y-next-btn');
+    const saveBtn = bd.querySelector('#sa11y-save-btn');
+
+    if (currentStep === 1) {
+      if (step1Panel) step1Panel.removeAttribute('hidden');
+      if (step2Panel) step2Panel.setAttribute('hidden', '');
+      if (tab1) { tab1.classList.add('sa11y-tab-active'); tab1.setAttribute('aria-selected', 'true'); }
+      if (tab2) { tab2.classList.remove('sa11y-tab-active'); tab2.setAttribute('aria-selected', 'false'); }
+      if (backBtn) backBtn.setAttribute('hidden', '');
+      if (nextBtn) nextBtn.removeAttribute('hidden');
+      if (saveBtn) saveBtn.setAttribute('hidden', '');
+    } else {
+      if (step1Panel) step1Panel.setAttribute('hidden', '');
+      if (step2Panel) step2Panel.removeAttribute('hidden');
+      if (tab1) { tab1.classList.remove('sa11y-tab-active'); tab1.setAttribute('aria-selected', 'false'); }
+      if (tab2) { tab2.classList.add('sa11y-tab-active'); tab2.setAttribute('aria-selected', 'true'); }
+      if (backBtn) backBtn.removeAttribute('hidden');
+      if (nextBtn) nextBtn.setAttribute('hidden', '');
+      if (saveBtn) saveBtn.removeAttribute('hidden');
+    }
+
+    updateModalLanguage(bd);
+  }
+
+  function selectLanguage(langCode, backdrop) {
+    if (!ALL_LANGUAGES.includes(langCode)) return;
+    currentLang = langCode;
+    localStorage.setItem(LANG_KEY, currentLang);
+
+    // 1. Live translate the host page content!
+    translateHostPage(currentLang);
+
+    // 2. Update modal language
+    const bd = backdrop || modalBackdrop;
+    if (bd) {
+      updateModalLanguage(bd);
+      bd.querySelectorAll('.sa11y-lang-card').forEach(card => {
+        const isSel = (card.dataset.lang === currentLang);
+        card.classList.toggle('sa11y-selected', isSel);
+        card.setAttribute('aria-checked', isSel ? 'true' : 'false');
+      });
+    }
+
+    // 3. Screen reader polite announcement
+    const opt = LANGUAGE_OPTIONS.find(l => l.code === currentLang);
+    const nativeName = opt ? opt.native : currentLang;
+    announce(`${nativeName} selected. Page content translated.`);
+
+    // 4. Dispatch events for widget iframe and other listeners
+    window.dispatchEvent(new CustomEvent('savanna:set_language', { detail: { lang: currentLang } }));
+    window.dispatchEvent(new CustomEvent('savanna:language_changed', { detail: { lang: currentLang } }));
   }
 
   function updateModalLanguage(backdrop) {
@@ -867,17 +1829,35 @@
       modalEl.setAttribute('lang', currentLang);
     }
 
-    const titleEl = backdrop.querySelector('#sa11y-modal-title span:last-child');
-    if (titleEl) titleEl.textContent = t.modalTitle;
+    const stepBadge = backdrop.querySelector('#sa11y-step-badge');
+    if (stepBadge) stepBadge.textContent = (currentStep === 1 ? t.stepBadge1 : t.stepBadge2);
+
+    const iconSpan = backdrop.querySelector('#sa11y-modal-icon');
+    if (iconSpan) iconSpan.textContent = (currentStep === 1 ? '🌐' : '♿');
+
+    const titleEl = backdrop.querySelector('#sa11y-modal-title .txt-title') || backdrop.querySelector('#sa11y-modal-title span:last-child');
+    if (titleEl) titleEl.textContent = (currentStep === 1 ? t.step1Title : t.modalTitle);
 
     const descEl = backdrop.querySelector('#sa11y-modal-desc');
-    if (descEl) descEl.textContent = t.modalSubtitle;
+    if (descEl) descEl.textContent = (currentStep === 1 ? t.step1Subtitle : t.modalSubtitle);
 
     const langBtn = backdrop.querySelector('#sa11y-lang-btn');
     if (langBtn) langBtn.textContent = t.langToggle;
 
+    const tab1 = backdrop.querySelector('#sa11y-tab-step1');
+    if (tab1) tab1.textContent = t.tabLanguages;
+
+    const tab2 = backdrop.querySelector('#sa11y-tab-step2');
+    if (tab2) tab2.textContent = t.tabAccommodations;
+
     const noticeEl = backdrop.querySelector('.sa11y-notice');
     if (noticeEl) noticeEl.textContent = t.noticeText;
+
+    const backBtn = backdrop.querySelector('#sa11y-back-btn');
+    if (backBtn) backBtn.textContent = t.btnBackStep;
+
+    const nextBtn = backdrop.querySelector('#sa11y-next-btn');
+    if (nextBtn) nextBtn.textContent = t.btnNextStep;
 
     const skipBtn = backdrop.querySelector('#sa11y-skip-btn');
     if (skipBtn) skipBtn.textContent = t.btnSkip;
@@ -892,6 +1872,7 @@
       { id: '#card-contrast', title: t.optContrastTitle, desc: t.optContrastDesc },
       { id: '#card-motor', title: t.optMotorTitle, desc: t.optMotorDesc },
       { id: '#card-cognitive', title: t.optCognitiveTitle, desc: t.optCognitiveDesc },
+      { id: '#card-standard', title: t.optStandardTitle, desc: t.optStandardDesc },
     ];
     cards.forEach(c => {
       const el = backdrop.querySelector(c.id);
@@ -937,69 +1918,163 @@
     const inputs = backdrop.querySelectorAll('.sa11y-options-grid input[type="checkbox"]');
     inputs.forEach(input => {
       const key = input.name;
-      input.checked = Boolean(activeProfile[key]);
+      if (key === 'standard') {
+        const anyActive = Boolean(activeProfile.screenReader || activeProfile.captionsTranscripts || 
+                          activeProfile.highContrast || activeProfile.motorAssistance || 
+                          activeProfile.cognitiveSupport);
+        input.checked = !anyActive;
+      } else {
+        input.checked = Boolean(activeProfile[key]);
+      }
       const card = input.closest('.sa11y-card');
       if (card) card.classList.toggle('sa11y-selected', input.checked);
+    });
+
+    // Also sync language selection cards in Step 1
+    backdrop.querySelectorAll('.sa11y-lang-card').forEach(card => {
+      const lang = card.dataset.lang;
+      const isSelected = (lang === currentLang);
+      card.classList.toggle('sa11y-selected', isSelected);
+      card.setAttribute('aria-checked', isSelected ? 'true' : 'false');
     });
   }
 
   function bindModalEvents(backdrop) {
-    // Checkbox toggle highlighting
-    backdrop.querySelectorAll('.sa11y-options-grid input[type="checkbox"]').forEach(input => {
-      input.addEventListener('change', () => {
-        const card = input.closest('.sa11y-card');
-        if (card) card.classList.toggle('sa11y-selected', input.checked);
+    // Language card click & keyboard selection
+    backdrop.querySelectorAll('.sa11y-lang-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const lang = card.dataset.lang;
+        selectLanguage(lang, backdrop);
+      });
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectLanguage(card.dataset.lang, backdrop);
+        }
       });
     });
 
-    // Language Selector / Cycler across all 8 languages
+    // Step navigation buttons
+    const nextBtn = backdrop.querySelector('#sa11y-next-btn');
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        showStep(2, backdrop);
+        const firstChk = backdrop.querySelector('#chk-sr');
+        if (firstChk) firstChk.focus();
+      });
+    }
+
+    const backBtn = backdrop.querySelector('#sa11y-back-btn');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        showStep(1, backdrop);
+        const activeCard = backdrop.querySelector('.sa11y-lang-card.sa11y-selected') || backdrop.querySelector('.sa11y-lang-card');
+        if (activeCard) activeCard.focus();
+      });
+    }
+
+    // Wizard direct tabs
+    const tab1 = backdrop.querySelector('#sa11y-tab-step1');
+    if (tab1) {
+      tab1.addEventListener('click', () => showStep(1, backdrop));
+    }
+    const tab2 = backdrop.querySelector('#sa11y-tab-step2');
+    if (tab2) {
+      tab2.addEventListener('click', () => showStep(2, backdrop));
+    }
+
+    // Checkbox toggle & mutual exclusivity for standard
+    const standardChk = backdrop.querySelector('#chk-standard');
+    const specificChks = backdrop.querySelectorAll(
+      '#chk-sr, #chk-captions, #chk-contrast, #chk-motor, #chk-cognitive'
+    );
+
+    if (standardChk) {
+      standardChk.addEventListener('change', () => {
+        if (standardChk.checked) {
+          specificChks.forEach(chk => {
+            chk.checked = false;
+            const card = chk.closest('.sa11y-card');
+            if (card) card.classList.remove('sa11y-selected');
+          });
+          adaptLowVisionContrast(false);
+        }
+        const card = standardChk.closest('.sa11y-card');
+        if (card) card.classList.toggle('sa11y-selected', standardChk.checked);
+      });
+    }
+
+    specificChks.forEach(input => {
+      input.addEventListener('change', () => {
+        if (input.checked && standardChk) {
+          standardChk.checked = false;
+          const stdCard = standardChk.closest('.sa11y-card');
+          if (stdCard) stdCard.classList.remove('sa11y-selected');
+        }
+        const card = input.closest('.sa11y-card');
+        if (card) card.classList.toggle('sa11y-selected', input.checked);
+
+        // Immediate visual contrast preview
+        if (input.id === 'chk-contrast') {
+          adaptLowVisionContrast(input.checked);
+        }
+      });
+    });
+
+    // Language Cycler button (#sa11y-lang-btn) - preserved for test suites
     const langBtn = backdrop.querySelector('#sa11y-lang-btn');
     if (langBtn) {
       langBtn.addEventListener('click', () => {
         const nextIndex = (ALL_LANGUAGES.indexOf(currentLang) + 1) % ALL_LANGUAGES.length;
-        currentLang = ALL_LANGUAGES[nextIndex];
-        localStorage.setItem(LANG_KEY, currentLang);
-        updateModalLanguage(backdrop);
-        announce(i18n[currentLang].langToggle);
-        window.dispatchEvent(new CustomEvent('savanna:set_language', { detail: { lang: currentLang } }));
-        window.dispatchEvent(new CustomEvent('savanna:language_changed', { detail: { lang: currentLang } }));
+        selectLanguage(ALL_LANGUAGES[nextIndex], backdrop);
       });
     }
 
     window.addEventListener('savanna:language_changed', (e) => {
       if (e.detail && e.detail.lang) {
         const newLang = e.detail.lang;
-        if (ALL_LANGUAGES.includes(newLang)) {
-          currentLang = newLang;
-          localStorage.setItem(LANG_KEY, currentLang);
-          updateModalLanguage(backdrop);
+        if (ALL_LANGUAGES.includes(newLang) && newLang !== currentLang) {
+          selectLanguage(newLang, backdrop);
         }
       }
     });
 
     // Save Button
     const saveBtn = backdrop.querySelector('#sa11y-save-btn');
-    saveBtn.addEventListener('click', () => {
-      const inputs = backdrop.querySelectorAll('.sa11y-options-grid input[type="checkbox"]');
-      inputs.forEach(input => {
-        activeProfile[input.name] = input.checked;
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        const inputs = backdrop.querySelectorAll('.sa11y-options-grid input[type="checkbox"]');
+        inputs.forEach(input => {
+          if (input.name !== 'standard') {
+            activeProfile[input.name] = input.checked;
+          }
+        });
+        activeProfile.configured = true;
+        activeProfile.skipped = false;
+        try {
+          localStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
+        } catch (_) {}
+        saveProfile(activeProfile);
+        applyAdaptations(activeProfile);
+        closeOnboardingModal();
+        announce(i18n[currentLang].savedAnnouncement);
       });
-      activeProfile.configured = true;
-      activeProfile.skipped = false;
-      saveProfile(activeProfile);
-      closeOnboardingModal();
-      announce(i18n[currentLang].savedAnnouncement);
-    });
+    }
 
     // Skip Button
     const skipBtn = backdrop.querySelector('#sa11y-skip-btn');
-    skipBtn.addEventListener('click', () => {
-      activeProfile.configured = true;
-      activeProfile.skipped = true;
-      saveProfile(activeProfile);
-      closeOnboardingModal();
-      announce(i18n[currentLang].skippedAnnouncement);
-    });
+    if (skipBtn) {
+      skipBtn.addEventListener('click', () => {
+        activeProfile.configured = true;
+        activeProfile.skipped = true;
+        try {
+          localStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
+        } catch (_) {}
+        saveProfile(activeProfile);
+        closeOnboardingModal();
+        announce(i18n[currentLang].skippedAnnouncement);
+      });
+    }
 
     // Backdrop click to dismiss
     backdrop.addEventListener('click', (e) => {
@@ -1016,10 +2091,14 @@
 
       if (e.key === 'Tab') {
         const focusables = backdrop.querySelectorAll(
-          'button, [href], input, [tabindex]:not([tabindex="-1"])'
+          'button:not([hidden]), [href], input:not([hidden]), [tabindex]:not([tabindex="-1"])'
         );
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
+        const visibleFocusables = Array.from(focusables).filter(el => {
+          return !el.closest('[hidden]');
+        });
+        if (visibleFocusables.length === 0) return;
+        const first = visibleFocusables[0];
+        const last = visibleFocusables[visibleFocusables.length - 1];
 
         if (e.shiftKey) {
           if (document.activeElement === first) {
@@ -1036,16 +2115,23 @@
     });
   }
 
-  function openOnboardingModal(isManualOpen = false) {
+  function openOnboardingModal(isManualOpen = false, targetStep = 1) {
     if (!modalBackdrop) modalBackdrop = buildOnboardingModal();
     previouslyFocusedElement = document.activeElement;
+    currentStep = targetStep || 1;
+    showStep(currentStep, modalBackdrop);
     syncCheckboxStates(modalBackdrop);
     modalBackdrop.removeAttribute('hidden');
     if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'true');
 
-    // Focus the first checkbox or title
-    const firstCheckbox = modalBackdrop.querySelector('input[type="checkbox"]');
-    if (firstCheckbox) firstCheckbox.focus();
+    // Focus active language card or first input
+    if (currentStep === 1) {
+      const activeCard = modalBackdrop.querySelector('.sa11y-lang-card.sa11y-selected') || modalBackdrop.querySelector('.sa11y-lang-card');
+      if (activeCard) activeCard.focus();
+    } else {
+      const firstCheckbox = modalBackdrop.querySelector('input[type="checkbox"]');
+      if (firstCheckbox) firstCheckbox.focus();
+    }
   }
 
   function closeOnboardingModal() {
@@ -2655,6 +3741,7 @@
     if (mutationTimeout) clearTimeout(mutationTimeout);
     mutationTimeout = setTimeout(() => {
       adaptBlindAndScreenReader(true);
+      if (currentLang && currentLang !== 'en') translateHostPage(currentLang);
     }, 150);
   });
   observer.observe(document.body, { childList: true, subtree: true });
@@ -2672,16 +3759,25 @@
     // Enable image keyboard Tab navigation and visual accessibility by default
     adaptBlindAndScreenReader(true);
 
-    // Check if user has already configured or skipped
+    // If current language is not English, translate host DOM immediately
+    if (currentLang && currentLang !== 'en') {
+      translateHostPage(currentLang);
+    }
+
+    // Check if user has completed onboarding or configured profile
+    const onboardingDone = (localStorage.getItem(ONBOARDING_COMPLETED_KEY) === 'true');
     const stored = getStoredProfile();
-    if (!stored || (!stored.configured && !stored.skipped)) {
-      // First visit: automatically open the accessible identification modal
+
+    if (!onboardingDone && (!stored || (!stored.configured && !stored.skipped))) {
+      // First visit: automatically open the accessible 2-step onboarding wizard
       setTimeout(() => {
-        openOnboardingModal(false);
+        openOnboardingModal(false, 1);
       }, 400);
     } else {
-      activeProfile = stored;
-      applyAdaptations(activeProfile);
+      if (stored) {
+        activeProfile = stored;
+        applyAdaptations(activeProfile);
+      }
     }
   }
 
@@ -2693,11 +3789,19 @@
 
   // Expose API for host scripts or other modules
   window.SavannaA11y = {
-    openSettings: () => openOnboardingModal(true),
+    openSettings: (targetStep) => openOnboardingModal(true, targetStep || 1),
     getProfile: () => ({ ...activeProfile }),
     setProfile: (p) => {
       activeProfile = { ...activeProfile, ...p, configured: true };
       saveProfile(activeProfile);
-    }
+      applyAdaptations(activeProfile);
+    },
+    setLanguage: (lang) => {
+      if (ALL_LANGUAGES.includes(lang)) {
+        selectLanguage(lang, modalBackdrop);
+      }
+    },
+    getLanguage: () => currentLang,
+    translatePage: () => translateHostPage(currentLang)
   };
 })();
