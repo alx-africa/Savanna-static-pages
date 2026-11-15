@@ -55,153 +55,40 @@ _DEFAULT_EDGE_VOICES: dict[str, str] = {
 }
 
 
-# Comprehensive dictionary of technical, educational, and job-board English terms
-# mapped to canonical Ethiopian Amharic phonetic pronunciation
-ENGLISH_TO_AMHARIC_PHONETICS: dict[str, str] = {
-    # Acronyms & Short forms
-    "ai": "ኤአይ",
-    "api": "ኤፒአይ",
-    "ui": "ዩአይ",
-    "ux": "ዩኤክስ",
-    "it": "አይቲ",
-    "hr": "ኤችአር",
-    "qa": "ኪውኤ",
-    "pr": "ፒአር",
-    "ceo": "ሲኢኦ",
-    "cto": "ሲቲኦ",
-    "cfo": "ሲኤፍኦ",
-    "url": "ዩአርኤል",
-    "html": "ኤችቲኤምኤል",
-    "css": "ሲኤስኤስ",
-    "js": "ጄኤስ",
-    "pdf": "ፒዲኤፍ",
-    "lms": "ኤልኤምኤስ",
-    "cv": "ሲቪ",
-    "faq": "ኤፍኤኪው",
-    "id": "አይዲ",
-    "app": "አፕ",
-    "apps": "አፕስ",
-    "pc": "ፒሲ",
-    "os": "ኦኤስ",
-    "wcag": "ደብሊውሲኤጂ",
-
-    # Professional Roles & Technical Concepts
-    "virtual assistant": "ቨርቹዋል አሲስታንት",
-    "virtual": "ቨርቹዋል",
-    "assistant": "አሲስታንት",
-    "software": "ሶፍትዌር",
-    "hardware": "ሃርድዌር",
-    "online": "ኦንላይን",
-    "offline": "ኦፍላይን",
-    "digital": "ዲጂታል",
-    "internet": "ኢንተርኔት",
-    "chat": "ቻት",
-    "chatbot": "ቻትቦት",
-    "chatgpt": "ቻት ጂፒቲ",
-    "claude": "ክላውድ",
-    "gemini": "ጄሚናይ",
-    "email": "ኢሜይል",
-    "computer": "ኮምፒውተር",
-    "website": "ዌብሳይት",
-    "web": "ዌብ",
-    "remote": "ሪሞት",
-    "data": "ዳታ",
-    "cloud": "ክላውድ",
-    "code": "ኮድ",
-    "coding": "ኮዲንግ",
-    "developer": "ዲቨሎፐር",
-    "development": "ዲቨሎፕመንት",
-    "engineer": "ኢንጅነር",
-    "engineering": "ኢንጅነሪንግ",
-    "manager": "ማናጀር",
-    "management": "ማኔጅመንት",
-    "specialist": "ስፔሻሊስት",
-    "expert": "ኤክስፐርት",
-    "consultant": "ኮንሰልታንት",
-    "support": "ሰፖርት",
-    "service": "ሰርቪስ",
-    "services": "ሰርቪሶች",
-    "senior": "ሲኒየር",
-    "junior": "ጁኒየር",
-    "full-time": "ፉል ታይም",
-    "part-time": "ፓርት ታይም",
-    "contract": "ኮንትራት",
-    "freelance": "ፍሪላንስ",
-    "internship": "ኢንተርንሺፕ",
-    "login": "ሎጊን",
-    "sign in": "ሳይን ኢን",
-    "sign up": "ሳይን አፕ",
-    "logout": "ሎግ አውት",
-    "dashboard": "ዳሽቦርድ",
-    "filter": "ፊልተር",
-    "filters": "ፊልተሮች",
-    "search": "ሰርች",
-    "profile": "ፕሮፋይል",
-    "settings": "ሴቲንግስ",
-    "status": "ስታተስ",
-    "role": "ሮል",
-    "post": "ፖስት",
-    "posted": "ፖስት የተደረገ",
-    "jobs": "ጆብስ",
-    "job": "ጆብ",
-    "resume": "ሬዙሜ",
-    "portfolio": "ፖርትፎሊዮ",
-    "project": "ፕሮጀክት",
-    "projects": "ፕሮጀክቶች",
-    "task": "ታስክ",
-    "tasks": "ታስኮች",
-    "calendar": "ካላንደር",
-    "slack": "ስላክ",
-    "zoom": "ዙም",
-    "notion": "ኖሽን",
-    "google": "ጉግል",
-    "microsoft": "ማይክሮሶፍት",
-    "linkedin": "ሊንክድኢን",
-    "facebook": "ፌስቡክ",
-    "twitter": "ትዊተር",
-    "instagram": "ኢንስታግራም",
-    "canva": "ካንቫ",
-    "workspace": "ዎርክስፔስ",
-    "feedback": "ፊድባክ",
-    "system": "ሲስተም",
-    "systems": "ሲስተሞች",
-    "network": "ኔትወርክ",
-    "server": "ሰርቨር",
-    "client": "ክላይንት",
-    "clients": "ክላይንቶች",
-    "link": "ሊንክ",
-    "button": "በትን",
-    "menu": "ሜኑ",
-    "click": "ክሊክ",
-    "tab": "ታብ",
-    "course": "ኮርስ",
-    "courses": "ኮርሶች",
-    "module": "ሞጁል",
-    "modules": "ሞጁሎች",
-    "lesson": "ሌሰን",
-    "lessons": "ሌሰኖች",
-    "certificate": "ሰርተፊኬት",
-    "level": "ሌቨል",
-    "admin": "አድሚን",
-    "office": "ኦፊስ",
-    "call": "ኮል",
-    "video": "ቪዲዮ",
-    "audio": "ኦዲዮ",
-    "phone": "ፎን",
-    "python": "ፓይተን",
-    "javascript": "ጃቫስክሪፕት",
-    "react": "ሪአክት",
-    "kubernetes": "ኩበርኔትስ",
-    "microservices": "ማይክሮሰርቪሰስ"
+# Standard 26-letter Latin Alphabet Grapheme Names in Ethiopic phonetics (Alphabet G2P).
+# This is an algorithmic phonetic table (A-Z), NOT a dictionary of words.
+LATIN_LETTER_PHONETICS: dict[str, str] = {
+    "A": "ኤ", "B": "ቢ", "C": "ሲ", "D": "ዲ", "E": "ኢ", "F": "ኤፍ",
+    "G": "ጂ", "H": "ኤች", "I": "አይ", "J": "ጄ", "K": "ኬ", "L": "ኤል",
+    "M": "ኤም", "N": "ኤን", "O": "ኦ", "P": "ፒ", "Q": "ኪው", "R": "አር",
+    "S": "ኤስ", "T": "ቲ", "U": "ዩ", "V": "ቪ", "W": "ደብሊው", "X": "ኤክስ",
+    "Y": "ዋይ", "Z": "ዜድ"
 }
+
+# Algorithmic English phoneme-to-syllable rewrite rules for arbitrary unseen words
+PHONEME_SYLLABLE_RULES: list[tuple[str, str]] = [
+    ("tion", "ሽን"), ("sion", "ሽን"), ("ment", "መንት"), ("ing", "ኢንግ"),
+    ("ch", "ች"), ("sh", "ሽ"), ("th", "ስ"), ("ph", "ፍ"), ("wh", "ው"),
+    ("qu", "ክው"), ("ck", "ክ"), ("ee", "ኢ"), ("ea", "ኢ"), ("oo", "ኡ"),
+    ("ou", "አው"), ("ai", "ኤ"), ("ay", "ኤ"), ("b", "ብ"), ("c", "ክ"),
+    ("d", "ድ"), ("f", "ፍ"), ("g", "ግ"), ("h", "ህ"), ("j", "ጅ"),
+    ("k", "ክ"), ("l", "ል"), ("m", "ም"), ("n", "ን"), ("p", "ፕ"),
+    ("r", "ር"), ("s", "ስ"), ("t", "ት"), ("v", "ቭ"), ("w", "ው"),
+    ("x", "ክስ"), ("y", "ይ"), ("z", "ዝ"), ("a", "አ"), ("e", "ኤ"),
+    ("i", "ኢ"), ("o", "ኦ"), ("u", "ኡ")
+]
 
 
 def _prepare_natural_speech_utterance(text: str, lang: str, default_voice: str) -> tuple[str, str]:
     """
-    Scalable, zero-delay speech preparation.
-    Prevents engine switching pauses by naturally phonetizing English technical terms
-    and acronyms inside Amharic sentences so they synthesize in one continuous, fluid stream.
-    Pure English utterances route cleanly to en-US-JennyNeural.
+    Scalable, zero-delay speech preparation without hardcoded word dictionaries.
+    
+    1. Pure English utterances route cleanly to en-US-JennyNeural with native pronunciation.
+    2. Pure Amharic utterances route directly to am-ET-MekdesNeural.
+    3. Mixed bilingual utterances (Ethiopic text containing embedded English words or acronyms):
+       - All-caps acronyms (AI, API, URL, HTML, etc.) are algorithmically expanded via 26-letter G2P.
+       - Arbitrary English words are algorithmically mapped via phonological syllable rules.
+       - Synthesizes in a single continuous stream with Mekdes to eliminate audio-gap delays.
     """
     clean_text = text.strip()
     if not clean_text:
@@ -221,40 +108,19 @@ def _prepare_natural_speech_utterance(text: str, lang: str, default_voice: str) 
     if not has_latin:
         return clean_text, default_voice
 
-    # Case 3: Mixed bilingual sentence (Amharic containing English words/acronyms/terms)
-    # Phonetize English tokens into authentic Ethiopic syllables for continuous single-stream audio
-    result = clean_text
+    # Case 3: Mixed bilingual sentence (Ethiopic containing untranslated Latin words/acronyms)
+    # 1. Expand all-caps acronyms (e.g. AI -> ኤአይ, API -> ኤፒአይ, HTML -> ኤችቲኤምኤል)
+    def _expand_acronym(m: re.Match[str]) -> str:
+        token = m.group(0)
+        return "".join(LATIN_LETTER_PHONETICS.get(char, char) for char in token)
 
-    # 1. Multi-word phrases first
-    for phrase, am_phonetic in sorted(ENGLISH_TO_AMHARIC_PHONETICS.items(), key=lambda x: len(x[0]), reverse=True):
-        if " " in phrase or "-" in phrase:
-            pattern = re.compile(rf"\b{re.escape(phrase)}\b", re.IGNORECASE)
-            result = pattern.sub(am_phonetic, result)
+    result = re.sub(r"\b[A-Z]{2,6}\b", _expand_acronym, clean_text)
 
-    # 2. Single-word matches & acronyms
-    for word, am_phonetic in sorted(ENGLISH_TO_AMHARIC_PHONETICS.items(), key=lambda x: len(x[0]), reverse=True):
-        if " " not in word and "-" not in word:
-            pattern = re.compile(rf"\b{re.escape(word)}\b", re.IGNORECASE)
-            result = pattern.sub(am_phonetic, result)
-
-    # 3. Rule-based phoneme transliteration for any remaining unseen English words
+    # 2. Algorithmic phoneme transliteration for arbitrary unseen Latin words
     def _transliterate_unseen_word(m: re.Match[str]) -> str:
         w = m.group(0).lower()
-        if w in ENGLISH_TO_AMHARIC_PHONETICS:
-            return ENGLISH_TO_AMHARIC_PHONETICS[w]
-        rules = [
-            ("tion", "ሽን"), ("sion", "ሽን"), ("ment", "መንት"), ("ing", "ኢንግ"),
-            ("ch", "ች"), ("sh", "ሽ"), ("th", "ስ"), ("ph", "ፍ"), ("wh", "ው"),
-            ("qu", "ክው"), ("ck", "ክ"), ("ee", "ኢ"), ("ea", "ኢ"), ("oo", "ኡ"),
-            ("ou", "አው"), ("ai", "ኤ"), ("ay", "ኤ"), ("b", "ብ"), ("c", "ክ"),
-            ("d", "ድ"), ("f", "ፍ"), ("g", "ግ"), ("h", "ህ"), ("j", "ጅ"),
-            ("k", "ክ"), ("l", "ል"), ("m", "ም"), ("n", "ን"), ("p", "ፕ"),
-            ("r", "ር"), ("s", "ስ"), ("t", "ት"), ("v", "ቭ"), ("w", "ው"),
-            ("x", "ክስ"), ("y", "ይ"), ("z", "ዝ"), ("a", "አ"), ("e", "ኤ"),
-            ("i", "ኢ"), ("o", "ኦ"), ("u", "ኡ")
-        ]
         out = w
-        for en_sub, am_sub in rules:
+        for en_sub, am_sub in PHONEME_SYLLABLE_RULES:
             out = out.replace(en_sub, am_sub)
         return out
 
