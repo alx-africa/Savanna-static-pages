@@ -987,7 +987,7 @@
           window.speechSynthesis.cancel();
           const utt = new SpeechSynthesisUtterance(text);
           utt.lang = BCP47_MAP[targetLang] || 'en-US';
-          utt.rate = 1.15;
+          utt.rate = 1.0;
           window.speechSynthesis.speak(utt);
           return;
         }

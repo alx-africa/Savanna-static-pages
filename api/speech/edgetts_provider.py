@@ -81,7 +81,7 @@ class EdgeTTSProvider(BaseTTSProvider):
         voice_name = voice or _DEFAULT_EDGE_VOICES[lang]
 
         async def _stream():
-            communicate = edge_tts.Communicate(text=text, voice=voice_name, rate="+30%")
+            communicate = edge_tts.Communicate(text=text, voice=voice_name)
             buf = bytearray()
             async for chunk in communicate.stream():
                 if chunk["type"] == "audio":

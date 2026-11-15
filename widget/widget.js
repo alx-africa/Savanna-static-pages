@@ -295,7 +295,7 @@
           window.speechSynthesis.cancel();
           const utt = new SpeechSynthesisUtterance(text);
           utt.lang = bcp47;
-          utt.rate = 1.15; // Crisp, fast reading rate matching English
+          utt.rate = 1.0;
           window.speechSynthesis.speak(utt);
           return;
         }
