@@ -50,6 +50,7 @@ async def describe_image(request: DescribeImageRequest) -> DescribeImageResponse
     ai_result, provider_name = await analyze_image_with_ai(
         filename=request.filename,
         url=request.url,
+        image_data=request.image_data,
         language=lang,
         settings=settings,
         context=request.context,

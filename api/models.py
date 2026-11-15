@@ -239,6 +239,7 @@ class VisualBreakdown(BaseModel):
 class DescribeImageRequest(BaseModel):
     url: Optional[str] = None
     filename: Optional[str] = None
+    image_data: Optional[str] = None
     language: SupportedLanguage | str = "auto"
     context: Optional[str] = None
 

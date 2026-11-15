@@ -2638,48 +2638,36 @@
      ═════════════════════════════════════════════════════════════════════════ */
 
   /* ── 8. Blind & Non-Visual: Semantic Curriculum Status & Image Alt ──────── */
-  const CLIENT_IMAGE_DESCRIPTIONS = {
-    'va-content-banner': {
-      en: "A wide graphical banner for 'VA Foundations & Professional Identity'. Illustrated in royal purple and deep navy gradients, it displays modern digital workspace icons: a calendar showing organized appointments, an email envelope with notification badge, and cloud collaboration arrows, symbolizing asynchronous remote executive assistance.",
-      am: "የ'ቨርቹዋል ረዳት መሰረታዊ ዕውቀት እና የሙያ ማንነት' ትምህርት ሰፊ የባነር ምስል። በጥልቅ ሰማያዊ እና ወይን-ጠጅ ቀለሞች የተዋቀረ ሲሆን፣ የቀን መቁጠሪያ፣ የኢሜይል መልዕክት ልውውጥ እና የደመና ምርታማነት ምልክቶችን ያሳያል።",
-      elements: ['Widescreen Banner', 'Calendar Scheduling', 'Email & Notifications', 'Cloud Productivity']
-    },
-    '1lhlc1k4xrfvwdftjczeasorpklmy3dax': {
-      en: "Close-up professional portrait of Evon, an African female Virtual Assistant with natural afro hair and a warm, confident expression, working at an organized remote workspace with laptop and notebook.",
-      am: "የኢቮን የቅርብ ሙያዊ ፎቶግራፍ፤ በራስ መተማመን የተሞላች አፍሪካዊት ሴት ቨርቹዋል ረዳት። ተፈጥሯዊ የአፍሮ ጸጉር አሠራር እና ፈገግታ ያላት ሲሆን፣ በላፕቶፕ እና ማስታወሻ ደብተር በተደራጀ ጽዱ የሥራ ጠረጴዛ ላይ ተቀምጣ ትታያለች።",
-      elements: ['African Female Professional', 'Natural Afro Hair', 'Laptop Workspace', 'Remote Independence']
-    },
-    'tools-gpt-grammarly': {
-      en: "Educational diagram comparing AI tools: OpenAI ChatGPT for drafting and research, alongside Grammarly for clarity, tone, and grammar refinement.",
-      am: "ለቨርቹዋል ረዳቶች አስፈላጊ የሆኑትን የAI መሣሪያዎች የሚያስተዋውቅ ዲያግራም፡ ChatGPT ለረቂቅ ጽሁፍ ዝግጅት፣ Grammarly ደግሞ ለሰዋሰው ማስተካከያ እና የቃላት ግልጽነት።",
-      elements: ['ChatGPT Logo', 'Grammarly Logo', 'AI Drafting', 'Grammar Refinement']
-    },
-    'graduation-badge-alx': {
-      en: "Circular graduation milestone achievement medallion in gold and navy blue, showing a mortarboard cap and stating 'Reach 70% to be eligible for graduation'.",
-      am: "በወርቃማ እና ሰማያዊ ቀለሞች የተሠራ ክብ የምረቃ ሜዳልያ ምልክት፤ የምረቃ ቆብ ምስል የያዘ ሲሆን፣ 'ለምረቃ ብቁ ለመሆን 70% ይድረሱ' የሚል መመሪያ ይዟል።",
-      elements: ['Graduation Medallion', '70% Threshold', 'Mortarboard Cap', 'Certification']
-    },
-    'holberton-logo-full-alx': {
-      en: "Official institutional logo for ALX and Holberton School, featuring bold crimson red and charcoal typography and geometric accents, signifying pan-African tech education excellence.",
-      am: "የALX እና ሆልበርተን ትምህርት ቤት ይፋዊ የድርጅት አርማ፤ ቀይ እና ጥቁር ቀለማት ያሉት የአፍሪካ መሪ የቴክኖሎጂ ስልጠና መድረክ መለያ።",
-      elements: ['ALX Monogram', 'Holberton Tech School', 'Crimson Geometric Accent', 'Career Validation']
-    },
-    'homepage-v1-paced-embed': {
-      en: "Savanna LMS paced curriculum roadmap displaying weekly lesson milestones, module progress bars, and upcoming assignment deadlines.",
-      am: "የሳቫና የትምህርት ጉዞ ሳምንታዊ የጊዜ ሰሌዳ እና የሂደት ፍሰት፤ የሳምንት ትምህርቶችን፣ የሂደት አሞሌዎችን እና የፈተና ማስረከቢያ ቀናትን ያሳያል።",
-      elements: ['Curriculum Roadmap', 'Weekly Milestones', 'Module Progress', 'Calendar Deadlines']
-    },
-    'olivia-reynolds': {
-      en: "Professional educator portrait of Olivia Reynolds, lead instructor for Executive Virtual Assistant operations.",
-      am: "የኦሊቪያ ሬይኖልድስ ሙያዊ ፎቶግራፍ፤ የአስፈፃሚ ቨርቹዋል ረዳት ዋና አሰልጣኝ እና መምህርት።",
-      elements: ['Instructor Headshot', 'Executive Educator', 'Professional Guidance', 'Mentorship']
-    },
-    'ryan-hayes': {
-      en: "Professional mentor portrait of Ryan Hayes, technical coach in remote workflows and workflow management.",
-      am: "የራያን ሄይስ ሙያዊ ፎቶግራፍ፤ በርቀት የስራ ሂደቶች እና የስራ አስተዳደር ቴክኒካል አማካሪ።",
-      elements: ['Technical Coach', 'Remote Workflows', 'Mentor Portrait', 'Workflow Specialist']
-    }
-  };
+  function captureImageBase64(targetEl) {
+    if (!targetEl) return null;
+    try {
+      let imgEl = targetEl;
+      if (targetEl.tagName !== 'IMG') {
+        imgEl = targetEl.querySelector('img');
+      }
+      if (imgEl && imgEl.tagName === 'IMG' && imgEl.complete && imgEl.naturalWidth > 0) {
+        const maxDim = 800;
+        let w = imgEl.naturalWidth;
+        let h = imgEl.naturalHeight;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round(h * (maxDim / w));
+            w = maxDim;
+          } else {
+            w = Math.round(w * (maxDim / h));
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w || 300;
+        canvas.height = h || 300;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgEl, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.85);
+      }
+    } catch (_) {}
+    return null;
+  }
 
   let activeA11yAudio = null;
   let activeA11yAbort = null;
@@ -2773,12 +2761,14 @@
   }
 
   function extractElementVisualDetails(targetEl) {
-    if (!targetEl) return { src: '', alt: '', filename: '' };
-    let src = (targetEl.getAttribute('src') || '').toLowerCase();
+    if (!targetEl) return { src: '', fullUrl: '', alt: '', filename: '', imageData: null };
+    let src = targetEl.getAttribute('src') || '';
+    let fullUrl = targetEl.src || targetEl.currentSrc || '';
     if (!src) {
       const childImg = targetEl.querySelector('img');
-      if (childImg && childImg.getAttribute('src')) {
-        src = (childImg.getAttribute('src') || '').toLowerCase();
+      if (childImg) {
+        src = childImg.getAttribute('src') || '';
+        fullUrl = childImg.src || childImg.currentSrc || '';
       }
     }
     if (!src) {
@@ -2787,19 +2777,24 @@
         (window.getComputedStyle ? window.getComputedStyle(targetEl).backgroundImage : '') || '';
       const match = bg.match(/url\(['"]?([^'"]+)['"]?\)/);
       if (match) {
-        src = match[1].toLowerCase();
+        src = match[1];
+        fullUrl = src;
       } else {
         const childBg = targetEl.querySelector('[style*="background-image"], .logo');
         if (childBg) {
           const cBg = childBg.style.backgroundImage || (window.getComputedStyle ? window.getComputedStyle(childBg).backgroundImage : '') || '';
           const cMatch = cBg.match(/url\(['"]?([^'"]+)['"]?\)/);
-          if (cMatch) src = cMatch[1].toLowerCase();
+          if (cMatch) {
+            src = cMatch[1];
+            fullUrl = src;
+          }
         }
       }
     }
-    const alt = (targetEl.getAttribute('alt') || targetEl.getAttribute('aria-label') || targetEl.title || '').toLowerCase();
+    const alt = targetEl.getAttribute('alt') || targetEl.getAttribute('aria-label') || targetEl.title || '';
     const filename = src.split('/').pop().split('?')[0] || '';
-    return { src, alt, filename };
+    const imageData = captureImageBase64(targetEl);
+    return { src, fullUrl: fullUrl || src, alt, filename, imageData };
   }
 
   function describeImage(img) {
@@ -2811,7 +2806,7 @@
       return;
     }
 
-    const { src, alt, filename } = extractElementVisualDetails(img);
+    const { src, fullUrl, alt, filename, imageData } = extractElementVisualDetails(img);
     const lang = currentLang;
 
     // Create container card with AI loading state
@@ -2893,24 +2888,18 @@
     }
 
     function useFallback() {
-      let matched = null;
-      for (const [key, data] of Object.entries(CLIENT_IMAGE_DESCRIPTIONS)) {
-        if (src.includes(key) || alt.includes(key)) {
-          matched = data;
-          break;
-        }
-      }
-      const descText = matched 
-        ? (matched[lang] || matched.en)
-        : (lang === 'am' ? `የትምህርት ኮርስ ይዘትን የሚያሳይ ምስል፡ ${alt || filename}` : `Educational lesson graphic depicting ${alt || filename}`);
+      const descText = alt || filename
+        ? (lang === 'am' ? `የትምህርት ሥዕላዊ መግለጫ፡ ${alt || filename}` : `Educational visual: ${alt || filename}`)
+        : (lang === 'am' ? 'የትምህርት ይዘት ሥዕላዊ መግለጫ' : 'Educational lesson graphic');
       const fallbackData = {
         description: descText,
-        ai_provider: 'savanna-ai-vision',
+        ai_provider: 'savanna-a11y-native',
         breakdown: {
           primary_subject: descText,
-          visual_elements: (matched && matched.elements) || ['Curriculum Graphic', 'Educational Layout'],
+          visual_elements: [alt || filename || 'Curriculum Graphic'],
+          intent_and_purpose: lang === 'am' ? 'የትምህርት ፅንሰ-ሃሳቡን በምስል ያጠናክራል።' : 'Reinforces core lesson competencies.',
           pedagogical_context: lang === 'am' ? 'የትምህርት ፅንሰ-ሃሳቡን በምስል ያጠናክራል።' : 'Reinforces core lesson competencies.',
-          composition_and_palette: 'Standard accessible graphic with high-contrast elements.'
+          composition_and_palette: 'Standard accessible graphic.'
         }
       };
       renderCardContent(fallbackData);
@@ -2922,7 +2911,12 @@
       fetch(apiUrl + '/describe-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename, url: src, language: lang })
+        body: JSON.stringify({
+          filename,
+          url: fullUrl || src,
+          image_data: imageData,
+          language: lang
+        })
       })
       .then(res => {
         if (!res.ok) throw new Error('API status: ' + res.status);
@@ -2955,7 +2949,7 @@
     announce(initialCue);
     const arrivalSpeechPromise = speakVisualDescription(initialCue);
 
-    const { src, alt, filename } = extractElementVisualDetails(img);
+    const { src, fullUrl, alt, filename, imageData } = extractElementVisualDetails(img);
 
     async function onDescriptionReady(description) {
       img.dataset.aiDescription = description;
@@ -2986,7 +2980,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           filename,
-          url: src,
+          url: fullUrl || src,
+          image_data: imageData,
           language: lang,
           context: situationContext
         })
@@ -2996,29 +2991,15 @@
         onDescriptionReady(data.description);
       })
       .catch(() => {
-        let matched = null;
-        for (const [key, d] of Object.entries(CLIENT_IMAGE_DESCRIPTIONS)) {
-          if (src.includes(key) || alt.includes(key)) {
-            matched = d;
-            break;
-          }
-        }
-        const descText = matched 
-          ? (matched[lang] || matched.en)
-          : (lang === 'am' ? `የትምህርት ይዘት ምስል፡ ${alt || filename}` : `Educational lesson visual: ${alt || filename}`);
+        const descText = alt || filename
+          ? (lang === 'am' ? `የትምህርት ይዘት ምስል፡ ${alt || filename}` : `Educational lesson visual: ${alt || filename}`)
+          : (lang === 'am' ? 'የትምህርት ይዘት ምስል' : 'Educational visual');
         onDescriptionReady(descText);
       });
     } else {
-      let matched = null;
-      for (const [key, d] of Object.entries(CLIENT_IMAGE_DESCRIPTIONS)) {
-        if (src.includes(key) || alt.includes(key)) {
-          matched = d;
-          break;
-        }
-      }
-      const descText = matched 
-        ? (matched[lang] || matched.en)
-        : (lang === 'am' ? `የትምህርት ይዘት ምስል፡ ${alt || filename}` : `Educational lesson visual: ${alt || filename}`);
+      const descText = alt || filename
+        ? (lang === 'am' ? `የትምህርት ይዘት ምስል፡ ${alt || filename}` : `Educational lesson visual: ${alt || filename}`)
+        : (lang === 'am' ? 'የትምህርት ይዘት ምስል' : 'Educational visual');
       onDescriptionReady(descText);
     }
   }
