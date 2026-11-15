@@ -66,6 +66,79 @@ def _html_to_text(html: str) -> str:
     return " ".join(soup.get_text(separator=" ").split())
 
 
+def extract_semantic_sections(html: str, source_name: str, domain: str = "course") -> list[dict]:
+    """
+    Universally parse an HTML document by semantic headings (H1-H6) and anchor IDs.
+    Extracts sections with precise URLs (e.g. pages/concept-with-navigation.html#what-is-shaping...).
+    Scalable across any host site or LMS curriculum.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup(["script", "style", "noscript", "meta", "head"]):
+        tag.decompose()
+
+    body = soup.find("body") or soup
+    sections: list[dict] = []
+    doc_stem = Path(source_name).stem
+    default_title = doc_stem.replace("-", " ").title()
+    current_title = default_title
+    current_anchor = ""
+    current_text: list[str] = []
+
+    for elem in body.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "ol", "table", "blockquote"]):
+        if elem.name in ["h1", "h2", "h3", "h4"]:
+            anchor = elem.find("a", id=True) or (elem if elem.get("id") else None)
+            aid = anchor.get("id", "").strip() if anchor else ""
+            heading_text = elem.get_text().strip()
+
+            if aid or (len(heading_text) > 3 and not heading_text.startswith("ALX")):
+                if current_text:
+                    full_text = " ".join(current_text).strip()
+                    if len(full_text) > 30:
+                        url_val = f"pages/{source_name}#{current_anchor}" if current_anchor else f"pages/{source_name}"
+                        sections.append({
+                            "text": full_text,
+                            "source": source_name,
+                            "title": current_title,
+                            "anchor": current_anchor,
+                            "url": url_val,
+                            "domain": domain,
+                        })
+                    current_text = []
+                current_title = heading_text
+                current_anchor = aid
+        else:
+            t = elem.get_text().strip()
+            if t:
+                current_text.append(t)
+
+    if current_text:
+        full_text = " ".join(current_text).strip()
+        if len(full_text) > 30:
+            url_val = f"pages/{source_name}#{current_anchor}" if current_anchor else f"pages/{source_name}"
+            sections.append({
+                "text": full_text,
+                "source": source_name,
+                "title": current_title,
+                "anchor": current_anchor,
+                "url": url_val,
+                "domain": domain,
+            })
+
+    if not sections:
+        raw_text = " ".join(soup.get_text(separator=" ").split())
+        if raw_text:
+            sections.append({
+                "text": raw_text,
+                "source": source_name,
+                "title": default_title,
+                "anchor": "",
+                "url": f"pages/{source_name}",
+                "domain": domain,
+            })
+
+    return sections
+
+
 def _stable_id(source: str, chunk_index: int) -> str:
     """Generate a deterministic chunk ID."""
     raw = f"{source}::{chunk_index}"
@@ -76,8 +149,8 @@ def _stable_id(source: str, chunk_index: int) -> str:
 
 def _collect_documents(docs_path: Path) -> list[dict]:
     """
-    Walk the doc directories and return a list of:
-        {"text": str, "source": str, "domain": "course" | "jobs"}
+    Walk the doc directories and return semantic section documents:
+        {"text": str, "source": str, "title": str, "url": str, "anchor": str, "domain": "course" | "jobs"}
     """
     documents: list[dict] = []
 
@@ -86,9 +159,9 @@ def _collect_documents(docs_path: Path) -> list[dict]:
     if course_dir.exists():
         for html_file in course_dir.rglob("*.html"):
             try:
-                text = _html_to_text(html_file.read_text(encoding="utf-8", errors="replace"))
-                if text:
-                    documents.append({"text": text, "source": html_file.name, "domain": "course"})
+                content = html_file.read_text(encoding="utf-8", errors="replace")
+                secs = extract_semantic_sections(content, html_file.name, "course")
+                documents.extend(secs)
             except OSError as exc:
                 logger.warning("Skipping %s: %s", html_file, exc)
 
@@ -97,9 +170,9 @@ def _collect_documents(docs_path: Path) -> list[dict]:
     if pages_dir.exists():
         for html_file in pages_dir.rglob("*.html"):
             try:
-                text = _html_to_text(html_file.read_text(encoding="utf-8", errors="replace"))
-                if text:
-                    documents.append({"text": text, "source": html_file.name, "domain": "course"})
+                content = html_file.read_text(encoding="utf-8", errors="replace")
+                secs = extract_semantic_sections(content, html_file.name, "course")
+                documents.extend(secs)
             except OSError as exc:
                 logger.warning("Skipping %s: %s", html_file, exc)
 
@@ -123,12 +196,15 @@ def _collect_documents(docs_path: Path) -> list[dict]:
                         documents.append({
                             "text": text,
                             "source": f"jobs:{job.get('id', 'unknown')}",
+                            "title": job.get("title", "Job Listing"),
+                            "url": f"/jobs/{job.get('id', '')}",
+                            "anchor": job.get("id", ""),
                             "domain": "jobs",
                         })
         except (json.JSONDecodeError, OSError) as exc:
             logger.warning("Failed to load jobs.json: %s", exc)
 
-    logger.info("Collected %d raw documents from %s", len(documents), docs_path)
+    logger.info("Collected %d semantic section documents from %s", len(documents), docs_path)
     return documents
 
 
@@ -163,11 +239,14 @@ def _ingest_sync(docs_path: Path, chroma_path: str, force: bool) -> None:
     for doc in documents:
         chunks = _chunk_text(doc["text"])
         for idx, chunk in enumerate(chunks):
-            chunk_id = _stable_id(doc["source"], idx)
+            chunk_anchor = doc.get("anchor", "")
+            chunk_id = f"{Path(doc['source']).stem}_{chunk_anchor or idx}" if idx == 0 and chunk_anchor else _stable_id(doc["source"], idx)
             ids.append(chunk_id)
             texts.append(chunk)
             metadatas.append({
                 "source": doc["source"],
+                "title": doc.get("title", doc["source"]),
+                "url": doc.get("url", f"pages/{doc['source']}"),
                 "chunk_index": idx,
                 "domain": doc["domain"],
             })

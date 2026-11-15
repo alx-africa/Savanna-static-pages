@@ -85,6 +85,8 @@ def _extract_citations(
                     id=ref,
                     source=c["source"],
                     excerpt=c["text"][:200],
+                    url=c.get("url"),
+                    title=c.get("title", c["source"]),
                 )
             )
     return citations

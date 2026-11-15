@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import get_settings
-from routers import chat, escalate, jobs, accommodate, lti, sms as sms_router, teacher, vision, speech, translate
+from routers import chat, escalate, jobs, accommodate, lti, sms as sms_router, teacher, vision, speech, translate, v1_contract
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -66,6 +66,10 @@ def create_app() -> FastAPI:
     app.include_router(vision.router,                             tags=["Vision & Image Accessibility"])
     app.include_router(speech.router,                             tags=["Speech & Voice Accessibility"])
     app.include_router(translate.router,                          tags=["Translation"])
+
+    # ── Level 2 Technical Guide Contract ─────────────────────────────────────
+    app.include_router(v1_contract.router, prefix="/api/v1",      tags=["Level 2 Contract"])
+    app.include_router(v1_contract.router, prefix="",             tags=["Level 2 Contract"])
 
     # ── Health ────────────────────────────────────────────────────────────────
     from models import HealthResponse

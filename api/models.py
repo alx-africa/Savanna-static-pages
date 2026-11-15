@@ -43,6 +43,75 @@ class Citation(BaseModel):
     source: str
     excerpt: str
     url: Optional[str] = None
+    title: Optional[str] = None
+
+
+# ─── Level 2 Technical Guide Data Contract ───────────────────────────────────
+
+class AskV1Request(BaseModel):
+    question: Optional[str] = None
+    message: Optional[str] = None
+    language: SupportedLanguage | str = "auto"
+    session_id: Optional[str] = None
+    simple_mode: bool = False
+
+    def get_query(self) -> str:
+        return (self.question or self.message or "").strip()
+
+
+class AskV1Source(BaseModel):
+    id: str
+    title: str
+    url: Optional[str] = None
+    source: str = ""
+    excerpt: str = ""
+
+
+class AskV1Response(BaseModel):
+    answer: str
+    sources: list[AskV1Source] = []
+    language: str = "en"
+    ethiopian_date: Optional[str] = None
+
+
+class LessonItem(BaseModel):
+    id: Optional[str] = None
+    title: str
+    html: Optional[str] = None
+    text: Optional[str] = None
+    url: Optional[str] = None
+
+
+class ContentV1Request(BaseModel):
+    lessons: list[LessonItem] = []
+
+
+class ContentV1Response(BaseModel):
+    status: str = "indexed"
+    count: int = 0
+    message: str
+
+
+class EscalationV1Request(BaseModel):
+    conversation: list[Any] | str = []
+    reason: Optional[str] = "Learner requested tutor help"
+    learner_context: Optional[dict[str, Any]] = None
+    session_id: Optional[str] = None
+
+
+class EscalationV1Response(BaseModel):
+    ticketId: str
+    status: str = "pending"
+    message: str = "A tutor will answer here. It may take until morning."
+    operator_url: Optional[str] = None
+
+
+class SMSInboundV1Request(BaseModel):
+    from_: str = Field(..., alias="from")
+    text: str
+
+    class Config:
+        populate_by_name = True
 
 
 class ChatResponse(BaseModel):
@@ -62,6 +131,8 @@ class EscalateRequest(BaseModel):
     user_id: Optional[str] = None
     reason: Optional[str] = None
     sdp_offer: Optional[str] = None      # WebRTC SDP offer for screen share
+    language: Optional[str] = "en"
+    learner_context: Optional[dict[str, Any]] = None
 
 
 class EscalateResponse(BaseModel):

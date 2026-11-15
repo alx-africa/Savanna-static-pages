@@ -1248,6 +1248,13 @@
     /* Render user bubble */
     appendMessage('user', text, null);
 
+    /* Dispatch event to parent host and custom element */
+    parent.postMessage({
+      type: 'db-assistant:question',
+      question: text,
+      language: currentLanguage
+    }, '*');
+
     /* Track in history */
     history.push({ role: 'user', content: text });
     if (history.length > 20) history.splice(0, history.length - 20);
@@ -1556,18 +1563,38 @@
 
   modalConfirm.addEventListener('click', async function () {
     closeEscalModal();
-    try {
-      /* Step 1: Request screen share */
-      mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    let hasStream = false;
 
-      /* Step 2: POST /escalate */
+    // Step 1: Request screen share if supported (Chrome on Android does not support getDisplayMedia)
+    if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+      try {
+        mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        hasStream = true;
+      } catch (mediaErr) {
+        // Fall back gracefully to contextual assistance (Android / mobile support)
+        console.warn('[Savanna escalation] Screen share skipped or unsupported on this device:', mediaErr.message);
+      }
+    }
+
+    // Step 2: Build rich learner context packet
+    const learnerContext = {
+      parent_url: document.referrer || window.location.href,
+      user_agent: navigator.userAgent,
+      is_mobile: /Android|iPhone|iPad/i.test(navigator.userAgent),
+      language: currentLanguage,
+      has_screen_share: hasStream
+    };
+
+    try {
+      /* Step 3: POST /escalate */
       const res = await fetch(apiUrl + '/escalate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           session_id: sessionId,
-          reason:     'User requested human assistance',
-          language:   currentLanguage
+          reason:     'User requested human assistance' + (hasStream ? ' (with screen share)' : ' (context-assisted)'),
+          language:   currentLanguage,
+          learner_context: learnerContext
         })
       });
 
@@ -1583,13 +1610,16 @@
       conf.textContent = '✓ Connected — Ticket #' + ticketId + '. An agent will join shortly.';
       ticketZone.appendChild(conf);
 
+      // Notify parent host and custom element
+      parent.postMessage({
+        type: 'db-assistant:escalated',
+        ticketId: ticketId,
+        conversation: history
+      }, '*');
+
     } catch (err) {
       if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
-      if (err.name === 'NotAllowedError') {
-        showError('Screen sharing was cancelled. You can try again.');
-      } else {
-        showError('Could not escalate: ' + err.message);
-      }
+      showError('Could not escalate: ' + err.message);
     }
   });
 

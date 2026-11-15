@@ -189,18 +189,27 @@ def _build_bm25_corpus() -> dict[str, Any]:
             start += size - overlap
         return res
 
+    from rag.ingest import extract_semantic_sections
+
     # 1. Index course HTML pages from pages/
     if pages_dir.exists():
         for html_file in sorted(pages_dir.glob("*.html")):
             try:
-                raw_text = _strip_html(html_file.read_text(encoding="utf-8", errors="replace"))
-                for idx, c in enumerate(_chunk(raw_text)):
-                    chunks.append({
-                        "id": f"{html_file.stem}_{idx}",
-                        "text": c,
-                        "source": html_file.name,
-                        "domain": "course",
-                    })
+                raw_html = html_file.read_text(encoding="utf-8", errors="replace")
+                secs = extract_semantic_sections(raw_html, html_file.name, "course")
+                for sec in secs:
+                    sec_chunks = _chunk(sec["text"])
+                    anchor_id = sec.get("anchor", "")
+                    for idx, c in enumerate(sec_chunks):
+                        cid = f"{html_file.stem}_{anchor_id or idx}" if idx == 0 and anchor_id else f"{html_file.stem}_{idx}"
+                        chunks.append({
+                            "id": cid,
+                            "text": c,
+                            "source": sec["source"],
+                            "title": sec.get("title", html_file.stem),
+                            "url": sec.get("url", f"pages/{html_file.name}"),
+                            "domain": "course",
+                        })
             except Exception as exc:
                 logger.warning("BM25: error reading page %s: %s", html_file, exc)
 
@@ -209,14 +218,21 @@ def _build_bm25_corpus() -> dict[str, Any]:
     if cc_dir.exists():
         for html_file in sorted(cc_dir.rglob("*.html")):
             try:
-                raw_text = _strip_html(html_file.read_text(encoding="utf-8", errors="replace"))
-                for idx, c in enumerate(_chunk(raw_text)):
-                    chunks.append({
-                        "id": f"cc_{html_file.stem}_{idx}",
-                        "text": c,
-                        "source": html_file.name,
-                        "domain": "course",
-                    })
+                raw_html = html_file.read_text(encoding="utf-8", errors="replace")
+                secs = extract_semantic_sections(raw_html, html_file.name, "course")
+                for sec in secs:
+                    sec_chunks = _chunk(sec["text"])
+                    anchor_id = sec.get("anchor", "")
+                    for idx, c in enumerate(sec_chunks):
+                        cid = f"cc_{html_file.stem}_{anchor_id or idx}" if idx == 0 and anchor_id else f"cc_{html_file.stem}_{idx}"
+                        chunks.append({
+                            "id": cid,
+                            "text": c,
+                            "source": sec["source"],
+                            "title": sec.get("title", html_file.stem),
+                            "url": sec.get("url", f"pages/{html_file.name}"),
+                            "domain": "course",
+                        })
             except Exception as exc:
                 logger.warning("BM25: error reading course-content %s: %s", html_file, exc)
 
@@ -243,6 +259,8 @@ def _build_bm25_corpus() -> dict[str, Any]:
                         "id": f"job_{job.get('id', 'unk')}",
                         "text": job_text,
                         "source": f"jobs:{job.get('id', 'unknown')}",
+                        "title": job.get("title", "Remote Tech Job"),
+                        "url": f"/jobs/{job.get('id', '')}",
                         "domain": "jobs",
                     })
         except Exception as exc:
@@ -335,6 +353,8 @@ def _retrieve_bm25_sync(
             "id": c["id"],
             "text": c["text"],
             "source": c["source"],
+            "title": c.get("title", c["source"]),
+            "url": c.get("url", f"pages/{c['source']}"),
             "distance": round(1.0 / (1.0 + score), 4),
         })
 
@@ -383,6 +403,8 @@ def _retrieve_sync(
                         "id": chunk_id,
                         "text": text,
                         "source": meta.get("source", "unknown"),
+                        "title": meta.get("title", meta.get("source", "Course Section")),
+                        "url": meta.get("url", f"pages/{meta.get('source', '')}"),
                         "distance": float(dist),
                     }
                 )

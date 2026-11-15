@@ -107,6 +107,8 @@ async def escalate(body: EscalateRequest) -> EscalateResponse:
         "reason": body.reason,
         "has_sdp": bool(body.sdp_offer),
         "sdp_offer": body.sdp_offer,
+        "language": body.language or "en",
+        "learner_context": body.learner_context or {},
         "status": "open",
         "created_at": created_at,
     }

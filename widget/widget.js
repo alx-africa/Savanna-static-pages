@@ -199,6 +199,24 @@
     } else if (event.data.type === 'savanna:lang_change' && event.data.lang) {
       // Synchronize language change with host page and a11y engine
       window.dispatchEvent(new CustomEvent('savanna:language_changed', { detail: { lang: event.data.lang } }));
+    } else if (event.data.type === 'db-assistant:question') {
+      const qEvt = new CustomEvent('db-assistant:question', {
+        bubbles: true,
+        composed: true,
+        detail: { question: event.data.question, language: event.data.language }
+      });
+      document.dispatchEvent(qEvt);
+      const hostElem = document.querySelector('db-assistant');
+      if (hostElem) hostElem.dispatchEvent(qEvt);
+    } else if (event.data.type === 'db-assistant:escalated') {
+      const escEvt = new CustomEvent('db-assistant:escalated', {
+        bubbles: true,
+        composed: true,
+        detail: { ticketId: event.data.ticketId, conversation: event.data.conversation }
+      });
+      document.dispatchEvent(escEvt);
+      const hostElem = document.querySelector('db-assistant');
+      if (hostElem) hostElem.dispatchEvent(escEvt);
     }
   });
 
@@ -336,5 +354,41 @@
     setTimeout(function () {
       iframe.contentWindow && iframe.contentWindow.postMessage({ type: 'open_escalate' }, '*');
     }, 150);
+  }
+
+  /* ── 10. Web Component: <db-assistant> (Level 1 Technical Guide Contract) ─ */
+  if (typeof customElements !== 'undefined' && !customElements.get('db-assistant')) {
+    class DbAssistant extends HTMLElement {
+      connectedCallback() {
+        const lang = this.getAttribute('lang');
+        const api = this.getAttribute('api');
+        const content = this.getAttribute('content');
+
+        if (lang) {
+          localStorage.setItem('savanna_lang', lang);
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ type: 'set_lang', lang: lang }, '*');
+          }
+        }
+        if (api) {
+          window.SavannaConfig = window.SavannaConfig || {};
+          window.SavannaConfig.apiUrl = api.replace(/\/$/, '');
+        }
+        if (content) {
+          fetch(content)
+            .then(res => res.json())
+            .then(data => {
+              const lessons = Array.isArray(data) ? data : (data.lessons || [data]);
+              fetch((window.SavannaConfig.apiUrl || apiUrl) + '/api/v1/content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lessons: lessons })
+              }).catch(() => {});
+            })
+            .catch(() => {});
+        }
+      }
+    }
+    customElements.define('db-assistant', DbAssistant);
   }
 })();

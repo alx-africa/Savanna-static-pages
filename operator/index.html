@@ -218,13 +218,18 @@
           if (!res.ok) throw new Error("Ticket details not found");
           const ticket = await res.json();
 
-          info.textContent = `Connected with session: ${ticket.session_id} (${ticket.reason || 'General help'})`;
+          let contextHtml = `Connected with session: <strong>${escapeHtml(ticket.session_id)}</strong> (${escapeHtml(ticket.reason || 'General help')})`;
+          if (ticket.learner_context && (ticket.learner_context.parent_url || ticket.learner_context.current_url)) {
+            const loc = ticket.learner_context.parent_url || ticket.learner_context.current_url;
+            contextHtml += `<br><small style="color:var(--primary); font-weight:600;">📱 Learner Context: <a href="${escapeHtml(loc)}" target="_blank" rel="noopener">${escapeHtml(loc)}</a> ${ticket.learner_context.is_mobile ? '• (Android/Mobile)' : ''}</small>`;
+          }
+          info.innerHTML = contextHtml;
           document.getElementById('disconnect-btn').style.display = 'inline-block';
 
           if (ticket.sdp_offer) {
             setupWebRTC(ticketId, ticket.sdp_offer);
           } else {
-            info.textContent += " (No screen-share stream was initiated by learner)";
+            info.innerHTML += "<br><span style='font-size:0.85rem; color:var(--text-muted);'>[Context-Assisted Mode: Learner device stream not active. Assisting via live context & text.]</span>";
           }
         } catch (err) {
           info.textContent = `Connection error: ${err.message}`;

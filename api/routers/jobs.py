@@ -120,6 +120,47 @@ async def list_jobs(
     return jobs
 
 
+def to_schema_org_job_posting(job: dict) -> dict:
+    """
+    Format job dictionary as a standard schema.org/JobPosting JSON-LD object.
+    Adheres to Level 3 Open Standards (Technical Guide lines 501-509).
+    """
+    return {
+        "@context": "https://schema.org",
+        "@type": "JobPosting",
+        "title": job.get("title", ""),
+        "description": job.get("description", ""),
+        "datePosted": str(job.get("posted_at", "2026-11-14T00:00:00Z"))[:10],
+        "employmentType": "FULL_TIME" if "full" in str(job.get("type", "")).lower() else "CONTRACT",
+        "jobLocationType": "TELECOMMUTE",
+        "hiringOrganization": {
+            "@type": "Organization",
+            "name": job.get("company", "African Remote Employer"),
+            "sameAs": job.get("url")
+        },
+        "jobLocation": {
+            "@type": "Place",
+            "address": {
+                "@type": "PostalAddress",
+                "addressLocality": job.get("location", "Addis Ababa"),
+                "addressCountry": "ET"
+            }
+        },
+        "jobBenefits": "Remote work, inclusive workplace, interview accommodations without medical proof",
+        "skills": ", ".join(job.get("skills", []))
+    }
+
+
+@router.get("/{job_id}/schema", summary="Get schema.org/JobPosting JSON-LD for a job (Level 3 Open Standard)")
+async def get_job_schema(job_id: str) -> dict:
+    """Return standard schema.org JSON-LD metadata for external search engines."""
+    raw_jobs = _load_jobs()
+    for raw in raw_jobs:
+        if raw.get("id") == job_id:
+            return to_schema_org_job_posting(raw)
+    raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+
+
 @router.get("/{job_id}", response_model=Job, summary="Get a single job by ID")
 async def get_job(
     job_id: str,

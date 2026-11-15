@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proof Outside Savanna — Blank Host Demo</title>
+  <style>
+    /* Intentionally minimal styling with NO Bootstrap, NO Savanna CSS */
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 2rem;
+      line-height: 1.6;
+      color: #222;
+      background: #fafafa;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 2rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    h1 {
+      margin-top: 0;
+      color: #0b3d91;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      background: #e0f2fe;
+      color: #0369a1;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .event-log {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      min-height: 80px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .log-item {
+      padding: 0.25rem 0;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+  </style>
+
+  <!-- 1. Load the module (Level 1 Drop-in Script) -->
+  <script src="/widget/widget.js" data-api-url="http://localhost:8000" defer></script>
+</head>
+<body>
+  <div class="container">
+    <span class="badge">Level 1 Test Proof: Outside Savanna</span>
+    <h1>Third-Party LMS Host Page</h1>
+    <p>
+      This page contains <strong>zero Savanna code and zero Bootstrap CSS</strong>.
+      It proves that the Savanna Multilingual Assistant installs on any arbitrary website
+      using a single script tag or custom element.
+    </p>
+
+    <!-- 2. Place the component (Technical Guide Data Contract) -->
+    <db-assistant lang="am" api="http://localhost:8000"></db-assistant>
+
+    <h2>Host Instructions for Judges</h2>
+    <ol>
+      <li>Notice the floating assistant launcher fixed at the bottom right.</li>
+      <li>Click the launcher (or press <kbd>Ctrl</kbd>+<kbd>/</kbd>) to open the accessible chat shell.</li>
+      <li>Ask a question in English or Amharic (by text or voice).</li>
+      <li>Observe the host receiving custom events in the live log below.</li>
+      <li>Press <kbd>Escape</kbd> to close and return focus to the launcher.</li>
+    </ol>
+
+    <h3>Host Event Listener Log</h3>
+    <div id="event-log" class="event-log" role="log" aria-live="polite">
+      <em>Waiting for module events... (e.g. db-assistant:question, db-assistant:escalated)</em>
+    </div>
+  </div>
+
+  <!-- 3. Optionally, listen to module events (Technical Guide Data Contract) -->
+  <script>
+    const logBox = document.getElementById('event-log');
+    function logEvent(name, detail) {
+      const div = document.createElement('div');
+      div.className = 'log-item';
+      div.textContent = `[${new Date().toLocaleTimeString()}] Event: ${name} -> ${JSON.stringify(detail)}`;
+      logBox.appendChild(div);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    document.addEventListener('db-assistant:question', (e) => {
+      console.log('Host received db-assistant:question:', e.detail);
+      logEvent('db-assistant:question', e.detail);
+    });
+
+    document.addEventListener('db-assistant:escalated', (e) => {
+      console.log('Host received db-assistant:escalated:', e.detail);
+      logEvent('db-assistant:escalated', e.detail);
+    });
+
+    document.addEventListener('savanna:language_changed', (e) => {
+      logEvent('savanna:language_changed', e.detail);
+    });
+  </script>
+</body>
+</html>

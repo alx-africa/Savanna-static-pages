@@ -115,7 +115,8 @@ class GeminiProvider(AIProvider):
                         id=c["id"],
                         source=c["source"],
                         excerpt=c["text"][:120],
-                        url=c.get("url")
+                        url=c.get("url"),
+                        title=c.get("title", c["source"]),
                     ))
 
             return reply_text, citations

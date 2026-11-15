@@ -243,6 +243,7 @@ async def chat(body: ChatRequest) -> ChatResponse:
             source=c.get("source", "unknown"),
             excerpt=c.get("text", "")[:200],
             url=c.get("url"),
+            title=c.get("title", c.get("source", "Course Section")),
         )
         for c in chunks
     ]

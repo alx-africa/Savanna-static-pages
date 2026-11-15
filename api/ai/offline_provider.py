@@ -152,6 +152,8 @@ class OfflineProvider(AIProvider):
                 id=top["id"],
                 source=top["source"],
                 excerpt=top["text"][:200],
+                url=top.get("url"),
+                title=top.get("title", top["source"]),
             )
             return text, [citation]
 
