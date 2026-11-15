@@ -135,6 +135,7 @@
 
   <!-- ── Input area ──────────────────────────────────────── -->
   <section class="input-area" aria-label="Message input">
+    <div id="voice-recording-status" class="voice-status-banner" role="status" aria-live="polite" style="display: none;"></div>
     <div class="input-wrapper">
       <div class="input-label-wrapper">
         <label id="chat-input-label" for="chat-input" class="input-label">
@@ -327,6 +328,17 @@
       suggestionText:'Would you like to switch language?',
       switchBtn:    'Switch',
       dismissBtn:   'Dismiss',
+      listen:       'Listen',
+      stopAudio:    'Stop',
+      audioLoading: 'Loading audio...',
+      recPrompt:    'Recording question... Speak now.',
+      recStop:      'Stop recording',
+      recProcessing:'Transcribing speech...',
+      recSuccess:   '✓ Audio transcribed! You can edit text below before sending.',
+      recNoSpeech:  'No speech detected. Please try again.',
+      recUnavailable:'Transcription service currently unavailable. You can type your question.',
+      ttsUnavailable:'Voice synthesis is not currently available for this language. Text response is provided above.',
+      micPermissionDenied:'Microphone access denied. Please grant permission in browser settings.'
     },
     am: {
       title:        'ሳቫና ረዳት',
@@ -365,6 +377,17 @@
       suggestionText:'ቋንቋዎን ወደ አማርኛ መቀየር ይፈልጋሉ?',
       switchBtn:    'ቀይር',
       dismissBtn:   'ተወው',
+      listen:       'አድምጥ',
+      stopAudio:    'አቁም',
+      audioLoading: 'ድምፅ እየተጫነ ነው...',
+      recPrompt:    'ጥያቄዎን እየቀረጽኩ ነው... አሁን ይናገሩ።',
+      recStop:      'መቅረጽ አቁም',
+      recProcessing:'ድምፅ ወደ ፅሑፍ እየተቀየረ ነው...',
+      recSuccess:   '✓ ድምፅዎ ወደ ፅሑፍ ተቀይሯል! ከመላክዎ በፊት ማስተካከል ይችላሉ።',
+      recNoSpeech:  'ምንም ድምፅ አልተገኘም። እባክዎ እንደገና ይሞክሩ።',
+      recUnavailable:'የድምፅ ግልባጭ አገልግሎት ለጊዜው አይገኝም። ጥያቄዎን መጻፍ ይችላሉ።',
+      ttsUnavailable:'ለዚህ ቋንቋ የድምፅ ውህደት ለጊዜው አይገኝም። የፅሑፍ ምላሽ ከላይ ተሰጥቷል።',
+      micPermissionDenied:'የማይክሮፎን ፈቃድ ተከልክሏል። እባክዎ በአሳሽ ቅንብሮች ውስጥ ፍቃድ ይስጡ።'
     },
     om: {
       title:        'Gargaaraa Savanna',
@@ -403,6 +426,17 @@
       suggestionText:'Afaan gara Afaan Oromootti jijjiiruu barbaadduu?',
       switchBtn:    'Jijjiiri',
       dismissBtn:   'Dhiisi',
+      listen:       'Dhaggeeffadhu',
+      stopAudio:    'Dhaabi',
+      audioLoading: 'Sagalee fe\'aa jira...',
+      recPrompt:    'Gaaffii waraabaa jira... Amma dubbadhaa.',
+      recStop:      'Waraabuu dhaabi',
+      recProcessing:'Sagalee gara barreeffamatti jijjiiraa jira...',
+      recSuccess:   '✓ Sagaleen gara barreeffamatti jijjiirameera! Erguuf dura sirreessuu dandeessu.',
+      recNoSpeech:  'Sagaleen hin dhaga\'amne. Maaloo irra deebiaatii yaalaa.',
+      recUnavailable:'Tajaajilli waraabbii yeroof hin jiru. Gaaffii keessan barreessuu dandeessu.',
+      ttsUnavailable:'Sagaleen afaan kanaaf yeroof hin jiru. Barreeffamni armaan olitti kennameera.',
+      micPermissionDenied:'Hayyamni maayikiroofoonii dhowwameera. Qindaa\'ina keessatti hayyama kennaa.'
     },
     ti: {
       title:        'ሳቫና ሓጋዚ',
@@ -441,6 +475,17 @@
       suggestionText:'ቋንቋ ናብ ትግርኛ ክቕየር ትደልዩዶ?',
       switchBtn:    'ቐይር',
       dismissBtn:   'ሕደጎ',
+      listen:       'ስምዑ',
+      stopAudio:    'ኣቋርጽ',
+      audioLoading: 'ድምጺ ይጽዕን ኣሎ...',
+      recPrompt:    'ሕቶኹም ይቕዳሕ ኣሎ... ሕጂ ተዛረቡ።',
+      recStop:      'ምቕዳሕ ኣቋርጽ',
+      recProcessing:'ድምጺ ናብ ጽሑፍ ይቕየር ኣሎ...',
+      recSuccess:   '✓ ድምጽኹም ናብ ጽሑፍ ተቐይሩ ኣሎ! ቅድሚ ምስዳድኩም ከተዐርዩዎ ትኽእሉ ኢኹም።',
+      recNoSpeech:  'ዝተሰምዐ ድምጺ የለን። በጃኹም ደጊምኩም ፈትኑ።',
+      recUnavailable:'ናይ ድምጺ ምቕያር ኣገልግሎት ንግዚኡ ኣይርከብን። ሕቶኹም ክትጽሕፉ ትኽእሉ ኢኹም።',
+      ttsUnavailable:'ንዚ ቋንቋ ናይ ድምጺ ኣገልግሎት ንግዚኡ ኣይርከብን። ናይ ጽሑፍ መልሲ ተዋሂቡ ኣሎ።',
+      micPermissionDenied:'ናይ ማይክሮፎን ፍቓድ ተኸልኪሉ ኣሎ። በጃኹም ኣብ ናይ መርበብ ቅጥዕታት ፍቓድ ሃቡ።'
     },
     so: {
       title:        'Kaaliyaha Savanna',
@@ -479,6 +524,17 @@
       suggestionText:'Ma doonaysaa inaad luuqadda u beddesho Soomaali?',
       switchBtn:    'Beddel',
       dismissBtn:   'Iska daa',
+      listen:       'Dhageyso',
+      stopAudio:    'Jooji',
+      audioLoading: 'Codka ayaa la soo dejinayaa...',
+      recPrompt:    'Su\'aasha waa la duubayaa... Hadda hadal.',
+      recStop:      'Jooji duubista',
+      recProcessing:'Codka waxaa loo beddelayaa qoraal...',
+      recSuccess:   '✓ Codka waxaa loo beddelay qoraal! Waad sixi kartaa inta aadan dirin.',
+      recNoSpeech:  'Wax cod ah lama helin. Fadlan mar kale isku day.',
+      recUnavailable:'Adeegga codka hadda ma heli karo. Waad qori kartaa su\'aashaada.',
+      ttsUnavailable:'Codka luuqaddan hadda ma heli karo. Jawaabta qoraalka ayaa kor ku taal.',
+      micPermissionDenied:'Ogolaanshaha makarafoonka waa la diiday. Fadlan u oggolow goobaha biraawsarka.'
     },
     ar: {
       title:        'مساعد سافانا',
@@ -517,6 +573,17 @@
       suggestionText:'هل تود تغيير اللغة إلى العربية؟',
       switchBtn:    'تغيير',
       dismissBtn:   'إلغاء',
+      listen:       'استمع',
+      stopAudio:    'إيقاف',
+      audioLoading: 'جارٍ تحميل الصوت...',
+      recPrompt:    'جارٍ تسجيل السؤال... تفضل بالكلام الآن.',
+      recStop:      'إيقاف التسجيل',
+      recProcessing:'جارٍ تحويل الصوت إلى نص...',
+      recSuccess:   '✓ تم تحويل الصوت إلى نص! يمكنك تعديل النص أدناه قبل الإرسال.',
+      recNoSpeech:  'لم يتم التقاط أي صوت. يرجى المحاولة مرة أخرى.',
+      recUnavailable:'خدمة تحويل الصوت غير متاحة حالياً. يمكنك كتابة سؤالك.',
+      ttsUnavailable:'التحويل الصوتي غير متاح حالياً لهذه اللغة. تم توفير الإجابة النصية أعلاه.',
+      micPermissionDenied:'تم رفض إذن الوصول إلى الميكروفون. يرجى منح الإذن في إعدادات المتصفح.'
     },
     sw: {
       title:        'Msaidizi wa Savanna',
@@ -555,6 +622,17 @@
       suggestionText:'Je, ungependa kubadilisha lugha kuwa Kiswahili?',
       switchBtn:    'Badilisha',
       dismissBtn:   'Ondoa',
+      listen:       'Sikiliza',
+      stopAudio:    'Simamisha',
+      audioLoading: 'Inapakia sauti...',
+      recPrompt:    'Swali linarekodiwa... Tafadhali ongea sasa.',
+      recStop:      'Simamisha kurekodi',
+      recProcessing:'Inabadilisha sauti kuwa maandishi...',
+      recSuccess:   '✓ Sauti imebadilishwa kuwa maandishi! Unaweza kuhariri kabla ya kutuma.',
+      recNoSpeech:  'Hakuna sauti iliyogunduliwa. Tafadhali jaribu tena.',
+      recUnavailable:'Huduma ya kurekodi haipatikani kwa sasa. Unaweza kuandika swali lako.',
+      ttsUnavailable:'Usomaji wa sauti haupatikani kwa sasa kwa lugha hii. Jibu la maandishi limetolewa hapo juu.',
+      micPermissionDenied:'Idhini ya maikrofoni imekataliwa. Tafadhali ruhusu katika mipangilio ya kivinjari.'
     },
     fr: {
       title:        'Assistant Savanna',
@@ -593,6 +671,17 @@
       suggestionText:'Souhaitez-vous passer au français ?',
       switchBtn:    'Changer',
       dismissBtn:   'Ignorer',
+      listen:       'Écouter',
+      stopAudio:    'Arrêter',
+      audioLoading: 'Chargement de l\'audio...',
+      recPrompt:    'Enregistrement de votre question... Parlez maintenant.',
+      recStop:      'Arrêter l\'enregistrement',
+      recProcessing:'Transcription de la voix en texte...',
+      recSuccess:   '✓ Audio transcrit ! Vous pouvez modifier le texte ci-dessous avant de l\'envoyer.',
+      recNoSpeech:  'Aucune voix détectée. Veuillez réessayer.',
+      recUnavailable:'Le service de transcription est actuellement indisponible. Vous pouvez taper votre question.',
+      ttsUnavailable:'La synthèse vocale n\'est pas disponible pour cette langue. La réponse textuelle est fournie ci-dessus.',
+      micPermissionDenied:'Accès au microphone refusé. Veuillez accorder la permission dans les paramètres du navigateur.'
     }
   };
 
@@ -776,8 +865,104 @@
     parent.postMessage({ type: 'close' }, '*');
   });
 
-  /* ── Built-in Focus Reader / Self-Voicing ─────────────────── */
+  /* ── Built-in Focus Reader & Message Audio Playback ─────── */
+  const messageAudioCache = new Map();
+  let activeMessageAudio = null;
+  let activeAudioButton = null;
   let activeAudio = null;
+
+  function stopActiveAudio() {
+    if (activeMessageAudio) {
+      try {
+        activeMessageAudio.pause();
+        activeMessageAudio.currentTime = 0;
+      } catch (_) {}
+      activeMessageAudio = null;
+    }
+    if (activeAudioButton) {
+      activeAudioButton.classList.remove('playing');
+      const t = getI18n();
+      activeAudioButton.setAttribute('aria-label', (t.listen || 'Listen') + ' to response');
+      const icon = activeAudioButton.querySelector('.audio-btn-icon');
+      const label = activeAudioButton.querySelector('.audio-btn-label');
+      if (icon) icon.textContent = '🔊';
+      if (label) label.textContent = t.listen || 'Listen';
+      activeAudioButton = null;
+    }
+  }
+
+  async function toggleMessageAudio(btn, text, lang) {
+    if (!text) return;
+    const targetLang = lang || currentLanguage || 'en';
+    const t = getI18n();
+
+    // If currently playing this message, clicking stops it
+    if (activeAudioButton === btn && activeMessageAudio && !activeMessageAudio.paused) {
+      stopActiveAudio();
+      return;
+    }
+
+    // Stop any other active message audio
+    stopActiveAudio();
+
+    const icon = btn.querySelector('.audio-btn-icon');
+    const label = btn.querySelector('.audio-btn-label');
+    if (label) label.textContent = t.audioLoading || 'Loading...';
+    btn.setAttribute('aria-label', t.audioLoading || 'Loading audio...');
+
+    const cacheKey = targetLang + ':' + text;
+
+    try {
+      let audioUrl = messageAudioCache.get(cacheKey);
+      if (!audioUrl) {
+        const resp = await fetch(apiUrl + '/speech/synthesize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text, language: targetLang })
+        });
+
+        if (resp.status === 501) {
+          showError(t.ttsUnavailable || 'Voice synthesis not yet available for this language. Text response is provided above.');
+          if (label) label.textContent = t.listen || 'Listen';
+          btn.setAttribute('aria-label', (t.listen || 'Listen') + ' to response');
+          return;
+        }
+
+        if (!resp.ok) {
+          showError(t.recUnavailable || 'Voice synthesis currently unavailable.');
+          if (label) label.textContent = t.listen || 'Listen';
+          btn.setAttribute('aria-label', (t.listen || 'Listen') + ' to response');
+          return;
+        }
+
+        const blob = await resp.blob();
+        audioUrl = URL.createObjectURL(blob);
+        messageAudioCache.set(cacheKey, audioUrl);
+      }
+
+      const audio = new Audio(audioUrl);
+      activeMessageAudio = audio;
+      activeAudioButton = btn;
+
+      btn.classList.add('playing');
+      btn.setAttribute('aria-label', (t.stopAudio || 'Stop') + ' reading response');
+      if (icon) icon.textContent = '⏹️';
+      if (label) label.textContent = t.stopAudio || 'Stop';
+
+      audio.onended = function () {
+        stopActiveAudio();
+      };
+      audio.onerror = function () {
+        stopActiveAudio();
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.error('[Savanna widget] Audio playback error:', err);
+      stopActiveAudio();
+      showError(t.recUnavailable || 'Voice playback error.');
+    }
+  }
 
   async function playSpeechAudio(text, lang) {
     if (!text) return;
@@ -974,6 +1159,25 @@
     li.appendChild(bubble);
     li.appendChild(ts);
 
+    if (role === 'assistant' && content) {
+      const audioControls = document.createElement('div');
+      audioControls.className = 'message-audio-controls';
+      const listenBtn = document.createElement('button');
+      listenBtn.type = 'button';
+      listenBtn.className = 'btn-audio-speak';
+      const t = getI18n();
+      listenBtn.setAttribute('aria-label', (t.listen || 'Listen') + ' to response');
+      listenBtn.innerHTML = '<span class="audio-btn-icon" aria-hidden="true">🔊</span> <span class="audio-btn-label">' + (t.listen || 'Listen') + '</span>';
+
+      const cleanContent = content.replace(/\[\d+\]/g, '').trim();
+      const msgLang = currentLanguage;
+      listenBtn.addEventListener('click', function () {
+        toggleMessageAudio(listenBtn, cleanContent, msgLang);
+      });
+      audioControls.appendChild(listenBtn);
+      li.appendChild(audioControls);
+    }
+
     if (citations && citations.length > 0) {
       const citeDiv = document.createElement('div');
       citeDiv.className = 'citations';
@@ -1083,10 +1287,7 @@
       appendMessage('assistant', reply, cites, ethDate);
       history.push({ role: 'assistant', content: reply });
 
-      /* TTS: Natural multi-lingual speech readout */
-      if (reply) {
-        playSpeechAudio(reply.replace(/\[\d+\]/g, ''), currentLanguage);
-      }
+      /* Note: TTS is on-demand via the "Listen" button on each message (never auto-played) */
 
       /* Notify parent of content height change */
       const totalH = document.documentElement.scrollHeight;
@@ -1100,9 +1301,10 @@
     }
   }
 
-  /* ── Voice input (Dual-Mode: Web Speech API + MediaRecorder fallback) ── */
+  /* ── Voice input (Dual-Mode: Server STT / MediaRecorder + Web Speech API) ── */
   let mediaRecorder = null;
   let audioChunks = [];
+  const voiceStatusBanner = document.getElementById('voice-recording-status');
 
   function setupVoice() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1115,6 +1317,23 @@
       return;
     }
 
+    function setRecordingState(recording) {
+      isListening = recording;
+      const t = getI18n();
+      voiceBtn.setAttribute('aria-pressed', recording ? 'true' : 'false');
+      voiceBtn.setAttribute('aria-label', recording ? (t.voiceStop || 'Stop voice input') : (t.voiceStart || 'Start voice input'));
+      voiceBtn.style.color = recording ? 'var(--c-error)' : '';
+    }
+
+    function stopVoiceRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        try { mediaRecorder.stop(); } catch (_) {}
+      } else if (recognition) {
+        try { recognition.stop(); } catch (_) {}
+      }
+      setRecordingState(false);
+    }
+
     if (SR) {
       try {
         recognition = new SR();
@@ -1124,23 +1343,41 @@
 
         recognition.addEventListener('result', function (e) {
           const transcript = e.results[0][0].transcript;
-          chatInput.value = (chatInput.value ? chatInput.value + ' ' : '') + transcript;
-          chatInput.dispatchEvent(new Event('input'));
+          if (transcript) {
+            chatInput.value = (chatInput.value ? chatInput.value + ' ' : '') + transcript;
+            chatInput.dispatchEvent(new Event('input'));
+            chatInput.focus();
+            if (voiceStatusBanner) {
+              voiceStatusBanner.className = 'voice-status-banner success';
+              voiceStatusBanner.style.display = 'flex';
+              const t = getI18n();
+              voiceStatusBanner.textContent = t.recSuccess || '✓ Audio transcribed! You can edit text below before sending.';
+              speakFocus(t.recSuccess || 'Speech transcribed. Review your question in the text box and press Send.');
+              setTimeout(function () {
+                if (voiceStatusBanner.classList.contains('success')) voiceStatusBanner.style.display = 'none';
+              }, 4500);
+            }
+          }
         });
 
         recognition.addEventListener('end', function () {
-          isListening = false;
-          voiceBtn.setAttribute('aria-pressed', 'false');
-          voiceBtn.setAttribute('aria-label', getI18n().voiceStart);
-          voiceBtn.style.color = '';
+          setRecordingState(false);
+          if (voiceStatusBanner && voiceStatusBanner.classList.contains('recording')) {
+            voiceStatusBanner.style.display = 'none';
+          }
         });
 
         recognition.addEventListener('error', function (e) {
-          isListening = false;
-          voiceBtn.setAttribute('aria-pressed', 'false');
-          voiceBtn.style.color = '';
+          setRecordingState(false);
+          if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
           if (e.error === 'language-not-supported' && hasMedia) {
             startMediaRecording();
+          } else if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+            const t = getI18n();
+            showError(t.micPermissionDenied || 'Microphone access denied. Please grant permission in browser settings.');
+          } else if (e.error === 'no-speech') {
+            const t = getI18n();
+            showError(t.recNoSpeech || 'No speech detected. Please try again.');
           } else {
             showError('Voice input error: ' + e.error);
           }
@@ -1149,36 +1386,64 @@
     }
 
     async function startMediaRecording() {
+      const t = getI18n();
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioChunks = [];
         mediaRecorder = new MediaRecorder(stream);
+
         mediaRecorder.ondataavailable = function (e) {
           if (e.data.size > 0) audioChunks.push(e.data);
         };
+
         mediaRecorder.onstop = async function () {
-          stream.getTracks().forEach(function (t) { t.stop(); });
+          stream.getTracks().forEach(function (track) { track.stop(); });
           const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
           if (audioBlob.size > 0) {
             await uploadAndTranscribe(audioBlob);
+          } else {
+            if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+            showError(t.recNoSpeech || 'No speech detected. Please try again.');
           }
         };
+
         mediaRecorder.start();
-        isListening = true;
-        voiceBtn.setAttribute('aria-pressed', 'true');
-        voiceBtn.setAttribute('aria-label', getI18n().voiceStop);
-        voiceBtn.style.color = 'var(--c-error)';
+        setRecordingState(true);
+
+        if (voiceStatusBanner) {
+          voiceStatusBanner.className = 'voice-status-banner recording';
+          voiceStatusBanner.style.display = 'flex';
+          voiceStatusBanner.innerHTML = '<span class="rec-pulse-dot" aria-hidden="true"></span> <span>' + (t.recPrompt || 'Recording question... Speak now.') + '</span> <button type="button" class="btn-rec-stop" id="btn-banner-rec-stop">' + (t.stopAudio || 'Stop') + '</button>';
+          const stopBtn = document.getElementById('btn-banner-rec-stop');
+          if (stopBtn) {
+            stopBtn.onclick = function (e) {
+              e.stopPropagation();
+              stopVoiceRecording();
+            };
+          }
+        }
+        speakFocus(t.recPrompt || 'Recording question... Speak now, then click Stop.');
       } catch (err) {
-        isListening = false;
-        voiceBtn.setAttribute('aria-pressed', 'false');
-        voiceBtn.style.color = '';
-        showError('Microphone access error: ' + (err.message || err));
+        setRecordingState(false);
+        if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          showError(t.micPermissionDenied || 'Microphone access denied. Please grant permission in browser settings.');
+        } else {
+          showError('Microphone error: ' + (err.message || err));
+        }
       }
     }
 
     async function uploadAndTranscribe(blob) {
+      const t = getI18n();
       try {
-        showThinking();
+        if (voiceStatusBanner) {
+          voiceStatusBanner.className = 'voice-status-banner processing';
+          voiceStatusBanner.style.display = 'flex';
+          voiceStatusBanner.innerHTML = '<span class="thinking-dot" style="margin-right:6px"></span> <span>' + (t.recProcessing || 'Transcribing speech...') + '</span>';
+        }
+        speakFocus(t.recProcessing || 'Transcribing speech...');
+
         const formData = new FormData();
         formData.append('file', blob, 'recording.webm');
         formData.append('language', currentLanguage);
@@ -1187,51 +1452,70 @@
           method: 'POST',
           body: formData
         });
-        removeThinking();
+
         if (resp.ok) {
           const data = await resp.json();
-          if (data.text) {
-            chatInput.value = (chatInput.value ? chatInput.value + ' ' : '') + data.text;
+          if (data.text && data.text.trim()) {
+            chatInput.value = (chatInput.value ? chatInput.value + ' ' : '') + data.text.trim();
             chatInput.dispatchEvent(new Event('input'));
             chatInput.focus();
+
+            if (voiceStatusBanner) {
+              voiceStatusBanner.className = 'voice-status-banner success';
+              voiceStatusBanner.style.display = 'flex';
+              voiceStatusBanner.textContent = t.recSuccess || '✓ Audio transcribed! You can edit text below before sending.';
+              speakFocus(t.recSuccess || 'Speech transcribed. Review your question in the text box and press Send.');
+              setTimeout(function () {
+                if (voiceStatusBanner.classList.contains('success')) voiceStatusBanner.style.display = 'none';
+              }, 4500);
+            }
+          } else {
+            if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+            showError(t.recNoSpeech || 'No speech detected. Please try again.');
           }
+        } else if (resp.status === 501) {
+          if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+          showError('Speech transcription not implemented for this language.');
         } else {
-          showError('Voice transcription could not be completed.');
+          if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+          showError(t.recUnavailable || 'Transcription service currently unavailable. You can type your question.');
         }
       } catch (err) {
-        removeThinking();
-        showError('Transcription error: ' + (err.message || err));
+        if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+        showError(t.recUnavailable || 'Transcription error: ' + (err.message || err));
       }
     }
 
     voiceBtn.addEventListener('click', function () {
       if (isListening) {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-          mediaRecorder.stop();
-        } else if (recognition) {
-          try { recognition.stop(); } catch (_) {}
-        }
-        isListening = false;
-        voiceBtn.setAttribute('aria-pressed', 'false');
-        voiceBtn.setAttribute('aria-label', getI18n().voiceStart);
-        voiceBtn.style.color = '';
+        stopVoiceRecording();
       } else {
-        const serverPreferredLanguages = ['om', 'ti', 'so'];
+        const serverPreferredLanguages = ['am', 'om', 'ti', 'so'];
         if (serverPreferredLanguages.indexOf(currentLanguage) !== -1 && hasMedia) {
+          startMediaRecording();
+        } else if (hasMedia) {
           startMediaRecording();
         } else if (recognition) {
           try {
             recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
             recognition.start();
-            isListening = true;
-            voiceBtn.setAttribute('aria-pressed', 'true');
-            voiceBtn.setAttribute('aria-label', getI18n().voiceStop);
-            voiceBtn.style.color = 'var(--c-error)';
+            setRecordingState(true);
+            const t = getI18n();
+            if (voiceStatusBanner) {
+              voiceStatusBanner.className = 'voice-status-banner recording';
+              voiceStatusBanner.style.display = 'flex';
+              voiceStatusBanner.innerHTML = '<span class="rec-pulse-dot" aria-hidden="true"></span> <span>' + (t.recPrompt || 'Recording question... Speak now.') + '</span> <button type="button" class="btn-rec-stop" id="btn-banner-rec-stop">' + (t.stopAudio || 'Stop') + '</button>';
+              const stopBtn = document.getElementById('btn-banner-rec-stop');
+              if (stopBtn) {
+                stopBtn.onclick = function (e) {
+                  e.stopPropagation();
+                  stopVoiceRecording();
+                };
+              }
+            }
           } catch (_) {
             if (hasMedia) startMediaRecording();
           }
-        } else if (hasMedia) {
-          startMediaRecording();
         }
       }
     });

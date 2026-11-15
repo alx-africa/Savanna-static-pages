@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3"
 
+    # Speech Providers (STT & TTS)
+    stt_provider: str = "addisai"        # addisai | whisper | offline
+    tts_provider: str = "edgetts"        # edgetts | addisai | offline
+    addis_api_key: str = ""
+    addis_api_base_url: str = "https://api.addisassistant.com"
+
     # Telegram
     telegram_bot_token: str = ""
 
