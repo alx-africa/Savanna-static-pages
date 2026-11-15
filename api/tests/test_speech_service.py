@@ -139,31 +139,31 @@ class TestEdgeTTSProvider(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(NotImplementedError):
             await provider.synthesize("Tigrigna test", language="ti")
 
-    def test_segment_bilingual_utterance(self):
-        from speech.edgetts_provider import _segment_bilingual_utterance
+    def test_prepare_natural_speech_utterance(self):
+        from speech.edgetts_provider import _prepare_natural_speech_utterance
 
-        # 1. Pure Latin in Amharic session routes to JennyNeural
-        segments = _segment_bilingual_utterance("Virtual Assistant", "am", "am-ET-MekdesNeural")
-        self.assertEqual(len(segments), 1)
-        self.assertEqual(segments[0], ("Virtual Assistant", "en-US-JennyNeural"))
+        # 1. Pure Latin in Amharic session routes directly to JennyNeural
+        synth_text, voice = _prepare_natural_speech_utterance("Virtual Assistant", "am", "am-ET-MekdesNeural")
+        self.assertEqual(voice, "en-US-JennyNeural")
+        self.assertEqual(synth_text, "Virtual Assistant")
 
         # 2. Pure Ethiopic routes to MekdesNeural
-        segments = _segment_bilingual_utterance("ሰላም እንደምን አላችሁ", "am", "am-ET-MekdesNeural")
-        self.assertEqual(len(segments), 1)
-        self.assertEqual(segments[0], ("ሰላም እንደምን አላችሁ", "am-ET-MekdesNeural"))
+        synth_text, voice = _prepare_natural_speech_utterance("ሰላም እንደምን አላችሁ", "am", "am-ET-MekdesNeural")
+        self.assertEqual(voice, "am-ET-MekdesNeural")
+        self.assertEqual(synth_text, "ሰላም እንደምን አላችሁ")
 
-        # 3. Mixed bilingual splits cleanly into native voice segments without XML tags
-        segments = _segment_bilingual_utterance("ይህ Virtual Assistant ትምህርት ነው።", "am", "am-ET-MekdesNeural")
-        self.assertEqual(len(segments), 3)
-        self.assertEqual(segments[0], ("ይህ", "am-ET-MekdesNeural"))
-        self.assertEqual(segments[1], ("Virtual Assistant", "en-US-JennyNeural"))
-        self.assertEqual(segments[2], ("ትምህርት ነው።", "am-ET-MekdesNeural"))
+        # 3. Mixed bilingual phonetically expands English terms into smooth Amharic syllables
+        synth_text, voice = _prepare_natural_speech_utterance("ይህ Virtual Assistant ትምህርት ነው።", "am", "am-ET-MekdesNeural")
+        self.assertEqual(voice, "am-ET-MekdesNeural")
+        self.assertIn("ቨርቹዋል አሲስታንት", synth_text)
+        self.assertNotIn("Virtual", synth_text)
 
-        # 4. Multi-word English technical terms
-        segments = _segment_bilingual_utterance("የ AI ረዳት ሶፍትዌሮች እንደ ChatGPT እና Claude", "am", "am-ET-MekdesNeural")
-        voices = [s[1] for s in segments]
-        self.assertIn("en-US-JennyNeural", voices)
-        self.assertIn("am-ET-MekdesNeural", voices)
+        # 4. Multi-word technical acronyms and terms
+        synth_text, voice = _prepare_natural_speech_utterance("የ AI ረዳት ሶፍትዌሮች እንደ ChatGPT እና Claude", "am", "am-ET-MekdesNeural")
+        self.assertEqual(voice, "am-ET-MekdesNeural")
+        self.assertIn("ኤአይ", synth_text)
+        self.assertIn("ቻት ጂፒቲ", synth_text)
+        self.assertIn("ክላውድ", synth_text)
 
 
 class TestSpeechServiceCoordinator(unittest.IsolatedAsyncioTestCase):

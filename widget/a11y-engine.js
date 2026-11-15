@@ -2992,11 +2992,14 @@
 
     let prefix = '';
     const tag = node.tagName.toLowerCase();
-    if (/^h[1-6]$/.test(tag)) {
-      const level = tag[1];
+    const role = (node.getAttribute('role') || '').toLowerCase();
+    if (/^h[1-6]$/.test(tag) || role === 'heading') {
+      const level = tag[1] || node.getAttribute('aria-level') || '2';
       prefix = (currentLang === 'am') ? `ርዕስ ${level}፡ ` : `Heading level ${level}: `;
     } else if (node.classList.contains('callout') || node.closest('.callout')) {
       prefix = (currentLang === 'am') ? `ማሳሰቢያ፡ ` : `Important note: `;
+    } else if (node.classList.contains('job-card') || role === 'article') {
+      prefix = (currentLang === 'am') ? `የሥራ ማስታወቂያ፡ ` : `Job opening: `;
     }
 
     // If student selected Amharic but the educational paragraph is in English,
@@ -3222,10 +3225,13 @@
       }
     });
 
-    // 4. Enrich Educational Content Paragraphs & Headings for Sequential Reading
-    const contentRoots = document.querySelectorAll(
-      '#curriculum_navigation_content, .formatted-content, .savanna-styles, article, main'
-    );
+    // 4. Enrich Educational & Portal Content Elements for Sequential Reading (Universal Scalability across any site)
+    let contentRoots = Array.from(document.querySelectorAll(
+      'main, article, [role="main"], #curriculum_navigation_content, .formatted-content, .savanna-styles, #jobs-container, .job-details, .job-card, .job-listing, .career-portal, .container, section'
+    ));
+    if (contentRoots.length === 0) {
+      contentRoots = [document.body || document.documentElement];
+    }
 
     // Normalize any bare inline text nodes (e.g. <mark> and raw text directly in container) into proper paragraphs
     contentRoots.forEach(root => {
@@ -3256,7 +3262,7 @@
       flushRun();
     });
     
-    const textSelectors = 'h1, h2, h3, h4, h5, p, .callout, blockquote, li';
+    const textSelectors = 'h1, h2, h3, h4, h5, h6, [role="heading"], p, .callout, blockquote, li, [role="article"], .job-card, .job-card-title, .job-card-snippet, .job-details';
     const textNodes = [];
 
     contentRoots.forEach(root => {
@@ -3275,7 +3281,7 @@
         if (el.closest('.callout') && !el.classList.contains('callout')) {
           return;
         }
-        if (el.tagName === 'LI' && el.closest('h1, h2, h3, h4, h5')) {
+        if (el.tagName === 'LI' && el.closest('h1, h2, h3, h4, h5, h6')) {
           return;
         }
         if (el.tagName === 'P' && el.parentElement && el.parentElement.tagName === 'LI') {

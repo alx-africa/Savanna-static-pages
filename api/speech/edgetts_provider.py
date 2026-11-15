@@ -55,52 +55,211 @@ _DEFAULT_EDGE_VOICES: dict[str, str] = {
 }
 
 
-def _segment_bilingual_utterance(text: str, lang: str, default_voice: str) -> list[tuple[str, str]]:
+# Comprehensive dictionary of technical, educational, and job-board English terms
+# mapped to canonical Ethiopian Amharic phonetic pronunciation
+ENGLISH_TO_AMHARIC_PHONETICS: dict[str, str] = {
+    # Acronyms & Short forms
+    "ai": "ኤአይ",
+    "api": "ኤፒአይ",
+    "ui": "ዩአይ",
+    "ux": "ዩኤክስ",
+    "it": "አይቲ",
+    "hr": "ኤችአር",
+    "qa": "ኪውኤ",
+    "pr": "ፒአር",
+    "ceo": "ሲኢኦ",
+    "cto": "ሲቲኦ",
+    "cfo": "ሲኤፍኦ",
+    "url": "ዩአርኤል",
+    "html": "ኤችቲኤምኤል",
+    "css": "ሲኤስኤስ",
+    "js": "ጄኤስ",
+    "pdf": "ፒዲኤፍ",
+    "lms": "ኤልኤምኤስ",
+    "cv": "ሲቪ",
+    "faq": "ኤፍኤኪው",
+    "id": "አይዲ",
+    "app": "አፕ",
+    "apps": "አፕስ",
+    "pc": "ፒሲ",
+    "os": "ኦኤስ",
+    "wcag": "ደብሊውሲኤጂ",
+
+    # Professional Roles & Technical Concepts
+    "virtual assistant": "ቨርቹዋል አሲስታንት",
+    "virtual": "ቨርቹዋል",
+    "assistant": "አሲስታንት",
+    "software": "ሶፍትዌር",
+    "hardware": "ሃርድዌር",
+    "online": "ኦንላይን",
+    "offline": "ኦፍላይን",
+    "digital": "ዲጂታል",
+    "internet": "ኢንተርኔት",
+    "chat": "ቻት",
+    "chatbot": "ቻትቦት",
+    "chatgpt": "ቻት ጂፒቲ",
+    "claude": "ክላውድ",
+    "gemini": "ጄሚናይ",
+    "email": "ኢሜይል",
+    "computer": "ኮምፒውተር",
+    "website": "ዌብሳይት",
+    "web": "ዌብ",
+    "remote": "ሪሞት",
+    "data": "ዳታ",
+    "cloud": "ክላውድ",
+    "code": "ኮድ",
+    "coding": "ኮዲንግ",
+    "developer": "ዲቨሎፐር",
+    "development": "ዲቨሎፕመንት",
+    "engineer": "ኢንጅነር",
+    "engineering": "ኢንጅነሪንግ",
+    "manager": "ማናጀር",
+    "management": "ማኔጅመንት",
+    "specialist": "ስፔሻሊስት",
+    "expert": "ኤክስፐርት",
+    "consultant": "ኮንሰልታንት",
+    "support": "ሰፖርት",
+    "service": "ሰርቪስ",
+    "services": "ሰርቪሶች",
+    "senior": "ሲኒየር",
+    "junior": "ጁኒየር",
+    "full-time": "ፉል ታይም",
+    "part-time": "ፓርት ታይም",
+    "contract": "ኮንትራት",
+    "freelance": "ፍሪላንስ",
+    "internship": "ኢንተርንሺፕ",
+    "login": "ሎጊን",
+    "sign in": "ሳይን ኢን",
+    "sign up": "ሳይን አፕ",
+    "logout": "ሎግ አውት",
+    "dashboard": "ዳሽቦርድ",
+    "filter": "ፊልተር",
+    "filters": "ፊልተሮች",
+    "search": "ሰርች",
+    "profile": "ፕሮፋይል",
+    "settings": "ሴቲንግስ",
+    "status": "ስታተስ",
+    "role": "ሮል",
+    "post": "ፖስት",
+    "posted": "ፖስት የተደረገ",
+    "jobs": "ጆብስ",
+    "job": "ጆብ",
+    "resume": "ሬዙሜ",
+    "portfolio": "ፖርትፎሊዮ",
+    "project": "ፕሮጀክት",
+    "projects": "ፕሮጀክቶች",
+    "task": "ታስክ",
+    "tasks": "ታስኮች",
+    "calendar": "ካላንደር",
+    "slack": "ስላክ",
+    "zoom": "ዙም",
+    "notion": "ኖሽን",
+    "google": "ጉግል",
+    "microsoft": "ማይክሮሶፍት",
+    "linkedin": "ሊንክድኢን",
+    "facebook": "ፌስቡክ",
+    "twitter": "ትዊተር",
+    "instagram": "ኢንስታግራም",
+    "canva": "ካንቫ",
+    "workspace": "ዎርክስፔስ",
+    "feedback": "ፊድባክ",
+    "system": "ሲስተም",
+    "systems": "ሲስተሞች",
+    "network": "ኔትወርክ",
+    "server": "ሰርቨር",
+    "client": "ክላይንት",
+    "clients": "ክላይንቶች",
+    "link": "ሊንክ",
+    "button": "በትን",
+    "menu": "ሜኑ",
+    "click": "ክሊክ",
+    "tab": "ታብ",
+    "course": "ኮርስ",
+    "courses": "ኮርሶች",
+    "module": "ሞጁል",
+    "modules": "ሞጁሎች",
+    "lesson": "ሌሰን",
+    "lessons": "ሌሰኖች",
+    "certificate": "ሰርተፊኬት",
+    "level": "ሌቨል",
+    "admin": "አድሚን",
+    "office": "ኦፊስ",
+    "call": "ኮል",
+    "video": "ቪዲዮ",
+    "audio": "ኦዲዮ",
+    "phone": "ፎን",
+    "python": "ፓይተን",
+    "javascript": "ጃቫስክሪፕት",
+    "react": "ሪአክት",
+    "kubernetes": "ኩበርኔትስ",
+    "microservices": "ማይክሮሰርቪሰስ"
+}
+
+
+def _prepare_natural_speech_utterance(text: str, lang: str, default_voice: str) -> tuple[str, str]:
     """
-    Intelligently segment code-switched bilingual utterances.
-    Prevents Edge-TTS from reading English/Latin words using Amharic/Ethiopic phonetics.
-    Each segment is paired with its native voice for seamless parallel synthesis.
+    Scalable, zero-delay speech preparation.
+    Prevents engine switching pauses by naturally phonetizing English technical terms
+    and acronyms inside Amharic sentences so they synthesize in one continuous, fluid stream.
+    Pure English utterances route cleanly to en-US-JennyNeural.
     """
     clean_text = text.strip()
     if not clean_text:
-        return []
+        return "", default_voice
+
     if lang != "am":
-        return [(clean_text, default_voice)]
+        return clean_text, default_voice
 
     has_ethiopic = bool(re.search(r"[\u1200-\u137F]", clean_text))
     has_latin = bool(re.search(r"[a-zA-Z]", clean_text))
 
-    # Case 1: Pure Latin / English words in an Amharic session -> speak with native English voice
+    # Case 1: Pure Latin / English utterance -> speak with native English voice
     if has_latin and not has_ethiopic:
-        return [(clean_text, "en-US-JennyNeural")]
+        return clean_text, "en-US-JennyNeural"
 
-    # Case 2: Pure Ethiopic text -> speak with Amharic voice
-    if not (has_latin and has_ethiopic):
-        return [(clean_text, default_voice)]
+    # Case 2: Pure Ethiopic utterance -> speak directly with Amharic voice
+    if not has_latin:
+        return clean_text, default_voice
 
-    # Case 3: Mixed bilingual text -> split into English clusters vs Ethiopic clusters
-    tokens = re.split(r"([A-Za-z0-9\+\#\.\-]+(?:\s+[A-Za-z0-9\+\#\.\-]+)*)", clean_text)
-    raw_segments: list[tuple[str, str]] = []
-    for token in tokens:
-        if not token:
-            continue
-        if re.search(r"[a-zA-Z]", token) and not re.search(r"[\u1200-\u137F]", token):
-            raw_segments.append((token.strip(), "en-US-JennyNeural"))
-        else:
-            t = token.strip()
-            if t:
-                raw_segments.append((t, default_voice))
+    # Case 3: Mixed bilingual sentence (Amharic containing English words/acronyms/terms)
+    # Phonetize English tokens into authentic Ethiopic syllables for continuous single-stream audio
+    result = clean_text
 
-    # Merge adjacent segments sharing the same voice
-    merged: list[tuple[str, str]] = []
-    for seg_text, seg_voice in raw_segments:
-        if not seg_text:
-            continue
-        if merged and merged[-1][1] == seg_voice:
-            merged[-1] = (merged[-1][0] + " " + seg_text, seg_voice)
-        else:
-            merged.append((seg_text, seg_voice))
-    return merged
+    # 1. Multi-word phrases first
+    for phrase, am_phonetic in sorted(ENGLISH_TO_AMHARIC_PHONETICS.items(), key=lambda x: len(x[0]), reverse=True):
+        if " " in phrase or "-" in phrase:
+            pattern = re.compile(rf"\b{re.escape(phrase)}\b", re.IGNORECASE)
+            result = pattern.sub(am_phonetic, result)
+
+    # 2. Single-word matches & acronyms
+    for word, am_phonetic in sorted(ENGLISH_TO_AMHARIC_PHONETICS.items(), key=lambda x: len(x[0]), reverse=True):
+        if " " not in word and "-" not in word:
+            pattern = re.compile(rf"\b{re.escape(word)}\b", re.IGNORECASE)
+            result = pattern.sub(am_phonetic, result)
+
+    # 3. Rule-based phoneme transliteration for any remaining unseen English words
+    def _transliterate_unseen_word(m: re.Match[str]) -> str:
+        w = m.group(0).lower()
+        if w in ENGLISH_TO_AMHARIC_PHONETICS:
+            return ENGLISH_TO_AMHARIC_PHONETICS[w]
+        rules = [
+            ("tion", "ሽን"), ("sion", "ሽን"), ("ment", "መንት"), ("ing", "ኢንግ"),
+            ("ch", "ች"), ("sh", "ሽ"), ("th", "ስ"), ("ph", "ፍ"), ("wh", "ው"),
+            ("qu", "ክው"), ("ck", "ክ"), ("ee", "ኢ"), ("ea", "ኢ"), ("oo", "ኡ"),
+            ("ou", "አው"), ("ai", "ኤ"), ("ay", "ኤ"), ("b", "ብ"), ("c", "ክ"),
+            ("d", "ድ"), ("f", "ፍ"), ("g", "ግ"), ("h", "ህ"), ("j", "ጅ"),
+            ("k", "ክ"), ("l", "ል"), ("m", "ም"), ("n", "ን"), ("p", "ፕ"),
+            ("r", "ር"), ("s", "ስ"), ("t", "ት"), ("v", "ቭ"), ("w", "ው"),
+            ("x", "ክስ"), ("y", "ይ"), ("z", "ዝ"), ("a", "አ"), ("e", "ኤ"),
+            ("i", "ኢ"), ("o", "ኦ"), ("u", "ኡ")
+        ]
+        out = w
+        for en_sub, am_sub in rules:
+            out = out.replace(en_sub, am_sub)
+        return out
+
+    result = re.sub(r"[a-zA-Z]+", _transliterate_unseen_word, result)
+    return result, default_voice
 
 
 class EdgeTTSProvider(BaseTTSProvider):
@@ -118,7 +277,7 @@ class EdgeTTSProvider(BaseTTSProvider):
         return EDGE_VOICE_CATALOG
 
     async def _stream_segment(self, segment_text: str, voice: str) -> bytes:
-        """Stream a single text segment through Edge-TTS into MP3 bytes."""
+        """Stream a text segment through Edge-TTS into MP3 bytes."""
         communicate = edge_tts.Communicate(text=segment_text, voice=voice)
         buf = bytearray()
         async for chunk in communicate.stream():
@@ -139,33 +298,22 @@ class EdgeTTSProvider(BaseTTSProvider):
             )
 
         default_voice = voice or _DEFAULT_EDGE_VOICES[lang]
-        segments = _segment_bilingual_utterance(text, lang, default_voice)
-        if not segments:
+        synth_text, active_voice = _prepare_natural_speech_utterance(text, lang, default_voice)
+        if not synth_text:
             raise ValueError("Cannot synthesize empty text.")
 
-        async def _synthesize_all() -> bytes:
-            if len(segments) == 1:
-                seg_text, seg_voice = segments[0]
-                return await self._stream_segment(seg_text, seg_voice)
-
-            # Concurrent synthesis of code-switched bilingual segments
-            try:
-                tasks = [self._stream_segment(s_txt, s_vc) for s_txt, s_vc in segments]
-                chunk_list = await asyncio.gather(*tasks)
-                return b"".join(chunk_list)
-            except Exception as exc:
-                logger.warning("Segmented synthesis failed, falling back to unified voice: %s", exc)
-                return await self._stream_segment(text.strip(), default_voice)
-
         try:
-            audio_buffer = await asyncio.wait_for(_synthesize_all(), timeout=self.timeout)
+            audio_buffer = await asyncio.wait_for(
+                self._stream_segment(synth_text, active_voice),
+                timeout=self.timeout
+            )
             if not audio_buffer:
                 raise RuntimeError("Edge-TTS produced no audio frames.")
 
             return TTSResult(
                 audio_bytes=audio_buffer,
                 media_type="audio/mpeg",
-                voice_name=default_voice,
+                voice_name=active_voice,
                 language=lang,
                 provider="edge-tts",
             )

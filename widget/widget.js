@@ -381,7 +381,29 @@
       'Close': 'ዝጋ',
       'Open': 'ክፈት',
       'Next': 'ቀጣይ',
-      'Previous': 'ቀዳሚ'
+      'Previous': 'ቀዳሚ',
+      'Apply Now': 'አሁን ያመልክቱ',
+      'Apply': 'ያመልክቱ',
+      'Save Job': 'ሥራውን ያስቀምጡ',
+      'Saved Jobs': 'የተቀመጡ ሥራዎች',
+      'Submit Application': 'ማመልከቻ ያስገቡ',
+      'Filter Jobs': 'ሥራዎችን ያጣሩ',
+      'Search Jobs': 'ሥራዎችን ይፈልጉ',
+      'Search': 'ፈልግ',
+      'Remote': 'የርቀት ሥራ',
+      'Full-time': 'ሙሉ ጊዜ',
+      'Part-time': 'የትርፍ ጊዜ',
+      'Contract': 'የኮንትራት',
+      'View Details': 'ዝርዝር ይመልከቱ',
+      'Clear Filters': 'ማጣሪያዎችን አጽዳ',
+      'Back': 'ተመለስ',
+      'Cancel': 'ይቅር',
+      'Submit': 'አስገባ',
+      'Download': 'አውርድ',
+      'Upload': 'ጫን',
+      'Sign In': 'ይግቡ',
+      'Sign Up': 'ይመዝገቡ',
+      'Log Out': 'ይውጡ'
     };
 
     let label = el.getAttribute('aria-label') || '';
@@ -389,8 +411,9 @@
     if (!label && el.innerText && el.innerText.trim().length > 0) {
       label = el.innerText.trim();
     }
-    if (curLang === 'am' && COMMON_AMHARIC_LABELS[label]) {
-      label = COMMON_AMHARIC_LABELS[label];
+    const cleanLabel = label.replace(/\s+/g, ' ').trim();
+    if (curLang === 'am' && COMMON_AMHARIC_LABELS[cleanLabel]) {
+      label = COMMON_AMHARIC_LABELS[cleanLabel];
     }
     let role = el.getAttribute('role');
     if (!role) {
