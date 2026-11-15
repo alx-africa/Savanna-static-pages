@@ -55,13 +55,49 @@ _DEFAULT_EDGE_VOICES: dict[str, str] = {
 }
 
 
+def _normalize_speech_punctuation(text: str, lang: str) -> str:
+    """
+    Ensure natural speech rhythm, breathing pauses, and clause boundaries.
+    
+    Acoustic neural TTS engines (e.g. Edge-TTS am-ET-MekdesNeural) tokenize Western
+    punctuation ('.', ',', ';', '?', '!') into acoustic pause and intonation tokens,
+    but treat Ethiopic punctuation (።, ፣, ፤, ፧) as non-breaking glyphs, causing the
+    AI to speak continuously in a run-on sentence without pausing.
+    
+    This function converts Ethiopic and non-breaking punctuation into acoustic cadence
+    markers without altering the phonetic pronunciation:
+      - '።' (Arat Neteb / Full stop) -> '. ' (400-500ms sentence drop & pause)
+      - '፣' (Netela Neteb / Comma)   -> ', ' (200ms phrase pause)
+      - '፤' (Dered Neteb / Semicolon)-> '; ' (300ms clause pause)
+      - '፧' (Question Mark)          -> '? ' (interrogative intonation pause)
+      - '፡' (Clause separator)       -> ': ' (when followed by space)
+    """
+    if lang in ("am", "ti"):
+        # Map Ethiopic full stop to full stop + space
+        t = re.sub(r"።\s*", ". ", text)
+        # Map Ethiopic comma to comma + space
+        t = re.sub(r"፣\s*", ", ", t)
+        # Map Ethiopic semicolon to semicolon + space
+        t = re.sub(r"፤\s*", "; ", t)
+        # Map Ethiopic question mark to question mark + space
+        t = re.sub(r"፧\s*", "? ", t)
+        # Map Ethiopic word separator before space to colon + space
+        t = re.sub(r"፡(?=\s+[A-Za-z\u1200-\u137F]|$)", ": ", t)
+        # Clean up repeated punctuation
+        t = re.sub(r"\.+", ".", t)
+        t = re.sub(r",+", ",", t)
+        t = re.sub(r";+", ";", t)
+        t = re.sub(r"\s+", " ", t).strip()
+        return t
+    return text
+
+
 def _prepare_natural_speech_utterance(text: str, lang: str, default_voice: str) -> tuple[str, str]:
     """
-    Scalable, zero-delay voice routing for Edge-TTS.
+    Scalable, zero-delay voice routing for Edge-TTS with natural punctuation cadence.
     
     1. Pure English utterances route cleanly to en-US-JennyNeural with native pronunciation.
-    2. Amharic utterances route directly to am-ET-MekdesNeural in a single continuous stream
-       without artificial delays or WebSocket switching gaps.
+    2. Amharic utterances route directly to am-ET-MekdesNeural with natural punctuation pauses.
     """
     clean_text = text.strip()
     if not clean_text:
@@ -77,7 +113,8 @@ def _prepare_natural_speech_utterance(text: str, lang: str, default_voice: str) 
     if has_latin and not has_ethiopic:
         return clean_text, "en-US-JennyNeural"
 
-    # Case 2: Ethiopic text -> speak in a single continuous stream with Amharic voice
+    # Case 2: Ethiopic text -> normalize punctuation pauses and speak with Amharic voice
+    clean_text = _normalize_speech_punctuation(clean_text, lang)
     return clean_text, default_voice
 
 

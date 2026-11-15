@@ -2673,8 +2673,27 @@
   let activeA11yAbort = null;
   const a11yAudioCache = new Map();
 
+  function normalizeSpeechPunctuation(text, lang) {
+    if (!text) return '';
+    if (lang === 'am' || lang === 'ti') {
+      return text
+        .replace(/።\s*/g, '. ')
+        .replace(/፣\s*/g, ', ')
+        .replace(/፤\s*/g, '; ')
+        .replace(/፧\s*/g, '? ')
+        .replace(/፡(?=\s+[A-Za-z\u1200-\u137F]|$)/g, ': ')
+        .replace(/\.+/g, '.')
+        .replace(/,+/g, ',')
+        .replace(/;+/g, ';')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+    return text;
+  }
+
   async function speakVisualDescription(text) {
     if (!text) return;
+    const cleanText = normalizeSpeechPunctuation(text, currentLang);
     const bcp47 = BCP47_A11Y[currentLang] || 'en-US';
 
     // 1. Try native browser voice if available for this language
@@ -2686,7 +2705,7 @@
         if (hasVoice) {
           if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
           return new Promise(resolve => {
-            const utt = new SpeechSynthesisUtterance(text);
+            const utt = new SpeechSynthesisUtterance(cleanText);
             utt.lang = bcp47;
             utt.rate = 1.0;
             utt.onend = () => resolve();
@@ -2709,7 +2728,7 @@
       }
       activeA11yAbort = new AbortController();
 
-      const cacheKey = currentLang + ':' + text;
+      const cacheKey = currentLang + ':' + cleanText;
       let audioUrl = a11yAudioCache.get(cacheKey);
       if (!audioUrl) {
         const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl)
@@ -2718,7 +2737,7 @@
         const resp = await fetch(apiUrl + '/speech/synthesize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text, language: currentLang }),
+          body: JSON.stringify({ text: cleanText, language: currentLang }),
           signal: activeA11yAbort.signal
         });
         if (resp.ok) {
