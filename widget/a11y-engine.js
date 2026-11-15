@@ -432,6 +432,17 @@
       localStorage.setItem(LANG_KEY, currentLang);
       updateModalLanguage(backdrop);
       announce(currentLang === 'am' ? 'ቋንቋ ወደ አማርኛ ተቀይሯል' : 'Language set to English');
+      window.dispatchEvent(new CustomEvent('savanna:set_language', { detail: { lang: currentLang } }));
+    });
+
+    window.addEventListener('savanna:language_changed', (e) => {
+      if (e.detail && e.detail.lang) {
+        const newLang = e.detail.lang;
+        currentLang = (newLang === 'am' || newLang === 'ti') ? 'am' : 'en';
+        if (!backdrop.hasAttribute('hidden')) {
+          updateModalLanguage(backdrop);
+        }
+      }
     });
 
     // Save Button

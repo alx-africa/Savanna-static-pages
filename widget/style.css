@@ -421,6 +421,53 @@ details[open] summary::before { transform: rotate(90deg); }
   margin-inline: 0.75rem;
 }
 
+/* ── Language Suggestion Banner ────────────────────────────── */
+.lang-suggestion-banner {
+  background: var(--c-primary-bg);
+  border-block-end: 1px solid var(--c-border-light);
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--c-text);
+}
+
+.lang-suggestion-banner[hidden] {
+  display: none !important;
+}
+
+.suggestion-content {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.suggestion-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.suggestion-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.btn-sm {
+  padding-block: 0.25rem;
+  padding-inline: 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}
+
 /* ── Input area ────────────────────────────────────────────── */
 .input-area {
   flex-shrink: 0;

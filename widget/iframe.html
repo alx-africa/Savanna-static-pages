@@ -109,6 +109,19 @@
   <!-- ── Ticket confirmation zone ───────────────────────── -->
   <div id="ticket-zone" aria-live="polite" aria-atomic="true"></div>
 
+  <!-- ── Language suggestion banner ─────────────────────── -->
+  <aside id="lang-suggestion-banner" class="lang-suggestion-banner" hidden
+         role="region" aria-label="Language suggestion">
+    <div class="suggestion-content">
+      <span class="suggestion-icon" aria-hidden="true">🌐</span>
+      <span id="suggestion-text">Would you like to switch language?</span>
+    </div>
+    <div class="suggestion-actions">
+      <button type="button" id="suggestion-accept-btn" class="btn btn-sm btn-primary">Switch</button>
+      <button type="button" id="suggestion-dismiss-btn" class="btn btn-sm btn-ghost">Dismiss</button>
+    </div>
+  </aside>
+
   <!-- ── Message area ────────────────────────────────────── -->
   <div class="message-area" aria-label="Conversation">
     <ul id="message-list"
@@ -196,9 +209,10 @@
 (function () {
   'use strict';
 
-  /* ── Resolve API base URL from query param ───────────────── */
-  const params  = new URLSearchParams(window.location.search);
-  const apiUrl  = (params.get('api') || '').replace(/\/$/, '') || '/api';
+  /* ── Resolve API base URL & initial language ────────────── */
+  const params    = new URLSearchParams(window.location.search);
+  const apiUrl    = (params.get('api') || '').replace(/\/$/, '') || '/api';
+  const paramLang = params.get('lang');
 
   /* ── Session & history ───────────────────────────────────── */
   const SESSION_KEY = 'savanna_session_id';
@@ -213,53 +227,68 @@
   const history   = []; // { role: 'user'|'assistant', content: string }
 
   /* ── Language state (8-Language Matrix + Auto-Detect) ────── */
-  const LANG_KEY    = 'savanna_lang';
-  const VOICE_GUIDE_KEY = 'savanna_voice_guide';
-  const SIMPLE_MODE_KEY = 'savanna_simple_mode';
-  let   currentLanguage = localStorage.getItem(LANG_KEY) || 'auto';
-  let   voiceGuideEnabled = localStorage.getItem(VOICE_GUIDE_KEY) !== 'false';
-  let   simpleModeEnabled = localStorage.getItem(SIMPLE_MODE_KEY) === 'true';
-  let   isListening = false;
-  let   recognition = null;
+  const LANG_KEY          = 'savanna_lang';
+  const VOICE_GUIDE_KEY   = 'savanna_voice_guide';
+  const SIMPLE_MODE_KEY   = 'savanna_simple_mode';
+  const USER_CHOSEN_KEY   = 'savanna_lang_user_chosen';
+  const SUGGESTION_DISMISSED_KEY = 'savanna_suggestion_dismissed';
 
   const BCP47_MAP = {
     'en': 'en-US',
     'am': 'am-ET',
     'ti': 'ti-ET',
     'ar': 'ar-SA',
-    'om': 'en-US',
+    'om': 'om-ET',
     'so': 'so-SO',
     'sw': 'sw-KE',
     'fr': 'fr-FR',
     'auto': 'en-US'
   };
 
-  /* ── DOM refs ────────────────────────────────────────────── */
-  const htmlEl        = document.documentElement;
-  const widgetTitle   = document.getElementById('widget-title');
-  const langSelect    = document.getElementById('lang-select');
-  const langToggleBtn = document.getElementById('lang-toggle-btn');
-  const voiceGuideBtn = document.getElementById('voice-guide-btn');
-  const simpleModeBtn = document.getElementById('simple-mode-btn');
-  const closeBtn      = document.getElementById('close-btn');
-  const minimizeBtn   = document.getElementById('minimize-btn');
-  const messageList   = document.getElementById('message-list');
-  const chatInput     = document.getElementById('chat-input');
-  const inputLabel    = document.querySelector('.input-label');
-  const sendBtn       = document.getElementById('send-btn');
-  const sendBtnLabel  = document.getElementById('send-btn-label');
-  const voiceBtn      = document.getElementById('voice-btn');
-  const escalateBtn   = document.getElementById('escalate-btn');
-  const escalateLabel = document.getElementById('escalate-label');
-  const errorZone     = document.getElementById('error-zone');
-  const ticketZone    = document.getElementById('ticket-zone');
-  const escalModal    = document.getElementById('escalation-modal');
-  const modalConfirm  = document.getElementById('modal-confirm-btn');
-  const modalCancel   = document.getElementById('modal-cancel-btn');
-  const modalTitle    = document.getElementById('modal-title');
-  const modalDesc     = document.querySelector('#escalation-modal p');
+  let currentLanguage = localStorage.getItem(LANG_KEY);
+  if (!currentLanguage) {
+    if (paramLang && (paramLang === 'auto' || BCP47_MAP[paramLang])) {
+      currentLanguage = paramLang;
+    } else {
+      currentLanguage = 'auto';
+    }
+  }
 
-  /* ── i18n strings ────────────────────────────────────────── */
+  let voiceGuideEnabled = localStorage.getItem(VOICE_GUIDE_KEY) !== 'false';
+  let simpleModeEnabled = localStorage.getItem(SIMPLE_MODE_KEY) === 'true';
+  let isListening = false;
+  let recognition = null;
+
+  /* ── DOM refs ────────────────────────────────────────────── */
+  const htmlEl            = document.documentElement;
+  const widgetTitle       = document.getElementById('widget-title');
+  const langSelect        = document.getElementById('lang-select');
+  const langToggleBtn     = document.getElementById('lang-toggle-btn');
+  const voiceGuideBtn     = document.getElementById('voice-guide-btn');
+  const simpleModeBtn     = document.getElementById('simple-mode-btn');
+  const closeBtn          = document.getElementById('close-btn');
+  const minimizeBtn       = document.getElementById('minimize-btn');
+  const messageList       = document.getElementById('message-list');
+  const chatInput         = document.getElementById('chat-input');
+  const inputLabel        = document.querySelector('.input-label');
+  const sendBtn           = document.getElementById('send-btn');
+  const sendBtnLabel      = document.getElementById('send-btn-label');
+  const voiceBtn          = document.getElementById('voice-btn');
+  const escalateBtn       = document.getElementById('escalate-btn');
+  const escalateLabel     = document.getElementById('escalate-label');
+  const errorZone         = document.getElementById('error-zone');
+  const ticketZone        = document.getElementById('ticket-zone');
+  const escalModal        = document.getElementById('escalation-modal');
+  const modalConfirm      = document.getElementById('modal-confirm-btn');
+  const modalCancel       = document.getElementById('modal-cancel-btn');
+  const modalTitle        = document.getElementById('modal-title');
+  const modalDesc         = document.querySelector('#escalation-modal p');
+  const suggestionBanner  = document.getElementById('lang-suggestion-banner');
+  const suggestionText    = document.getElementById('suggestion-text');
+  const suggestionAccept  = document.getElementById('suggestion-accept-btn');
+  const suggestionDismiss = document.getElementById('suggestion-dismiss-btn');
+
+  /* ── i18n strings (8 languages + fallback) ────────────────── */
   const i18n = {
     en: {
       title:        'Savanna Assistant',
@@ -294,6 +323,10 @@
       modalCancel:  'Cancel',
       modalConfirm: 'Share & Connect',
       escalateAlert:'Live help desk opened. Share your screen with a human agent?',
+      welcome:      'Savanna assistant opened. Type your message or use voice.',
+      suggestionText:'Would you like to switch language?',
+      switchBtn:    'Switch',
+      dismissBtn:   'Dismiss',
     },
     am: {
       title:        'ሳቫና ረዳት',
@@ -328,78 +361,379 @@
       modalCancel:  'ይቅር',
       modalConfirm: 'አጋራና ተገናኝ',
       escalateAlert:'የቀጥታ እርዳታ ጠረጴዛ ተከፍቷል። ከሰው ወኪል ጋር ስክሪንዎን ያጋሩ?',
+      welcome:      'ሳቫና ረዳት ተከፍቷል። መልዕክትዎን በእንግሊዝኛ ወይም በአማርኛ ይፃፉ።',
+      suggestionText:'ቋንቋዎን ወደ አማርኛ መቀየር ይፈልጋሉ?',
+      switchBtn:    'ቀይር',
+      dismissBtn:   'ተወው',
+    },
+    om: {
+      title:        'Gargaaraa Savanna',
+      langLabel:    'Afaan filadhaa',
+      langBtn:      'OM',
+      inputPlaceholder: 'Ergaa barreessi (Afaan Oromoo, English...)',
+      send:         'Ergi',
+      voiceStart:   'Sagalee jalqabi',
+      voiceStop:    'Sagalee dhaabi',
+      escalate:     'Gargaarsa namaa argadhaa',
+      closeLabel:   'Gargaaraa cufi',
+      minimiseLabel:'Gargaaraa xiqqeessi',
+      thinking:     'Yaadaa jira…',
+      voiceGuideOn: 'Qajeelchi sagalee banaadha. Cufuuf cuqaasaa.',
+      voiceGuideOff:'Qajeelchi sagalee cufaadha. Banuuf cuqaasaa.',
+      voiceGuideActive: 'Qajeelchi sagalee hojjetaa jira',
+      voiceGuideInactive: 'Qajeelchi sagalee dhaabbateera',
+      simpleModeOn: 'Haalli salphaan banaadha. Cufuuf cuqaasaa.',
+      simpleModeOff:'Haalli salphaan cufaadha. Banuuf cuqaasaa.',
+      simpleModeActive: 'Haalli salphaan banameera. Ibsi ifaa fi salphaa ta\'a.',
+      simpleModeInactive: 'Haalli salphaan cufameera.',
+      roleButton:   'qabduu',
+      roleLink:     'hidhata',
+      roleTextEntry:'galmee barreeffamaa',
+      statePressed: 'cuqaasameera',
+      stateNotPressed: 'hin cuqaasamne',
+      stateExpanded:'bal\'ateera',
+      stateCollapsed:'dudduubatti deebi\'eera',
+      stateDisabled:'hojii ala',
+      modalTitle:   'Iskiriinii keessan ogeessa wajjin qoodduu?',
+      modalDesc:    'Gargaarsa dhuunfaa argachuuf, gargaaraan iskiriinii keessan ilaala. Waan qooddan isintu filata. Yeroo barbaaddan dhaabuu dandeessu.',
+      modalCancel:  'Dhiisi',
+      modalConfirm: 'Qoodiitii Wal-qunnami',
+      escalateAlert:'Tajaajilli gargaarsa kallattii banameera. Iskiriinii keessan qoodduu?',
+      welcome:      'Gargaaraan Savanna banameera. Ergaa keessan barreessaa ykn dubbadhaa.',
+      suggestionText:'Afaan gara Afaan Oromootti jijjiiruu barbaadduu?',
+      switchBtn:    'Jijjiiri',
+      dismissBtn:   'Dhiisi',
+    },
+    ti: {
+      title:        'ሳቫና ሓጋዚ',
+      langLabel:    'ቋንቋ ምረጹ',
+      langBtn:      'TI',
+      inputPlaceholder: 'መልእኽቲ ጸሓፉ (ትግርኛ፣ እንግሊዝኛ...)',
+      send:         'ስደድ',
+      voiceStart:   'ናይ ድምጺ ምእታው ጀምር',
+      voiceStop:    'ናይ ድምጺ ምእታው ኣቋርጽ',
+      escalate:     'ናይ ሰብ ሓገዝ ርኸቡ',
+      closeLabel:   'ሓጋዚ ዕጸዉ',
+      minimiseLabel:'ሓጋዚ ኣንእስ',
+      thinking:     'ይሓስብ ኣሎ…',
+      voiceGuideOn: 'ናይ ድምጺ መምርሒ በርሀ። ንምዕጻው ጠውቑ።',
+      voiceGuideOff:'ናይ ድምጺ መምርሒ ጠፍአ። ንምብራህ ጠውቑ።',
+      voiceGuideActive: 'ናይ ድምጺ መምርሒ ተኸፊቱ ኣሎ',
+      voiceGuideInactive: 'ናይ ድምጺ መምርሒ ተዓጽዩ ኣሎ',
+      simpleModeOn: 'ቀሊል ሁነታ በርሀ። ንምዕጻው ጠውቑ።',
+      simpleModeOff:'ቀሊል ሁነታ ጠፍአ። ንምብራህ ጠውቑ።',
+      simpleModeActive: 'ቀሊል ሁነታ ተኸፊቱ ኣሎ። መብርሂታት ብቐሊል ቃላት ይኸውን።',
+      simpleModeInactive: 'ቀሊል ሁነታ ተዓጽዩ ኣሎ።',
+      roleButton:   'መልጎም',
+      roleLink:     'መላገቢ',
+      roleTextEntry:'መእተዊ ጽሑፍ',
+      statePressed: 'ተጠዊቑ',
+      stateNotPressed: 'ኣይተጠወቐን',
+      stateExpanded:'ተዘርጊሑ',
+      stateCollapsed:'ተዓጺፉ',
+      stateDisabled:'ተሰናኺሉ',
+      modalTitle:   'ስክሪንኩም ምስ ሰብ ወኪል ከተካፍሉ ትደልዩዶ?',
+      modalDesc:    'ብሕታዊ ሓገዝ ንምርካብ፣ ሓደ ኦፕሬተር ስክሪንኩም ክርኢ እዩ። እንታይ ከም እተካፍሉ ባዕልኹም ትመርጹ። ኣብ ዝኾነ ግዜ ደው ከተብሉዎ ትኽእሉ ኢኹም።',
+      modalCancel:  'ይቕረታ',
+      modalConfirm: 'ኣካፍልን ተራኸብን',
+      escalateAlert:'ቀጥታዊ ናይ ሓገዝ ሰሌዳ ተኸፊቱ ኣሎ። ስክሪንኩም ከተካፍሉ ትደልዩዶ?',
+      welcome:      'ሳቫና ሓጋዚ ተኸፊቱ ኣሎ። መልእኽትኹም ጸሓፉ ወይ ብድምጺ ተዛረቡ።',
+      suggestionText:'ቋንቋ ናብ ትግርኛ ክቕየር ትደልዩዶ?',
+      switchBtn:    'ቐይር',
+      dismissBtn:   'ሕደጎ',
+    },
+    so: {
+      title:        'Kaaliyaha Savanna',
+      langLabel:    'Dooro luuqadda',
+      langBtn:      'SO',
+      inputPlaceholder: 'Farriin qor (Soomaali, English...)',
+      send:         'Dir',
+      voiceStart:   'Bilow codka',
+      voiceStop:    'Jooji codka',
+      escalate:     'Hel caawimaad qof ah',
+      closeLabel:   'Xir kaaliyaha',
+      minimiseLabel:'Yaree kaaliyaha',
+      thinking:     'Fikiraya…',
+      voiceGuideOn: 'Tilmaamaha codka waa shidan yahay. Guji si aad u damiso.',
+      voiceGuideOff:'Tilmaamaha codka waa dansan yahay. Guji si aad u shido.',
+      voiceGuideActive: 'Tilmaamaha codka waa la shiday',
+      voiceGuideInactive: 'Tilmaamaha codka waa la damiyay',
+      simpleModeOn: 'Qaabka fudud waa shidan yahay. Guji si aad u damiso.',
+      simpleModeOff:'Qaabka fudud waa dansan yahay. Guji si aad u shido.',
+      simpleModeActive: 'Qaabka fudud waa shidan yahay. Sharraxaadu waxay noqon doontaa mid fudud.',
+      simpleModeInactive: 'Qaabka fudud waa la damiyay.',
+      roleButton:   'badhan',
+      roleLink:     'xiriir',
+      roleTextEntry:'meel qoraal',
+      statePressed: 'la riixay',
+      stateNotPressed: 'aan la riixin',
+      stateExpanded:'la fidiyay',
+      stateCollapsed:'la laabay',
+      stateDisabled:'shaqaynayn',
+      modalTitle:   'Shaashaddaada ma la wadaagaysaa shaqaale caawinaad ah?',
+      modalDesc:    'Si aad u hesho caawimaad shaqsiyeed, shaqaale ayaa daawan doona shaashaddaada. Waxaad dooran kartaa waxaad wadaagayso. Waad joojin kartaa waqti kasta.',
+      modalCancel:  'Jooji',
+      modalConfirm: 'Wadaag oo Ku Xirno',
+      escalateAlert:'Miiska caawimaada tooska ah waa la furay. Shaashaddaada ma la wadaagaysaa qof?',
+      welcome:      'Kaaliyaha Savanna waa furan yahay. Qor farriintaada ama isticmaal codka.',
+      suggestionText:'Ma doonaysaa inaad luuqadda u beddesho Soomaali?',
+      switchBtn:    'Beddel',
+      dismissBtn:   'Iska daa',
+    },
+    ar: {
+      title:        'مساعد سافانا',
+      langLabel:    'اختر اللغة',
+      langBtn:      'AR',
+      inputPlaceholder: 'اكتب رسالتك (العربية، الإنجليزية...)',
+      send:         'إرسال',
+      voiceStart:   'بدء الإدخال الصوتي',
+      voiceStop:    'إيقاف الإدخال الصوتي',
+      escalate:     'طلب مساعدة بشرية',
+      closeLabel:   'إغلاق المساعد',
+      minimiseLabel:'تصغير المساعد',
+      thinking:     'جارٍ التفكير…',
+      voiceGuideOn: 'الإرشاد الصوتي مفعّل. انقر للتعطيل.',
+      voiceGuideOff:'الإرشاد الصوتي معطّل. انقر للتفعيل.',
+      voiceGuideActive: 'تم تفعيل الإرشاد الصوتي',
+      voiceGuideInactive: 'تم تعطيل الإرشاد الصوتي',
+      simpleModeOn: 'الوضع المبسط مفعّل. انقر للتعطيل.',
+      simpleModeOff:'الوضع المبسط معطّل. انقر للتفعيل.',
+      simpleModeActive: 'تم تفعيل الوضع المبسط. ستكون الشروحات بلغة واضحة وميسرة.',
+      simpleModeInactive: 'تم تعطيل الوضع المبسط.',
+      roleButton:   'زر',
+      roleLink:     'رابط',
+      roleTextEntry:'إدخال نص',
+      statePressed: 'مضغوط',
+      stateNotPressed: 'غير مضغوط',
+      stateExpanded:'موسع',
+      stateCollapsed:'مطوي',
+      stateDisabled:'معطل',
+      modalTitle:   'هل ترغب في مشاركة شاشتك مع مرشد بشري؟',
+      modalDesc:    'للحصول على مساعدة مخصصة، سيشاهد وكيل الدعم شاشتك. يمكنك اختيار ما تريد مشاركته، ويمكنك إيقاف المشاركة في أي وقت.',
+      modalCancel:  'إلغاء',
+      modalConfirm: 'مشاركة واتصال',
+      escalateAlert:'تم فتح مكتب المساعدة المباشرة. هل ترغب في مشاركة شاشتك؟',
+      welcome:      'تم فتح مساعد سافانا. اكتب رسالتك أو استخدم صوتك.',
+      suggestionText:'هل تود تغيير اللغة إلى العربية؟',
+      switchBtn:    'تغيير',
+      dismissBtn:   'إلغاء',
+    },
+    sw: {
+      title:        'Msaidizi wa Savanna',
+      langLabel:    'Chagua lugha',
+      langBtn:      'SW',
+      inputPlaceholder: 'Andika ujumbe (Kiswahili, Kiingereza...)',
+      send:         'Tuma',
+      voiceStart:   'Anza kuongea',
+      voiceStop:    'Sitisha sauti',
+      escalate:     'Pata usaidizi wa mtu',
+      closeLabel:   'Funga msaidizi',
+      minimiseLabel:'Punguza msaidizi',
+      thinking:     'Inafikiria…',
+      voiceGuideOn: 'Mwongozo wa sauti umewashwa. Bofya ili kuzima.',
+      voiceGuideOff:'Mwongozo wa sauti umezimwa. Bofya ili kuwasha.',
+      voiceGuideActive: 'Mwongozo wa sauti umewashwa',
+      voiceGuideInactive: 'Mwongozo wa sauti umezimwa',
+      simpleModeOn: 'Hali rahisi imewashwa. Bofya ili kuzima.',
+      simpleModeOff:'Hali rahisi imezimwa. Bofya ili kuwasha.',
+      simpleModeActive: 'Hali rahisi imewashwa. Maelezo yatakuwa kwa lugha rahisi.',
+      simpleModeInactive: 'Hali rahisi imezimwa.',
+      roleButton:   'kitufe',
+      roleLink:     'kiungo',
+      roleTextEntry:'uandishi wa maandishi',
+      statePressed: 'imebonyezwa',
+      stateNotPressed: 'haijabonyezwa',
+      stateExpanded:'imepanuliwa',
+      stateCollapsed:'imekunjwa',
+      stateDisabled:'imezimwa',
+      modalTitle:   'Shiriki skrini yako na msaidizi wa kibinadamu?',
+      modalDesc:    'Ili kupata usaidizi maalum, msaidizi ataangalia skrini yako. Utachagua unachotaka kushiriki na unaweza kusitisha wakati wowote.',
+      modalCancel:  'Ghairi',
+      modalConfirm: 'Shiriki na Unganisha',
+      escalateAlert:'Dawati la usaidizi la moja kwa moja limefunguliwa. Shiriki skrini yako na msaidizi?',
+      welcome:      'Msaidizi wa Savanna amefunguliwa. Andika ujumbe wako au tumia sauti.',
+      suggestionText:'Je, ungependa kubadilisha lugha kuwa Kiswahili?',
+      switchBtn:    'Badilisha',
+      dismissBtn:   'Ondoa',
+    },
+    fr: {
+      title:        'Assistant Savanna',
+      langLabel:    'Choisir la langue',
+      langBtn:      'FR',
+      inputPlaceholder: 'Écrivez un message (Français, Anglais...)',
+      send:         'Envoyer',
+      voiceStart:   'Démarrer la voix',
+      voiceStop:    'Arrêter la voix',
+      escalate:     'Obtenir de l\'aide humaine',
+      closeLabel:   'Fermer l\'assistant',
+      minimiseLabel:'Réduire l\'assistant',
+      thinking:     'Réflexion en cours…',
+      voiceGuideOn: 'Guidage vocal activé. Cliquez pour désactiver.',
+      voiceGuideOff:'Guidage vocal désactivé. Cliquez pour activer.',
+      voiceGuideActive: 'Guidage vocal activé',
+      voiceGuideInactive: 'Guidage vocal désactivé',
+      simpleModeOn: 'Mode simple activé. Cliquez pour désactiver.',
+      simpleModeOff:'Mode simple désactivé. Cliquez pour activer.',
+      simpleModeActive: 'Mode simple activé. Les explications utiliseront un vocabulaire simplifié.',
+      simpleModeInactive: 'Mode simple désactivé.',
+      roleButton:   'bouton',
+      roleLink:     'lien',
+      roleTextEntry:'champ de texte',
+      statePressed: 'enfoncé',
+      stateNotPressed: 'non enfoncé',
+      stateExpanded:'développé',
+      stateCollapsed:'réduit',
+      stateDisabled:'désactivé',
+      modalTitle:   'Partager votre écran avec un assistant humain ?',
+      modalDesc:    'Pour obtenir une aide personnalisée, un opérateur consultera votre écran. Vous choisissez ce que vous partagez et pouvez interrompre à tout moment.',
+      modalCancel:  'Annuler',
+      modalConfirm: 'Partager et se connecter',
+      escalateAlert:'Assistance en direct ouverte. Partager votre écran avec un opérateur ?',
+      welcome:      'Assistant Savanna ouvert. Écrivez votre message ou utilisez votre voix.',
+      suggestionText:'Souhaitez-vous passer au français ?',
+      switchBtn:    'Changer',
+      dismissBtn:   'Ignorer',
     }
   };
 
+  function getI18n() {
+    if (currentLanguage !== 'auto' && i18n[currentLanguage]) {
+      return i18n[currentLanguage];
+    }
+    return i18n.en;
+  }
+
   /* ── Apply language & RTL handling ───────────────────────── */
   function applyLanguage() {
-    const isAm = (currentLanguage === 'am' || currentLanguage === 'ti');
     const isRtl = (currentLanguage === 'ar');
-    const t = isAm ? i18n.am : i18n.en;
+    const t = getI18n();
 
     htmlEl.setAttribute('lang', (currentLanguage === 'auto') ? 'en' : currentLanguage);
     htmlEl.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
 
     if (langSelect) langSelect.value = currentLanguage;
 
-    const titles = {
-      'en': 'Savanna Assistant',
-      'am': 'ሳቫና ረዳት',
-      'om': 'Gargaaraa Savanna',
-      'ti': 'ሳቫና ሓጋዚ',
-      'so': 'Kaaliyaha Savanna',
-      'ar': 'مساعد سافانا',
-      'sw': 'Msaidizi wa Savanna',
-      'fr': 'Assistant Savanna',
-      'auto': 'Savanna Assistant'
-    };
-    widgetTitle.textContent = titles[currentLanguage] || titles['en'];
+    widgetTitle.textContent = t.title;
 
     voiceGuideBtn.setAttribute('aria-label', voiceGuideEnabled ? t.voiceGuideOn : t.voiceGuideOff);
     voiceGuideBtn.setAttribute('aria-pressed', voiceGuideEnabled ? 'true' : 'false');
     voiceGuideBtn.style.opacity = voiceGuideEnabled ? '1' : '0.6';
+
     simpleModeBtn.setAttribute('aria-label', simpleModeEnabled ? t.simpleModeOn : t.simpleModeOff);
     simpleModeBtn.setAttribute('aria-pressed', simpleModeEnabled ? 'true' : 'false');
     simpleModeBtn.style.background = simpleModeEnabled ? 'rgba(255,255,255,0.3)' : '';
     simpleModeBtn.style.opacity = simpleModeEnabled ? '1' : '0.6';
 
-    const placeholders = {
-      'en': 'Message (English, Amharic, Oromo, Arabic...)',
-      'am': 'መልእክት ይፃፉ (በአማርኛ፣ ኦሮምኛ፣ አረብኛ...)',
-      'om': 'Ergaa barreessi (Afaan Oromoo, English...)',
-      'ti': 'መልእኽቲ ጸሓፉ (ትግርኛ፣ እንግሊዝኛ...)',
-      'so': 'Farriin qor (Soomaali, English...)',
-      'ar': 'اكتب رسالتك (العربية، الإنجليزية...)',
-      'sw': 'Andika ujumbe (Kiswahili, Kiingereza...)',
-      'fr': 'Écrivez un message (Français, Anglais...)',
-      'auto': 'Message (English, Amharic, Oromo, Arabic...)'
-    };
-    inputLabel.textContent = placeholders[currentLanguage] || placeholders['en'];
+    inputLabel.textContent = t.inputPlaceholder;
+    chatInput.setAttribute('placeholder', t.inputPlaceholder);
+    chatInput.setAttribute('aria-label', t.inputPlaceholder);
     chatInput.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
 
-    sendBtnLabel.textContent  = (currentLanguage === 'ar') ? 'إرسال' : t.send;
+    sendBtnLabel.textContent  = t.send;
     sendBtn.setAttribute('aria-label', t.send + ' message');
     voiceBtn.setAttribute('aria-label', isListening ? t.voiceStop : t.voiceStart);
-    escalateLabel.textContent = (currentLanguage === 'ar') ? 'مساعدة' : t.escalate;
+    escalateLabel.textContent = t.escalate;
     escalateBtn.setAttribute('aria-label', t.escalate + ' — escalate to a human agent');
     closeBtn.setAttribute('aria-label',    t.closeLabel);
     minimizeBtn.setAttribute('aria-label', t.minimiseLabel);
 
-    if (modalTitle) modalTitle.textContent = (currentLanguage === 'ar') ? 'هل ترغب في مشاركة شاشتك مع مرشد بشري؟' : t.modalTitle;
-    if (modalDesc) modalDesc.textContent = (currentLanguage === 'ar') ? 'للحصول على مساعدة مخصصة، سيشاهد وكيل الدعم شاشتك. يمكنك إيقاف المشاركة في أي وقت.' : t.modalDesc;
-    if (modalCancel) modalCancel.textContent = (currentLanguage === 'ar') ? 'إلغاء' : t.modalCancel;
-    if (modalConfirm) modalConfirm.textContent = (currentLanguage === 'ar') ? 'مشاركة واتصال' : t.modalConfirm;
+    if (modalTitle) modalTitle.textContent = t.modalTitle;
+    if (modalDesc) modalDesc.textContent = t.modalDesc;
+    if (modalCancel) modalCancel.textContent = t.modalCancel;
+    if (modalConfirm) modalConfirm.textContent = t.modalConfirm;
 
     localStorage.setItem(LANG_KEY, currentLanguage);
     if (recognition) recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
+
+    try {
+      parent.postMessage({ type: 'savanna:lang_change', lang: currentLanguage }, '*');
+    } catch (_) {}
   }
 
   applyLanguage();
+
+  /* ── Accessible Regional Language Suggestion Banner ───────── */
+  const REGIONAL_SUGGESTIONS = {
+    'Africa/Khartoum': 'ar',
+    'Africa/Juba': 'ar',
+    'Africa/Mogadishu': 'so',
+    'Africa/Nairobi': 'sw',
+    'Africa/Asmara': 'ti',
+    'Africa/Djibouti': 'so',
+    'Africa/Cairo': 'ar'
+  };
+
+  const LANG_NAMES = {
+    'en': 'English',
+    'am': 'አማርኛ',
+    'om': 'Afaan Oromoo',
+    'ti': 'ትግርኛ',
+    'so': 'Soomaali',
+    'ar': 'العربية',
+    'sw': 'Kiswahili',
+    'fr': 'Français'
+  };
+
+  function checkLanguageSuggestion() {
+    if (!suggestionBanner) return;
+    if (sessionStorage.getItem(SUGGESTION_DISMISSED_KEY)) return;
+    if (localStorage.getItem(USER_CHOSEN_KEY) === 'true') return;
+
+    let candidate = null;
+
+    // 1. Check browser navigator languages
+    const browserLangs = navigator.languages || [navigator.language || ''];
+    for (const bl of browserLangs) {
+      const code = (bl || '').toLowerCase().split(/[-_]/)[0];
+      if (code && code !== 'en' && BCP47_MAP[code]) {
+        candidate = code;
+        break;
+      }
+    }
+
+    // 2. Coarse regional timezone hint
+    if (!candidate) {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        if (REGIONAL_SUGGESTIONS[tz]) {
+          candidate = REGIONAL_SUGGESTIONS[tz];
+        } else if (tz === 'Africa/Addis_Ababa' && currentLanguage === 'en') {
+          candidate = 'am';
+        }
+      } catch (_) {}
+    }
+
+    if (candidate && candidate !== currentLanguage && candidate !== 'en') {
+      const targetI18n = i18n[candidate] || i18n.en;
+      suggestionText.textContent = targetI18n.suggestionText || `Would you like to switch to ${LANG_NAMES[candidate]}?`;
+      suggestionAccept.textContent = targetI18n.switchBtn || 'Switch';
+      suggestionDismiss.textContent = targetI18n.dismissBtn || 'Dismiss';
+      suggestionBanner.removeAttribute('hidden');
+
+      suggestionAccept.onclick = function () {
+        currentLanguage = candidate;
+        localStorage.setItem(USER_CHOSEN_KEY, 'true');
+        applyLanguage();
+        suggestionBanner.setAttribute('hidden', '');
+        speakFocus((LANG_NAMES[candidate] || candidate) + ' selected');
+      };
+
+      suggestionDismiss.onclick = function () {
+        suggestionBanner.setAttribute('hidden', '');
+        sessionStorage.setItem(SUGGESTION_DISMISSED_KEY, 'true');
+      };
+    }
+  }
+
+  // Run suggestion check on load
+  setTimeout(checkLanguageSuggestion, 300);
 
   /* ── Language Selector Listener ──────────────────────────── */
   if (langSelect) {
     langSelect.addEventListener('change', function () {
       currentLanguage = langSelect.value;
+      localStorage.setItem(USER_CHOSEN_KEY, 'true');
+      if (suggestionBanner) suggestionBanner.setAttribute('hidden', '');
       applyLanguage();
       const speakMap = {
         'en': 'Language set to English',
@@ -421,10 +755,8 @@
     voiceGuideEnabled = !voiceGuideEnabled;
     localStorage.setItem(VOICE_GUIDE_KEY, voiceGuideEnabled ? 'true' : 'false');
     applyLanguage();
-    const msg = voiceGuideEnabled
-      ? (isAmharic ? i18n.am.voiceGuideActive : i18n.en.voiceGuideActive)
-      : (isAmharic ? i18n.am.voiceGuideInactive : i18n.en.voiceGuideInactive);
-    speakFocus(msg);
+    const t = getI18n();
+    speakFocus(voiceGuideEnabled ? t.voiceGuideActive : t.voiceGuideInactive);
   });
 
   /* ── Simple Mode (plain language) toggle ─────────────────── */
@@ -432,17 +764,8 @@
     simpleModeEnabled = !simpleModeEnabled;
     localStorage.setItem(SIMPLE_MODE_KEY, simpleModeEnabled ? 'true' : 'false');
     applyLanguage();
-    const msg = simpleModeEnabled
-      ? (isAmharic ? i18n.am.simpleModeActive : i18n.en.simpleModeActive)
-      : (isAmharic ? i18n.am.simpleModeInactive : i18n.en.simpleModeInactive);
-    speakFocus(msg);
-  });
-    localStorage.setItem(VOICE_GUIDE_KEY, voiceGuideEnabled ? 'true' : 'false');
-    applyLanguage();
-    const msg = voiceGuideEnabled
-      ? (isAmharic ? i18n.am.voiceGuideActive : i18n.en.voiceGuideActive)
-      : (isAmharic ? i18n.am.voiceGuideInactive : i18n.en.voiceGuideInactive);
-    speakFocus(msg);
+    const t = getI18n();
+    speakFocus(simpleModeEnabled ? t.simpleModeActive : t.simpleModeInactive);
   });
 
   /* ── Close / minimise ────────────────────────────────────── */
@@ -459,7 +782,7 @@
     try {
       window.speechSynthesis.cancel();
       const utt = new SpeechSynthesisUtterance(text);
-      utt.lang = BCP47_MAP[currentLanguage] || (isAmharic ? 'am-ET' : 'en-US');
+      utt.lang = BCP47_MAP[currentLanguage] || 'en-US';
       utt.rate = 1.05;
       window.speechSynthesis.speak(utt);
     } catch (_) {}
@@ -467,8 +790,7 @@
 
   function getAccessibleDescription(el) {
     if (!el || el === document.body || el === document.documentElement) return null;
-    const lang = isAmharic ? 'am' : 'en';
-    const t = i18n[lang];
+    const t = getI18n();
 
     let label = el.getAttribute('aria-label') || '';
     if (!label && el.getAttribute('aria-labelledby')) {
@@ -515,16 +837,20 @@
   /* ── Focus & message management (from parent) ───────────── */
   window.addEventListener('message', function (e) {
     if (!e.data || typeof e.data !== 'object') return;
+    const t = getI18n();
     if (e.data.type === 'focus') {
       chatInput.focus();
-      const welcome = isAmharic
-        ? 'ሳቫና ረዳት ተከፍቷል። መልዕክትዎን በእንግሊዝኛ ወይም በአማርኛ ይፃፉ።'
-        : 'Savanna assistant opened. Type your message in English or Amharic.';
-      speakFocus(welcome);
+      speakFocus(t.welcome);
     } else if (e.data.type === 'open_escalate') {
       openEscalModal();
-      const msg = isAmharic ? i18n.am.escalateAlert : i18n.en.escalateAlert;
-      speakFocus(msg);
+      speakFocus(t.escalateAlert);
+    } else if (e.data.type === 'set_lang' && e.data.lang) {
+      if (BCP47_MAP[e.data.lang] || e.data.lang === 'auto') {
+        currentLanguage = e.data.lang;
+        localStorage.setItem(USER_CHOSEN_KEY, 'true');
+        if (suggestionBanner) suggestionBanner.setAttribute('hidden', '');
+        applyLanguage();
+      }
     }
   });
 
@@ -533,7 +859,6 @@
   window.addEventListener('keydown', function (e) {
     if (e.key === ' ' || e.code === 'Space') {
       const isInput = (e.target === chatInput);
-      // If typing inside textarea with content, let normal typing proceed
       if (isInput && chatInput.value && chatInput.value.trim().length > 0) {
         return;
       }
@@ -542,8 +867,7 @@
         e.preventDefault();
         lastSpaceTime = 0;
         openEscalModal();
-        const msg = isAmharic ? i18n.am.escalateAlert : i18n.en.escalateAlert;
-        speakFocus(msg);
+        speakFocus(getI18n().escalateAlert);
       } else {
         lastSpaceTime = now;
       }
@@ -637,7 +961,7 @@
   function showThinking() {
     const li = document.createElement('li');
     li.id = 'thinking-indicator';
-    li.setAttribute('aria-label', i18n[isAmharic ? 'am' : 'en'].thinking);
+    li.setAttribute('aria-label', getI18n().thinking);
     li.innerHTML = `
       <div class="thinking-indicator" aria-hidden="true">
         <span class="thinking-dot"></span>
@@ -719,7 +1043,7 @@
       /* TTS */
       if (window.speechSynthesis && reply) {
         const utt = new SpeechSynthesisUtterance(reply);
-        utt.lang = BCP47_MAP[currentLanguage] || (isAmharic ? 'am-ET' : 'en-US');
+        utt.lang = BCP47_MAP[currentLanguage] || 'en-US';
         window.speechSynthesis.speak(utt);
       }
 
@@ -759,7 +1083,7 @@
     recognition.addEventListener('end', function () {
       isListening = false;
       voiceBtn.setAttribute('aria-pressed', 'false');
-      voiceBtn.setAttribute('aria-label', i18n[isAmharic ? 'am' : 'en'].voiceStart);
+      voiceBtn.setAttribute('aria-label', getI18n().voiceStart);
       voiceBtn.style.color = '';
     });
 
@@ -777,7 +1101,7 @@
         recognition.start();
         isListening = true;
         voiceBtn.setAttribute('aria-pressed', 'true');
-        voiceBtn.setAttribute('aria-label', i18n[isAmharic ? 'am' : 'en'].voiceStop);
+        voiceBtn.setAttribute('aria-label', getI18n().voiceStop);
         voiceBtn.style.color = 'var(--c-error)';
       }
     });
@@ -829,7 +1153,7 @@
         body: JSON.stringify({
           session_id: sessionId,
           reason:     'User requested human assistance',
-          language:   isAmharic ? 'am' : 'en'
+          language:   currentLanguage
         })
       });
 

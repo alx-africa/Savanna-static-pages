@@ -26,10 +26,12 @@
     document.head.appendChild(a11yScript);
   })();
 
-  /* ── 1. Resolve API base URL ─────────────────────────────────────────── */
+  /* ── 1. Resolve API base URL & initial language ───────────────────────── */
   const apiUrl = (scriptEl && scriptEl.dataset.apiUrl)
     ? scriptEl.dataset.apiUrl.replace(/\/$/, '')
     : (window.location.origin + '/api');
+
+  const initialLang = (scriptEl && scriptEl.dataset.lang) ? scriptEl.dataset.lang : '';
 
   /* ── 2. Inject persistent CSS ─────────────────────────────────────────── */
   const CSS = `
@@ -133,6 +135,9 @@
   if (window.location.protocol === 'file:' && scriptEl && scriptEl.src) {
     iframeSrc = scriptEl.src.replace(/widget\.js(\?.*)?$/, 'iframe.html') + '?api=' + encodeURIComponent(apiUrl);
   }
+  if (initialLang) {
+    iframeSrc += '&lang=' + encodeURIComponent(initialLang);
+  }
   iframe.src = iframeSrc;
   iframe.title = 'Savanna Learning Assistant';
   iframe.setAttribute('allow', 'microphone; display-capture');
@@ -188,6 +193,16 @@
       const maxH = window.innerHeight - 128;
       const clampedH = Math.min(Math.max(event.data.height, 200), maxH);
       container.style.height = clampedH + 'px';
+    } else if (event.data.type === 'savanna:lang_change' && event.data.lang) {
+      // Synchronize language change with host page and a11y engine
+      window.dispatchEvent(new CustomEvent('savanna:language_changed', { detail: { lang: event.data.lang } }));
+    }
+  });
+
+  // Allow host window to set language via CustomEvent
+  window.addEventListener('savanna:set_language', function (e) {
+    if (e.detail && e.detail.lang) {
+      iframe.contentWindow && iframe.contentWindow.postMessage({ type: 'set_lang', lang: e.detail.lang }, '*');
     }
   });
 
@@ -198,6 +213,16 @@
 
   /* ── 8. Built-in Focus Reader / Self-Voicing on Host Page ─────────────── */
   const VOICE_GUIDE_KEY = 'savanna_voice_guide';
+  const BCP47_HOST = {
+    'en': 'en-US',
+    'am': 'am-ET',
+    'ti': 'ti-ET',
+    'ar': 'ar-SA',
+    'om': 'om-ET',
+    'so': 'so-SO',
+    'sw': 'sw-KE',
+    'fr': 'fr-FR'
+  };
 
   function isVoiceGuideEnabled() {
     return localStorage.getItem(VOICE_GUIDE_KEY) !== 'false';
@@ -208,7 +233,8 @@
     try {
       window.speechSynthesis.cancel();
       const utt = new SpeechSynthesisUtterance(text);
-      utt.lang = 'en-US';
+      const currentLang = localStorage.getItem('savanna_lang') || 'en';
+      utt.lang = BCP47_HOST[currentLang] || 'en-US';
       utt.rate = 1.05;
       window.speechSynthesis.speak(utt);
     } catch (_) {}
@@ -246,7 +272,18 @@
 
   // Speak trigger button specifically when focused
   trigger.addEventListener('focus', function () {
-    const desc = isOpen ? 'Close learning assistant, button, expanded' : 'Open learning assistant, button, collapsed';
+    const curLang = localStorage.getItem('savanna_lang') || 'en';
+    const triggerDescs = {
+      'en': isOpen ? 'Close learning assistant, button, expanded' : 'Open learning assistant, button, collapsed',
+      'am': isOpen ? 'ረዳትን ዝጋ፣ አዝራር፣ ተከፍቷል' : 'ረዳትን ክፈት፣ አዝራር፣ ተዘግቷል',
+      'om': isOpen ? "Gargaaraa cufi, qabduu, bal'ateera" : "Gargaaraa bani, qabduu, dudduubatti deebi'eera",
+      'ti': isOpen ? 'ሓጋዚ ዕጸዉ፣ መልጎም፣ ተዘርጊሑ' : 'ሓጋዚ ክፈቱ፣ መልጎም፣ ተዓጺፉ',
+      'so': isOpen ? 'Xir kaaliyaha, badhan, la fidiyay' : 'Fur kaaliyaha, badhan, la laabay',
+      'ar': isOpen ? 'إغلاق المساعد، زر، موسع' : 'فتح المساعد، زر، مطوي',
+      'sw': isOpen ? 'Funga msaidizi, kitufe, imepanuliwa' : 'Fungua msaidizi, kitufe, imekunjwa',
+      'fr': isOpen ? "Fermer l'assistant, bouton, développé" : "Ouvrir l'assistant, bouton, réduit"
+    };
+    const desc = triggerDescs[curLang] || triggerDescs['en'];
     speakHost(desc);
   });
 
