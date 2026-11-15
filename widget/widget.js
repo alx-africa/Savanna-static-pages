@@ -113,7 +113,8 @@
   const trigger = document.createElement('button');
   trigger.id = 'savanna-trigger';
   trigger.setAttribute('role', 'button');
-  trigger.setAttribute('aria-label', 'Open learning assistant');
+  trigger.setAttribute('aria-label', 'Open learning assistant (Alt+A)');
+  trigger.setAttribute('accesskey', 'a');
   trigger.setAttribute('aria-expanded', 'false');
   trigger.setAttribute('aria-controls', 'savanna-iframe-container');
   trigger.setAttribute('tabindex', '0');
@@ -141,7 +142,7 @@
   if (initialLang) {
     iframeSrc += '&lang=' + encodeURIComponent(initialLang);
   }
-  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.4.0';
+  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.5.0';
   iframe.src = iframeSrc;
   iframe.title = 'Savanna Learning Assistant';
   iframe.setAttribute('allow', 'microphone; display-capture');
@@ -152,14 +153,76 @@
   document.body.appendChild(trigger);
   document.body.appendChild(container);
 
-  /* ── 5. Open / close logic ─────────────────────────────────────────────── */
+  /* ── 5. Pedagogical Host Context Extractor ──────────────────────────────── */
+  function extractPageContext() {
+    let title = document.title || '';
+
+    // Find active or nearest heading in viewport
+    let activeHeading = '';
+    const headings = Array.from(document.querySelectorAll('h1, h2, h3, [role="heading"]'));
+    if (headings.length > 0) {
+      let closest = headings[0];
+      let minDistance = Infinity;
+      for (const h of headings) {
+        const rect = h.getBoundingClientRect();
+        if (rect.top >= -50 && rect.top <= window.innerHeight * 0.6) {
+          closest = h;
+          break;
+        }
+        const dist = Math.abs(rect.top);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closest = h;
+        }
+      }
+      activeHeading = closest ? (closest.textContent || '').trim().replace(/\s+/g, ' ') : '';
+    }
+
+    // Selected text if any
+    let selection = '';
+    try {
+      const sel = window.getSelection();
+      if (sel && sel.toString()) {
+        selection = sel.toString().trim();
+      }
+    } catch (_) {}
+
+    // Page summary excerpt from main, article, or content
+    let summary = '';
+    const mainContent = document.querySelector('main, article, [role="main"], #content, .content, .savanna-styles') || document.body;
+    if (mainContent) {
+      try {
+        const clone = mainContent.cloneNode(true);
+        const toRemove = clone.querySelectorAll('script, style, #savanna-iframe-container, #savanna-trigger, nav, header, footer');
+        toRemove.forEach(function (el) { el.remove(); });
+        summary = (clone.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 1500);
+      } catch (_) {}
+    }
+
+    return {
+      title: title,
+      active_heading: activeHeading,
+      selected_text: selection,
+      summary: summary,
+      url: window.location.href
+    };
+  }
+
+  /* ── 6. Open / close logic ─────────────────────────────────────────────── */
   let isOpen = false;
 
   function openWidget() {
     isOpen = true;
     container.classList.add('savanna-open');
     trigger.setAttribute('aria-expanded', 'true');
-    trigger.setAttribute('aria-label', 'Close learning assistant');
+    trigger.setAttribute('aria-label', 'Close learning assistant (Alt+A)');
+
+    const context = extractPageContext();
+    iframe.contentWindow && iframe.contentWindow.postMessage({
+      type: 'page_context',
+      context: context
+    }, '*');
+
     /* Focus into iframe via postMessage */
     iframe.contentWindow && iframe.contentWindow.postMessage({ type: 'focus' }, '*');
   }
@@ -168,7 +231,7 @@
     isOpen = false;
     container.classList.remove('savanna-open');
     trigger.setAttribute('aria-expanded', 'false');
-    trigger.setAttribute('aria-label', 'Open learning assistant');
+    trigger.setAttribute('aria-label', 'Open learning assistant (Alt+A)');
     trigger.focus();
   }
 
@@ -184,7 +247,28 @@
     }
   });
 
-  /* ── 6. postMessage listener (from iframe) ─────────────────────────────── */
+  /* Global Keyboard Shortcut: Alt + A toggles assistant from anywhere on page */
+  window.addEventListener('keydown', function (e) {
+    if (e.altKey && (e.key === 'a' || e.key === 'A' || e.code === 'KeyA') && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      toggleWidget();
+    }
+  });
+
+  /* Update iframe when user selects text on the host page */
+  document.addEventListener('selectionchange', function () {
+    if (!isOpen) return;
+    try {
+      const sel = window.getSelection();
+      const text = sel ? sel.toString().trim() : '';
+      iframe.contentWindow && iframe.contentWindow.postMessage({
+        type: 'selection_change',
+        selected_text: text
+      }, '*');
+    } catch (_) {}
+  });
+
+  /* ── 7. postMessage listener (from iframe) ─────────────────────────────── */
   window.addEventListener('message', function (event) {
     /* Accept messages from same origin or the configured API origin */
     const allowedOrigin = new URL(apiUrl).origin;
@@ -193,6 +277,11 @@
 
     if (event.data.type === 'close') {
       closeWidget();
+    } else if (event.data.type === 'request_context') {
+      iframe.contentWindow && iframe.contentWindow.postMessage({
+        type: 'page_context',
+        context: extractPageContext()
+      }, '*');
     } else if (event.data.type === 'resize' && typeof event.data.height === 'number') {
       const maxH = window.innerHeight - 128;
       const clampedH = Math.min(Math.max(event.data.height, 200), maxH);
@@ -228,7 +317,7 @@
     }
   });
 
-  /* ── 7. Escape key closes widget ──────────────────────────────────────── */
+  /* ── 8. Escape key closes widget ──────────────────────────────────────── */
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && isOpen) closeWidget();
   });

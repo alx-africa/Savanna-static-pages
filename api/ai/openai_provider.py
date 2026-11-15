@@ -32,9 +32,10 @@ def get_system_prompt(language: str, simple_mode: bool = False) -> str:
         f"You are a helpful multilingual learning assistant for Savanna, an online learning platform "
         f"serving Ethiopian and regional refugee learners (including Eritrean, Sudanese, Somali, and Congolese learners). "
         f"You MUST respond fluently and naturally in {lang_name}. "
-        f"Answer ONLY from the provided course content. "
-        f"If the answer is not in the provided content, state clearly in {lang_name} that the course material does not mention it, and do not include any citation markers. "
-        f"When answering from the course content, always cite your sources using [source_id] notation corresponding to the course chunks provided. "
+        f"Answer from the provided course content or the active lesson on the learner's screen. "
+        f"When the learner asks about a concept, term, or highlighted text from their lesson, explain it clearly and pedagogically. "
+        f"If the answer is neither in the provided content nor in the active lesson, state clearly in {lang_name} that the course material does not mention it, and do not include any citation markers. "
+        f"When answering from course content chunks, always cite your sources using [source_id] notation corresponding to the course chunks provided. "
         f"Do not make up information or answer questions outside the course curriculum.\n\n"
         f"CRITICAL TERMINOLOGY & ENTITY PRESERVATION RULES:\n"
         f"1. Do NOT translate technical acronyms, tool names, coding terms, or proper nouns into literal words.\n"
@@ -57,14 +58,30 @@ def get_system_prompt(language: str, simple_mode: bool = False) -> str:
 _CITATION_RE = re.compile(r"\[([^\]]+)\]")
 
 
-def _build_context_block(context_chunks: list[dict]) -> str:
-    """Format RAG chunks into a readable context block."""
-    if not context_chunks:
-        return "No additional context available."
-    lines = ["=== Provided course content ==="]
-    for chunk in context_chunks:
-        lines.append(f"[{chunk['id']}] (source: {chunk['source']})\n{chunk['text']}")
+def _build_context_block(context_chunks: list[dict], page_context: dict | None = None) -> str:
+    """Format RAG chunks and live lesson page context into a readable context block."""
+    lines: list[str] = []
+
+    if page_context and isinstance(page_context, dict):
+        lines.append("=== Active Lesson on Learner's Screen ===")
+        if page_context.get("title"):
+            lines.append(f"Lesson Title: {page_context['title']}")
+        if page_context.get("active_heading"):
+            lines.append(f"Current Topic / Heading: {page_context['active_heading']}")
+        if page_context.get("selected_text"):
+            lines.append(f"Learner Highlighted Text: \"{page_context['selected_text']}\"")
+        if page_context.get("summary"):
+            lines.append(f"Lesson Excerpt:\n{page_context['summary']}")
         lines.append("---")
+
+    if context_chunks:
+        lines.append("=== Provided course content ===")
+        for chunk in context_chunks:
+            lines.append(f"[{chunk['id']}] (source: {chunk['source']})\n{chunk['text']}")
+            lines.append("---")
+
+    if not lines:
+        return "No additional context available."
     return "\n".join(lines)
 
 
@@ -108,9 +125,10 @@ class OpenAIProvider(AIProvider):
         context_chunks: list[dict],
         history: list[ChatMessage],
         simple_mode: bool = False,
+        page_context: dict | None = None,
     ) -> tuple[str, list[Citation]]:
         system_prompt = get_system_prompt(language, simple_mode)
-        context_block = _build_context_block(context_chunks)
+        context_block = _build_context_block(context_chunks, page_context=page_context)
 
         messages: list[dict] = [
             {"role": "system", "content": system_prompt},

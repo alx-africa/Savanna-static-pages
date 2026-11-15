@@ -264,6 +264,7 @@ async def chat(body: ChatRequest) -> ChatResponse:
                 chunks,
                 body.history,
                 simple_mode=body.simple_mode,
+                page_context=body.page_context,
             ),
             timeout=30.0,
         )

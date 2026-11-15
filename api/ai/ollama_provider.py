@@ -94,9 +94,10 @@ def _build_ollama_messages(
     context_chunks: list[dict],
     history: list[ChatMessage],
     simple_mode: bool = False,
+    page_context: dict | None = None,
 ) -> list[dict]:
     system_prompt = get_system_prompt(language, simple_mode)
-    context_block = _build_context_block(context_chunks)
+    context_block = _build_context_block(context_chunks, page_context=page_context)
 
     messages: list[dict] = [
         {"role": "system", "content": system_prompt},
@@ -132,8 +133,9 @@ class OllamaProvider(AIProvider):
         context_chunks: list[dict],
         history: list[ChatMessage],
         simple_mode: bool = False,
+        page_context: dict | None = None,
     ) -> tuple[str, list[Citation]]:
-        messages = _build_ollama_messages(message, language, context_chunks, history, simple_mode)
+        messages = _build_ollama_messages(message, language, context_chunks, history, simple_mode, page_context=page_context)
         payload = {
             "model": self._settings.ollama_model,
             "messages": messages,

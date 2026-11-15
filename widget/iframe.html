@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
   <title>Savanna Learning Assistant</title>
-  <link rel="stylesheet" href="style.css?v=2.4.0" />
+  <link rel="stylesheet" href="style.css?v=2.5.0" />
   <style>
     /* Iframe-specific overrides — full-height shell */
     html, body { height: 100%; overflow: hidden; }
@@ -146,14 +146,35 @@
     </div>
   </aside>
 
+  <!-- ── Context & Starter Pills Bar ─────────────────────── -->
+  <section class="prompt-pills-bar" aria-label="Suggested learning prompts">
+    <div id="active-context-badge" class="active-context-badge" hidden>
+      <span class="context-badge-icon" aria-hidden="true">📖</span>
+      <span id="active-context-title" class="context-badge-text"></span>
+    </div>
+    <div class="prompt-pills-scroll" role="toolbar" aria-label="Quick questions for this concept">
+      <button type="button" class="prompt-pill" id="pill-simple" data-prompt-id="simple" aria-label="Ask assistant to explain this concept simply">
+        <span class="pill-icon" aria-hidden="true">💡</span>
+        <span class="pill-text" id="pill-text-simple">Explain simply</span>
+      </button>
+      <button type="button" class="prompt-pill" id="pill-example" data-prompt-id="example" aria-label="Ask assistant for a real-world Ethiopian example">
+        <span class="pill-icon" aria-hidden="true">🇪🇹</span>
+        <span class="pill-text" id="pill-text-example">Give an example</span>
+      </button>
+      <button type="button" class="prompt-pill" id="pill-quiz" data-prompt-id="quiz" aria-label="Ask assistant to quiz me on this concept">
+        <span class="pill-icon" aria-hidden="true">❓</span>
+        <span class="pill-text" id="pill-text-quiz">Quiz me</span>
+      </button>
+      <button type="button" class="prompt-pill" id="selection-pill" hidden data-prompt-id="selection" aria-label="Ask assistant to explain highlighted text">
+        <span class="pill-icon" aria-hidden="true">📝</span>
+        <span class="pill-text" id="pill-text-selection">Explain highlighted</span>
+      </button>
+    </div>
+  </section>
+
   <!-- ── Message area ────────────────────────────────────── -->
-  <div class="message-area" aria-label="Conversation">
-    <ul id="message-list"
-        role="log"
-        aria-live="polite"
-        aria-atomic="false"
-        aria-label="Conversation"
-        aria-busy="false">
+  <div class="message-area" role="log" aria-live="polite" aria-atomic="false" aria-label="Conversation" aria-busy="false">
+    <ul id="message-list">
     </ul>
   </div>
 
@@ -284,6 +305,7 @@
   let simpleModeEnabled = localStorage.getItem(SIMPLE_MODE_KEY) === 'true';
   let isListening = false;
   let recognition = null;
+  let activePageContext = null;
 
   /* ── DOM refs ────────────────────────────────────────────── */
   const htmlEl            = document.documentElement;
@@ -313,6 +335,16 @@
   const suggestionText    = document.getElementById('suggestion-text');
   const suggestionAccept  = document.getElementById('suggestion-accept-btn');
   const suggestionDismiss = document.getElementById('suggestion-dismiss-btn');
+  const contextBadge      = document.getElementById('active-context-badge');
+  const contextTitle      = document.getElementById('active-context-title');
+  const pillSimple        = document.getElementById('pill-simple');
+  const pillExample       = document.getElementById('pill-example');
+  const pillQuiz          = document.getElementById('pill-quiz');
+  const selectionPill     = document.getElementById('selection-pill');
+  const pillTextSimple    = document.getElementById('pill-text-simple');
+  const pillTextExample   = document.getElementById('pill-text-example');
+  const pillTextQuiz      = document.getElementById('pill-text-quiz');
+  const pillTextSelection = document.getElementById('pill-text-selection');
 
   /* ── i18n strings (8 languages + fallback) ────────────────── */
   const i18n = {
@@ -363,7 +395,14 @@
       recNoSpeech:  'No speech detected. Please try again.',
       recUnavailable:'Transcription service currently unavailable. You can type your question.',
       ttsUnavailable:'Voice synthesis is not currently available for this language. Text response is provided above.',
-      micPermissionDenied:'Microphone access denied. Please grant permission in browser settings.'
+      micPermissionDenied:'Microphone access denied. Please grant permission in browser settings.',
+      pillSimple:   'Explain simply',
+      pillExample:  'Give an example',
+      pillQuiz:     'Quiz me',
+      pillSelection:'Explain highlighted',
+      activeTopic:  'Topic',
+      speedLabel:   'Playback speed',
+      noResponseYet:'No assistant response to play yet.'
     },
     am: {
       title:        'ሳቫና ረዳት',
@@ -412,7 +451,14 @@
       recNoSpeech:  'ምንም ድምፅ አልተገኘም። እባክዎ እንደገና ይሞክሩ።',
       recUnavailable:'የድምፅ ግልባጭ አገልግሎት ለጊዜው አይገኝም። ጥያቄዎን መጻፍ ይችላሉ።',
       ttsUnavailable:'ለዚህ ቋንቋ የድምፅ ውህደት ለጊዜው አይገኝም። የፅሑፍ ምላሽ ከላይ ተሰጥቷል።',
-      micPermissionDenied:'የማይክሮፎን ፈቃድ ተከልክሏል። እባክዎ በአሳሽ ቅንብሮች ውስጥ ፍቃድ ይስጡ።'
+      micPermissionDenied:'የማይክሮፎን ፈቃድ ተከልክሏል። እባክዎ በአሳሽ ቅንብሮች ውስጥ ፍቃድ ይስጡ።',
+      pillSimple:   'በቀላል አማርኛ',
+      pillExample:  'ምሳሌ ስጠኝ',
+      pillQuiz:     'ፈትነኝ',
+      pillSelection:'የተመረጠውን አብራራ',
+      activeTopic:  'ርዕስ',
+      speedLabel:   'የድምፅ ፍጥነት',
+      noResponseYet:'እስካሁን ምንም ምላሽ አልተሰጠም።'
     },
     om: {
       title:        'Gargaaraa Savanna',
@@ -759,6 +805,17 @@
     if (modalCancel) modalCancel.textContent = t.modalCancel;
     if (modalConfirm) modalConfirm.textContent = t.modalConfirm;
 
+    if (pillTextSimple) pillTextSimple.textContent = t.pillSimple || 'Explain simply';
+    if (pillTextExample) pillTextExample.textContent = t.pillExample || 'Give an example';
+    if (pillTextQuiz) pillTextQuiz.textContent = t.pillQuiz || 'Quiz me';
+    if (pillTextSelection) pillTextSelection.textContent = t.pillSelection || 'Explain highlighted';
+
+    if (pillSimple) pillSimple.setAttribute('aria-label', (t.pillSimple || 'Explain simply') + ' — ' + (t.title || 'Assistant'));
+    if (pillExample) pillExample.setAttribute('aria-label', (t.pillExample || 'Give an example') + ' — ' + (t.title || 'Assistant'));
+    if (pillQuiz) pillQuiz.setAttribute('aria-label', (t.pillQuiz || 'Quiz me') + ' — ' + (t.title || 'Assistant'));
+    if (selectionPill) selectionPill.setAttribute('aria-label', (t.pillSelection || 'Explain highlighted') + ' — ' + (t.title || 'Assistant'));
+    if (typeof updateContextUI === 'function') updateContextUI();
+
     localStorage.setItem(LANG_KEY, currentLanguage);
     if (recognition) recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
 
@@ -896,6 +953,222 @@
     parent.postMessage({ type: 'close' }, '*');
   });
 
+  /* ── Zero-Dependency Web Audio Earcons (Auditory Cues) ──── */
+  let audioCtx = null;
+  function getAudioContext() {
+    if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(function () {});
+    }
+    return audioCtx;
+  }
+
+  function playEarcon(type) {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      if (type === 'open') {
+        // Ascending chime: C5 (523.25Hz) -> E5 (659.25Hz) -> G5 (783.99Hz)
+        [523.25, 659.25, 783.99].forEach(function (freq, i) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.045);
+          gain.gain.setValueAtTime(0.08, now + i * 0.045);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.045 + 0.11);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.045);
+          osc.stop(now + i * 0.045 + 0.11);
+        });
+      } else if (type === 'close') {
+        // Descending chime: G5 (783.99Hz) -> E5 (659.25Hz) -> C5 (523.25Hz)
+        [783.99, 659.25, 523.25].forEach(function (freq, i) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.045);
+          gain.gain.setValueAtTime(0.08, now + i * 0.045);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.045 + 0.11);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.045);
+          osc.stop(now + i * 0.045 + 0.11);
+        });
+      } else if (type === 'mic_start') {
+        // Crisp high beep: 880Hz (A5)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } else if (type === 'mic_stop') {
+        // Two-tone double settling: 880Hz -> 440Hz
+        [880, 440].forEach(function (freq, i) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.055);
+          gain.gain.setValueAtTime(0.1, now + i * 0.055);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.08);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.055);
+          osc.stop(now + i * 0.055 + 0.08);
+        });
+      } else if (type === 'answer_ready') {
+        // Harmonic bell ping: 523Hz + 1046Hz
+        [523.25, 1046.5].forEach(function (freq, i) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(i === 0 ? 0.12 : 0.06, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.32);
+        });
+      }
+    } catch (_) {}
+  }
+
+  /* ── Lesson Context & Pedagogical Starter Pills ─────────── */
+
+  const PROMPT_TEMPLATES = {
+    simple: {
+      en: 'Could you explain this concept in simple, beginner-friendly terms?',
+      am: 'እባክዎ ይህንን ጽንሰ-ሀሳብ በቀላል እና ግልጽ በሆነ አማርኛ ያስረዱኝ።',
+      om: 'Mee yaada kana haala salphaa fi ifa ta\'een naaf ibsaa?',
+      ti: 'በጃኹም ነዚ ጽንሰ-ሓሳብ ብቐሊልን ንጹርን መንገዲ ግለጹለይ።',
+      so: 'Fadlan fikradan si fudud oo qof kasta fahmi karo ii sharax?',
+      ar: 'هل يمكنك شرح هذا المفهوم بأسلوب مبسط وسهل الفهم؟',
+      sw: 'Tafadhali eleza dhana hii kwa maneno rahisi kueleweka?',
+      fr: 'Pourriez-vous expliquer ce concept en termes simples et accessibles ?'
+    },
+    example: {
+      en: 'Can you give a practical, real-world example (with Ethiopian context if relevant) for this concept?',
+      am: 'ለዚህ ጽንሰ-ሀሳብ ተጨባጭ እና ተግባራዊ ምሳሌ (ከተቻለ ከኢትዮጵያ ነባራዊ ሁኔታ ጋር) ይሰጡኛል?',
+      om: 'Yaada kanaaf fakkeenya qabatamaa fi hojiirra oolu (haala Itoophiyaa wajjin) naaf kennuu dandeessuu?',
+      ti: 'ንዚ ጽንሰ-ሓሳብ ጭቡጥን ግብራውን ኣብነት (ምስ ኩነታት ኢትዮጵያ ዝተኣሳሰረ) ክትህቡኒ ትኽእሉዶ?',
+      so: 'Miyaad i siin kartaa tusaale dhab ah oo la xiriira fikradan (haddii ay suurtagal tahay xaaladda Itoobiya)?',
+      ar: 'هل يمكنك إعطاء مثال عملي واقعي (في السياق الإثيوبي إن أمكن) لهذا المفهوم؟',
+      sw: 'Unaweza kutoa mfano halisi na wa vitendo kuhusu dhana hii?',
+      fr: 'Pouvez-vous donner un exemple concret et pratique (dans le contexte éthiopien si pertinent) pour ce concept ?'
+    },
+    quiz: {
+      en: 'Can you quiz me with 1 or 2 quick questions to test my understanding of this concept?',
+      am: 'ስለዚህ ጽንሰ-ሀሳብ ያለኝን ግንዛቤ ለመፈተሽ 1 ወይም 2 ፈጣን ጥያቄዎችን ይጠይቁኝ?',
+      om: 'Hubannoo ani qabu qoruuf gaaffilee gaggabaaboo 1 ykn 2 na gaafachuu dandeessuu?',
+      ti: 'ናይዚ ጽንሰ-ሓሳብ ርድኢተይ ንምፍታን 1 ወይ 2 ሕቶታት ክትሓቱኒ ትኽእሉዶ?',
+      so: 'Miyaad igu tijaabin kartaa 1 ama 2 su\'aalood oo degdeg ah si aad u eegto fahamkayga?',
+      ar: 'هل يمكنك اختباري بسؤال أو سؤالين سريعين للتحقق من فهمي لهذا المفهوم؟',
+      sw: 'Unaweza kuniuliza maswali 1 au 2 ya haraka kupima uelewa wangu wa somo hili?',
+      fr: 'Pouvez-vous me poser 1 ou 2 questions rapides pour tester ma compréhension de ce concept ?'
+    },
+    selection: {
+      en: 'Please explain what this selected text from the lesson means: ',
+      am: 'እባክዎ ይህ ከትምህርቱ የተመረጠ ፅሑፍ ምን ማለት እንደሆነ ያብራሩልኝ፡ ',
+      om: 'Mee barreeffamni filatame kun maal akka ta\'e naaf ibsaa: ',
+      ti: 'በጃኹም እዚ ካብ ትምህርቲ ዝተመረጸ ጽሑፍ እንታይ ማለት ምዃኑ ግለጹለይ፡ ',
+      so: 'Fadlan ii sharax waxa uu ka dhigan yahay qoraalkan la doortay: ',
+      ar: 'يرجى شرح ما يعنيه هذا النص المحدد من الدرس: ',
+      sw: 'Tafadhali eleza maana ya kifungu hiki kilichochaguliwa kutoka kwenye somo: ',
+      fr: 'Veuillez expliquer ce que signifie ce texte sélectionné dans la leçon : '
+    }
+  };
+
+  function updateContextUI() {
+    if (!contextBadge || !contextTitle) return;
+    if (activePageContext && (activePageContext.active_heading || activePageContext.title)) {
+      const topic = activePageContext.active_heading || activePageContext.title;
+      const t = getI18n();
+      contextTitle.textContent = (t.activeTopic || 'Topic') + ': ' + topic;
+      contextBadge.removeAttribute('hidden');
+    } else {
+      contextBadge.setAttribute('hidden', '');
+    }
+    updateSelectionPill();
+  }
+
+  function updateSelectionPill() {
+    if (!selectionPill) return;
+    if (activePageContext && activePageContext.selected_text && activePageContext.selected_text.length >= 3) {
+      selectionPill.removeAttribute('hidden');
+    } else {
+      selectionPill.setAttribute('hidden', '');
+    }
+  }
+
+  function handlePillClick(promptId) {
+    playEarcon('mic_stop');
+    const lang = (currentLanguage === 'auto' || !PROMPT_TEMPLATES[promptId][currentLanguage]) ? 'en' : currentLanguage;
+    let text = PROMPT_TEMPLATES[promptId][lang] || PROMPT_TEMPLATES[promptId].en;
+    if (promptId === 'selection') {
+      const sel = (activePageContext && activePageContext.selected_text) ? activePageContext.selected_text : '';
+      if (!sel) return;
+      text = text + '"' + sel + '"';
+    }
+    chatInput.value = text;
+    chatInput.dispatchEvent(new Event('input'));
+    sendMessage();
+  }
+
+  if (pillSimple) pillSimple.addEventListener('click', function () { handlePillClick('simple'); });
+  if (pillExample) pillExample.addEventListener('click', function () { handlePillClick('example'); });
+  if (pillQuiz) pillQuiz.addEventListener('click', function () { handlePillClick('quiz'); });
+  if (selectionPill) selectionPill.addEventListener('click', function () { handlePillClick('selection'); });
+
+  /* ── Audio Playback Speed Controls (0.8x, 1.0x, 1.25x) ──── */
+  let currentPlaybackRate = parseFloat(localStorage.getItem('savanna_playback_rate') || '1.0');
+  if (![0.8, 1.0, 1.25].includes(currentPlaybackRate)) currentPlaybackRate = 1.0;
+
+  function cyclePlaybackRate(btn) {
+    if (currentPlaybackRate === 1.0) currentPlaybackRate = 1.25;
+    else if (currentPlaybackRate === 1.25) currentPlaybackRate = 0.8;
+    else currentPlaybackRate = 1.0;
+
+    localStorage.setItem('savanna_playback_rate', currentPlaybackRate.toString());
+    document.querySelectorAll('.btn-audio-speed').forEach(function (b) {
+      b.textContent = currentPlaybackRate + 'x';
+      b.setAttribute('aria-label', (getI18n().speedLabel || 'Playback speed') + ': ' + currentPlaybackRate + 'x. Click to change.');
+    });
+    if (activeMessageAudio) {
+      activeMessageAudio.playbackRate = currentPlaybackRate;
+    }
+    const t = getI18n();
+    speakFocus((t.speedLabel || 'Speed') + ' ' + currentPlaybackRate + 'x');
+  }
+
+  /* ── Keyboard Shortcuts: Replay & Voice ─────────────────── */
+  function listenToLastResponse() {
+    const listenButtons = Array.from(document.querySelectorAll('.btn-audio-speak'));
+    if (listenButtons.length > 0) {
+      const lastBtn = listenButtons[listenButtons.length - 1];
+      lastBtn.click();
+    } else {
+      const t = getI18n();
+      speakFocus(t.noResponseYet || 'No assistant response to play yet.');
+    }
+  }
+
+  function toggleVoiceHotkey() {
+    if (voiceBtn && !voiceBtn.disabled) {
+      voiceBtn.click();
+    }
+  }
+
   /* ── Built-in Focus Reader & Message Audio Playback ─────── */
   const messageAudioCache = new Map();
   let activeMessageAudio = null;
@@ -967,11 +1240,12 @@
         }
 
         const blob = await resp.blob();
-        audioUrl = URL.createObjectURL(blob);
+        audioUrl = (window.URL && window.URL.createObjectURL) ? URL.createObjectURL(blob) : '';
         messageAudioCache.set(cacheKey, audioUrl);
       }
 
       const audio = new Audio(audioUrl);
+      audio.playbackRate = currentPlaybackRate;
       activeMessageAudio = audio;
       activeAudioButton = btn;
 
@@ -1056,13 +1330,15 @@
       });
       if (resp.ok) {
         const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
+        const url = (window.URL && window.URL.createObjectURL) ? URL.createObjectURL(blob) : '';
         widgetAudioCache.set(cacheKey, url);
-        activeAudio = new Audio(url);
-        activeAudio.onended = function () {
-          activeAudio = null;
-        };
-        activeAudio.play().catch(function () {});
+        if (url) {
+          activeAudio = new Audio(url);
+          activeAudio.onended = function () {
+            activeAudio = null;
+          };
+          activeAudio.play().catch(function () {});
+        }
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
@@ -1094,7 +1370,7 @@
           }).then(function (r) {
             if (r.ok) return r.blob();
           }).then(function (blob) {
-            if (blob) widgetAudioCache.set(cacheKey, URL.createObjectURL(blob));
+            if (blob && window.URL && window.URL.createObjectURL) widgetAudioCache.set(cacheKey, URL.createObjectURL(blob));
           }).catch(function () {});
         }, delay);
         delay += 120;
@@ -1157,7 +1433,18 @@
   window.addEventListener('message', function (e) {
     if (!e.data || typeof e.data !== 'object') return;
     const t = getI18n();
-    if (e.data.type === 'focus') {
+    if (e.data.type === 'page_context' && e.data.context) {
+      activePageContext = e.data.context;
+      updateContextUI();
+    } else if (e.data.type === 'selection_change') {
+      if (activePageContext) {
+        activePageContext.selected_text = e.data.selected_text || '';
+      } else {
+        activePageContext = { selected_text: e.data.selected_text || '' };
+      }
+      updateSelectionPill();
+    } else if (e.data.type === 'focus') {
+      playEarcon('open');
       chatInput.focus();
       speakFocus(t.welcome);
     } else if (e.data.type === 'open_escalate') {
@@ -1173,23 +1460,42 @@
     }
   });
 
-  /* ── Double-Space Shortcut for Live Help Desk ───────────── */
-  let lastSpaceTime = 0;
+  /* ── Keyboard Shortcuts (Muscle Memory & Accessibility) ── */
   window.addEventListener('keydown', function (e) {
-    if (e.key === ' ' || e.code === 'Space') {
-      const isInput = (e.target === chatInput);
-      if (isInput && chatInput.value && chatInput.value.trim().length > 0) {
-        return;
+    // Escape or Control halts active speech immediately
+    if (e.key === 'Control' || e.key === 'Escape') {
+      let stopped = false;
+      if (activeMessageAudio && !activeMessageAudio.paused) {
+        stopActiveAudio();
+        stopped = true;
       }
-      const now = Date.now();
-      if (now - lastSpaceTime < 450) {
-        e.preventDefault();
-        lastSpaceTime = 0;
-        openEscalModal();
-        speakFocus(getI18n().escalateAlert);
-      } else {
-        lastSpaceTime = now;
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        stopped = true;
       }
+      if (stopped && e.key === 'Control') return;
+    }
+
+    // Alt + V: Toggle Voice Input
+    if (e.altKey && (e.key === 'v' || e.key === 'V' || e.code === 'KeyV')) {
+      e.preventDefault();
+      toggleVoiceHotkey();
+      return;
+    }
+
+    // Alt + L: Listen / Replay Last Assistant Response
+    if (e.altKey && (e.key === 'l' || e.key === 'L' || e.code === 'KeyL')) {
+      e.preventDefault();
+      listenToLastResponse();
+      return;
+    }
+
+    // Alt + H: Escalate to Human Help Desk
+    if (e.altKey && (e.key === 'h' || e.key === 'H' || e.code === 'KeyH')) {
+      e.preventDefault();
+      openEscalModal();
+      speakFocus(getI18n().escalateAlert);
+      return;
     }
   });
 
@@ -1264,8 +1570,18 @@
       listenBtn.type = 'button';
       listenBtn.className = 'btn-audio-speak';
       const t = getI18n();
-      listenBtn.setAttribute('aria-label', (t.listen || 'Listen') + ' to response');
+      listenBtn.setAttribute('aria-label', (t.listen || 'Listen') + ' to response (Alt+L)');
       listenBtn.innerHTML = '<span class="audio-btn-icon" aria-hidden="true">🔊</span> <span class="audio-btn-label">' + (t.listen || 'Listen') + '</span>';
+
+      const speedBtn = document.createElement('button');
+      speedBtn.type = 'button';
+      speedBtn.className = 'btn-audio-speed';
+      speedBtn.setAttribute('aria-label', (t.speedLabel || 'Playback speed') + ': ' + currentPlaybackRate + 'x. Click to change.');
+      speedBtn.textContent = currentPlaybackRate + 'x';
+      speedBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        cyclePlaybackRate(speedBtn);
+      });
 
       const cleanContent = content.replace(/\[\d+\]/g, '').trim();
       const msgLang = currentLanguage;
@@ -1273,6 +1589,7 @@
         toggleMessageAudio(listenBtn, cleanContent, msgLang);
       });
       audioControls.appendChild(listenBtn);
+      audioControls.appendChild(speedBtn);
       li.appendChild(audioControls);
     }
 
@@ -1299,7 +1616,7 @@
     }
 
     messageList.appendChild(li);
-    li.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    try { if (li.scrollIntoView) li.scrollIntoView({ behavior: 'smooth', block: 'end' }); } catch (_) {}
     return li;
   }
 
@@ -1314,7 +1631,7 @@
         <span class="thinking-dot"></span>
       </div>`;
     messageList.appendChild(li);
-    li.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    try { if (li.scrollIntoView) li.scrollIntoView({ behavior: 'smooth', block: 'end' }); } catch (_) {}
     return li;
   }
 
@@ -1367,11 +1684,12 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message:     text,
-          language:    currentLanguage,
-          session_id:  sessionId,
-          history:     history.slice(-10),
-          simple_mode: simpleModeEnabled
+          message:      text,
+          language:     currentLanguage,
+          session_id:   sessionId,
+          history:      history.slice(-10),
+          simple_mode:  simpleModeEnabled,
+          page_context: activePageContext
         })
       });
 
@@ -1391,6 +1709,14 @@
 
       appendMessage('assistant', reply, cites, ethDate);
       history.push({ role: 'assistant', content: reply });
+
+      playEarcon('answer_ready');
+
+      // Voice Guide announcement for blind learners
+      if (voiceGuideEnabled && reply) {
+        const preview = reply.length > 120 ? (reply.slice(0, 120) + '...') : reply;
+        speakFocus('Assistant: ' + preview + ' Press Alt+L to listen to full response.');
+      }
 
       /* Note: TTS is on-demand via the "Listen" button on each message (never auto-played) */
 
@@ -1431,6 +1757,7 @@
     }
 
     function stopVoiceRecording() {
+      playEarcon('mic_stop');
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         try { mediaRecorder.stop(); } catch (_) {}
       } else if (recognition) {
@@ -1514,6 +1841,7 @@
 
         mediaRecorder.start();
         setRecordingState(true);
+        playEarcon('mic_start');
 
         if (voiceStatusBanner) {
           voiceStatusBanner.className = 'voice-status-banner recording';
@@ -1726,10 +2054,41 @@
     if (e.target === escalModal) closeEscalModal();
   });
 
-  /* ── Escape key ──────────────────────────────────────────── */
+  /* ── Strict Focus Trap Inside Widget Shell ────────────────── */
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    if (!escalModal.hidden) return; // escalModal has its own modal focus trap
+
+    const focusable = Array.from(document.querySelectorAll(
+      'button:not([disabled]):not([hidden]):not([style*="display:none"]):not([style*="display: none"]), ' +
+      'select:not([disabled]), textarea:not([disabled]), input:not([disabled]), ' +
+      'a[href], [tabindex]:not([tabindex="-1"])'
+    )).filter(function (el) {
+      return el.offsetParent !== null && !el.closest('[hidden]');
+    });
+
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last  = focusable[focusable.length - 1];
+
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+
+  /* ── Escape key closes widget ────────────────────────────── */
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       if (!escalModal.hidden) { closeEscalModal(); return; }
+      playEarcon('close');
       parent.postMessage({ type: 'close' }, '*');
     }
   });

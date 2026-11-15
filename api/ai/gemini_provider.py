@@ -38,13 +38,14 @@ class GeminiProvider(AIProvider):
         context_chunks: list[dict],
         history: list[ChatMessage],
         simple_mode: bool = False,
+        page_context: dict | None = None,
     ) -> tuple[str, list[Citation]]:
         """Generate a pedagogical response in the learner's chosen language."""
         if not self.api_key:
             raise RuntimeError("Gemini API key is not configured.")
 
         system_prompt = get_system_prompt(language, simple_mode)
-        context_block = _build_context_block(context_chunks)
+        context_block = _build_context_block(context_chunks, page_context=page_context)
 
         contents: list[dict[str, Any]] = []
 

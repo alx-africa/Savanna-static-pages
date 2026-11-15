@@ -816,3 +816,116 @@ details[open] summary::before { transform: rotate(90deg); }
     border-color: #991b1b;
   }
 }
+
+/* ── Context & Starter Pills Bar ─────────────────────────────── */
+.prompt-pills-bar {
+  background: var(--c-surface-2);
+  border-bottom: 1px solid var(--c-border-light);
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.active-context-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--c-primary-dark);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-badge-icon {
+  font-size: 0.85rem;
+}
+
+.context-badge-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt-pills-scroll {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.prompt-pills-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.prompt-pills-scroll::-webkit-scrollbar-thumb {
+  background: var(--c-border-light);
+  border-radius: 4px;
+}
+
+.prompt-pill {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border-light);
+  border-radius: 9999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--c-text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.prompt-pill:hover {
+  background: var(--c-primary-bg);
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+  transform: translateY(-1px);
+}
+
+.prompt-pill:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.prompt-pill .pill-icon {
+  font-size: 0.85rem;
+}
+
+/* ── Audio Speed Toggle Control ─────────────────────────────── */
+.btn-audio-speed {
+  background: transparent;
+  border: 1px solid var(--c-border-light);
+  color: var(--c-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.22rem 0.45rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-inline-start: 0.35rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-audio-speed:hover {
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  border-color: var(--c-border);
+}
+
+.btn-audio-speed:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+

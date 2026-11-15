@@ -136,6 +136,7 @@ class OfflineProvider(AIProvider):
         context_chunks: list[dict],
         history: list[ChatMessage],
         simple_mode: bool = False,
+        page_context: dict | None = None,
     ) -> tuple[str, list[Citation]]:
         note = _OFFLINE_NOTES.get(language, _OFFLINE_NOTES["en"])
         mode_prefix = _MODE_PREFIXES.get(language, _MODE_PREFIXES["en"]) if simple_mode else ""

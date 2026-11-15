@@ -36,6 +36,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     user_id: Optional[str] = None
     simple_mode: bool = Field(default=False, description="Plain-language simple mode for cognitive accessibility")
+    page_context: Optional[dict[str, Any]] = Field(default=None, description="Active host page lesson context (title, active heading, selection, summary)")
 
 
 class Citation(BaseModel):

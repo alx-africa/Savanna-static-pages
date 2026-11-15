@@ -13,6 +13,7 @@ class AIProvider(ABC):
         context_chunks: list[dict],  # RAG results: {"id", "text", "source"}
         history: list[ChatMessage],
         simple_mode: bool = False,
+        page_context: dict | None = None,
     ) -> tuple[str, list[Citation]]:
         """Return (response_text, citations)."""
 
