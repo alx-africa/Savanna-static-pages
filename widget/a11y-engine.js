@@ -654,6 +654,119 @@
 
   /* ── 2d. Dynamic DOM Content Translation Engine ───────────────────────── */
   const originalTextMap = new WeakMap();
+  const DYN_TRANS_PREFIX = 'savanna_dyn_trans_';
+  const dynamicTransCache = {}; // In-memory dynamic translation cache: { am: { "Hello": "ሰላም" }, ... }
+  const pendingBatchStrings = {}; // Pending unseen strings per language: { am: Set(), ... }
+  const inFlightTranslations = {}; // In-flight request guards per language: { am: true, ... }
+  let translateDebounceTimer = null;
+
+  function getDynamicTrans(lang, text) {
+    if (!dynamicTransCache[lang]) {
+      dynamicTransCache[lang] = {};
+      try {
+        if (typeof localStorage !== 'undefined') {
+          const raw = localStorage.getItem(DYN_TRANS_PREFIX + lang);
+          if (raw) Object.assign(dynamicTransCache[lang], JSON.parse(raw));
+        }
+      } catch (_) {}
+    }
+    return dynamicTransCache[lang][text];
+  }
+
+  function setDynamicTransBatch(lang, map) {
+    if (!dynamicTransCache[lang]) {
+      dynamicTransCache[lang] = {};
+    }
+    Object.assign(dynamicTransCache[lang], map);
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(DYN_TRANS_PREFIX + lang, JSON.stringify(dynamicTransCache[lang]));
+      }
+    } catch (_) {}
+  }
+
+  function getTranslateApiUrl() {
+    let base = '';
+    if (typeof window !== 'undefined' && window.SavannaConfig && window.SavannaConfig.apiUrl) {
+      base = window.SavannaConfig.apiUrl;
+    } else if (currentScript && currentScript.dataset && currentScript.dataset.apiUrl) {
+      base = currentScript.dataset.apiUrl;
+    } else if (currentScript && currentScript.src) {
+      try {
+        base = new URL(currentScript.src).origin;
+      } catch (_) {}
+    }
+    if (!base && typeof window !== 'undefined' && window.location) {
+      base = (window.location.port === '8080') ? 'http://localhost:8000' : window.location.origin;
+    }
+    base = (base || '').replace(/\/$/, '');
+    const cleanBase = base.replace(/\/api$/, '');
+    return cleanBase + '/translate';
+  }
+
+  function scheduleBatchTranslation(lang) {
+    if (lang === 'en' || !pendingBatchStrings[lang] || pendingBatchStrings[lang].size === 0) return;
+    if (translateDebounceTimer) {
+      clearTimeout(translateDebounceTimer);
+    }
+    translateDebounceTimer = setTimeout(() => {
+      dispatchBatchTranslation(lang);
+    }, 70);
+  }
+
+  async function dispatchBatchTranslation(lang) {
+    if (lang === 'en') return;
+    if (!pendingBatchStrings[lang] || pendingBatchStrings[lang].size === 0) return;
+    if (inFlightTranslations[lang]) return;
+
+    const stringsToTranslate = Array.from(pendingBatchStrings[lang]).slice(0, 100);
+    stringsToTranslate.forEach(s => pendingBatchStrings[lang].delete(s));
+
+    if (stringsToTranslate.length === 0) return;
+
+    inFlightTranslations[lang] = true;
+    const url = getTranslateApiUrl();
+
+    try {
+      const fetchFn = (typeof window !== 'undefined' && window.fetch) ? window.fetch : (typeof fetch === 'function' ? fetch : null);
+      if (fetchFn) {
+        const resp = await fetchFn(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            strings: stringsToTranslate,
+            target_lang: lang,
+            source_lang: 'en'
+          })
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.translations && typeof data.translations === 'object') {
+            setDynamicTransBatch(lang, data.translations);
+            if (currentLang === lang) {
+              translateHostPage(lang);
+              if (typeof window !== 'undefined') {
+                const Evt = window.CustomEvent || (typeof CustomEvent !== 'undefined' ? CustomEvent : null);
+                if (Evt) {
+                  window.dispatchEvent(new Evt('savanna:page_translated', {
+                    detail: { lang, count: Object.keys(data.translations).length }
+                  }));
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // Graceful offline/network fallback
+    } finally {
+      inFlightTranslations[lang] = false;
+      if (pendingBatchStrings[lang] && pendingBatchStrings[lang].size > 0) {
+        scheduleBatchTranslation(lang);
+      }
+    }
+  }
 
   function translateHostPage(lang) {
     if (!lang || !ALL_LANGUAGES.includes(lang)) lang = 'en';
@@ -710,9 +823,16 @@
       const leadingWs = orig.match(/^\s*/)[0];
       const trailingWs = orig.match(/\s*$/)[0];
 
-      // Exact match in dictionary
+      // Exact match in static dictionary
       if (DOM_TRANSLATIONS[trimmed] && DOM_TRANSLATIONS[trimmed][lang]) {
         node.nodeValue = leadingWs + DOM_TRANSLATIONS[trimmed][lang] + trailingWs;
+        continue;
+      }
+
+      // Exact match in dynamic translation cache
+      const cached = getDynamicTrans(lang, trimmed);
+      if (cached) {
+        node.nodeValue = leadingWs + cached + trailingWs;
         continue;
       }
 
@@ -765,6 +885,13 @@
       }
       if (didReplace) {
         node.nodeValue = replacedText;
+        continue;
+      }
+
+      // Not found in static dictionary or cache: Queue for dynamic batch translation
+      if (/[a-zA-Z\u00C0-\u024F]/.test(trimmed)) {
+        if (!pendingBatchStrings[lang]) pendingBatchStrings[lang] = new Set();
+        pendingBatchStrings[lang].add(trimmed);
       }
     }
 
@@ -785,6 +912,11 @@
           el.setAttribute('aria-label', el.dataset.sa11yOrigAria);
         } else if (DOM_TRANSLATIONS[origAria] && DOM_TRANSLATIONS[origAria][lang]) {
           el.setAttribute('aria-label', DOM_TRANSLATIONS[origAria][lang]);
+        } else if (getDynamicTrans(lang, origAria)) {
+          el.setAttribute('aria-label', getDynamicTrans(lang, origAria));
+        } else if (/[a-zA-Z\u00C0-\u024F]/.test(origAria)) {
+          if (!pendingBatchStrings[lang]) pendingBatchStrings[lang] = new Set();
+          pendingBatchStrings[lang].add(origAria);
         }
       }
 
@@ -795,9 +927,18 @@
           el.setAttribute('placeholder', el.dataset.sa11yOrigPlaceholder);
         } else if (DOM_TRANSLATIONS[origPh] && DOM_TRANSLATIONS[origPh][lang]) {
           el.setAttribute('placeholder', DOM_TRANSLATIONS[origPh][lang]);
+        } else if (getDynamicTrans(lang, origPh)) {
+          el.setAttribute('placeholder', getDynamicTrans(lang, origPh));
+        } else if (/[a-zA-Z\u00C0-\u024F]/.test(origPh)) {
+          if (!pendingBatchStrings[lang]) pendingBatchStrings[lang] = new Set();
+          pendingBatchStrings[lang].add(origPh);
         }
       }
     });
+
+    if (lang !== 'en' && pendingBatchStrings[lang] && pendingBatchStrings[lang].size > 0) {
+      scheduleBatchTranslation(lang);
+    }
   }
 
 
@@ -3802,6 +3943,9 @@
       }
     },
     getLanguage: () => currentLang,
-    translatePage: () => translateHostPage(currentLang)
+    translatePage: () => translateHostPage(currentLang),
+    getDynamicTranslations: (lang) => (dynamicTransCache[lang] ? { ...dynamicTransCache[lang] } : {}),
+    setDynamicTranslations: (lang, map) => setDynamicTransBatch(lang, map),
+    flushPendingTranslations: (lang) => dispatchBatchTranslation(lang || currentLang)
   };
 })();

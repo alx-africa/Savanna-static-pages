@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import get_settings
-from routers import chat, escalate, jobs, accommodate, lti, sms as sms_router, teacher, vision, speech
+from routers import chat, escalate, jobs, accommodate, lti, sms as sms_router, teacher, vision, speech, translate
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -65,6 +65,7 @@ def create_app() -> FastAPI:
     app.include_router(teacher.router,     prefix="/teacher",     tags=["Teacher Analytics"])
     app.include_router(vision.router,                             tags=["Vision & Image Accessibility"])
     app.include_router(speech.router,                             tags=["Speech & Voice Accessibility"])
+    app.include_router(translate.router,                          tags=["Translation"])
 
     # ── Health ────────────────────────────────────────────────────────────────
     from models import HealthResponse

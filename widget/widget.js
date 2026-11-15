@@ -31,6 +31,9 @@
     ? scriptEl.dataset.apiUrl.replace(/\/$/, '')
     : (window.location.origin + '/api');
 
+  window.SavannaConfig = window.SavannaConfig || {};
+  window.SavannaConfig.apiUrl = apiUrl;
+
   const initialLang = (scriptEl && scriptEl.dataset.lang) ? scriptEl.dataset.lang : '';
 
   /* ── 2. Inject persistent CSS ─────────────────────────────────────────── */
