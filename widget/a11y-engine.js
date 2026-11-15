@@ -649,6 +649,110 @@
     "ar": "الموارد التعليمية",
     "sw": "Nyenzo za masomo",
     "fr": "Ressources"
+  },
+  // ── Universal Job Searching & Career Marketplace Terminology ──
+  "Jobs": {
+    "en": "Jobs", "am": "ስራዎች", "om": "Hojiiwwan", "ti": "ስራሕቲ", "so": "Shaqooyinka", "ar": "الوظائف", "sw": "Kazi", "fr": "Emplois"
+  },
+  "Job Title": {
+    "en": "Job Title", "am": "የስራ መደብ", "om": "Mata duree Hojii", "ti": "ናይ ስራሕ መደብ", "so": "Cinwaanka Shaqada", "ar": "المسمى الوظيفي", "sw": "Nafasi ya Kazi", "fr": "Intitulé du poste"
+  },
+  "Company": {
+    "en": "Company", "am": "ድርጅት", "om": "Dhaabbata", "ti": "ትካል", "so": "Shirkadda", "ar": "الشركة", "sw": "Kampuni", "fr": "Entreprise"
+  },
+  "Location": {
+    "en": "Location", "am": "ቦታ", "om": "Bakka", "ti": "ቦታ", "so": "Goobta", "ar": "الموقع", "sw": "Mahali", "fr": "Emplacement"
+  },
+  "Remote": {
+    "en": "Remote", "am": "የርቀት ስራ (Remote)", "om": "Fagoo (Remote)", "ti": "ናይ ርሕቐት ስራሕ (Remote)", "so": "Masaafada (Remote)", "ar": "عن بُعد (Remote)", "sw": "Kazi ya Masafa (Remote)", "fr": "À distance (Remote)"
+  },
+  "Full-time": {
+    "en": "Full-time", "am": "ሙሉ ጊዜ", "om": "Yeroo Guutuu", "ti": "ምሉእ ግዜ", "so": "Waqti Buuxa", "ar": "دوام كامل", "sw": "Muda Kamili", "fr": "Temps plein"
+  },
+  "Part-time": {
+    "en": "Part-time", "am": "የትርፍ ጊዜ", "om": "Yeroo Garaa-garaa", "ti": "ናይ ትርፊ ግዜ", "so": "Waqti Dhiman", "ar": "دوام جزئي", "sw": "Muda wa Sehemu", "fr": "Temps partiel"
+  },
+  "Contract": {
+    "en": "Contract", "am": "የኮንትራት ስራ", "om": "Waliigaltee", "ti": "ናይ ኮንትራት", "so": "Qandaraas", "ar": "عقد", "sw": "Mkataba", "fr": "Contrat"
+  },
+  "Internship": {
+    "en": "Internship", "am": "የልምምድ ስራ (Internship)", "om": "Shaakala Hojii (Internship)", "ti": "ናይ ልምምድ ስራሕ", "so": "Tababar Shaqo (Internship)", "ar": "تدريب عملي (Internship)", "sw": "Mafunzo Kazini (Internship)", "fr": "Stage (Internship)"
+  },
+  "Apply Now": {
+    "en": "Apply Now", "am": "አሁን ያመልክቱ", "om": "Amma Iyyadhaa", "ti": "ሕጂ ኣመልክቱ", "so": "Hadda Codso", "ar": "قدّم الآن", "sw": "Tuma Maombi Sasa", "fr": "Postuler maintenant"
+  },
+  "Apply": {
+    "en": "Apply", "am": "አመልክት", "om": "Iyyadhu", "ti": "ኣመልክት", "so": "Codso", "ar": "تقديم", "sw": "Omba", "fr": "Postuler"
+  },
+  "Save Job": {
+    "en": "Save Job", "am": "ስራ አስቀምጥ", "om": "Hojii Olkaayi", "ti": "ስራሕ ኣቐምጥ", "so": "Kaydi Shaqada", "ar": "حفظ الوظيفة", "sw": "Hifadhi Kazi", "fr": "Enregistrer l'offre"
+  },
+  "Job Description": {
+    "en": "Job Description", "am": "የስራ ዝርዝር መግለጫ", "om": "Ibsa Hojii", "ti": "ናይ ስራሕ መግለጺ", "so": "Faahfaahinta Shaqada", "ar": "الوصف الوظيفي", "sw": "Maelezo ya Kazi", "fr": "Description du poste"
+  },
+  "Requirements": {
+    "en": "Requirements", "am": "መስፈርቶች", "om": "Ulaagaalee", "ti": "ቅድመ-ኩነታት", "so": "Shuruudaha", "ar": "المتطلبات", "sw": "Vigezo na Masharti", "fr": "Exigences"
+  },
+  "Responsibilities": {
+    "en": "Responsibilities", "am": "የስራ ኃላፊነቶች", "om": "Ittigaafatamummaa", "ti": "ሓላፍነታት", "so": "Masuuliyadaha", "ar": "المسؤوليات", "sw": "Majukumu", "fr": "Responsabilités"
+  },
+  "Qualifications": {
+    "en": "Qualifications", "am": "የትምህርት እና የልምድ ዝግጅት", "om": "Ga'umsa Barbaachisu", "ti": "ብቕዓት", "so": "Shahaadooyinka & Khibradda", "ar": "المؤهلات المطلوبة", "sw": "Sifa Zilizohitajika", "fr": "Qualifications"
+  },
+  "Skills Required": {
+    "en": "Skills Required", "am": "የሚያስፈልጉ ክህሎቶች", "om": "Dandeettiiwwan Barbaachisan", "ti": "ዘድልዩ ክእለታት", "so": "Xirfadaha Loo Baahan Yahay", "ar": "المهارات المطلوبة", "sw": "Ujuzi Unaohitajika", "fr": "Compétences requises"
+  },
+  "Experience": {
+    "en": "Experience", "am": "የስራ ልምድ", "om": "Muuxannoo Hojii", "ti": "ናይ ስራሕ ተመኩሮ", "so": "Khibrad", "ar": "الخبرة", "sw": "Uzoefu", "fr": "Expérience"
+  },
+  "Salary": {
+    "en": "Salary", "am": "ደመወዝ / ክፍያ", "om": "Mindaa / Kaffaltii", "ti": "መሃያ", "so": "Mushahar", "ar": "الراتب", "sw": "Mshahara", "fr": "Salaire"
+  },
+  "Compensation": {
+    "en": "Compensation", "am": "ጥቅማጥቅም እና ክፍያ", "om": "Kaffaltii fi Faayidaalee", "ti": "ክፍሊትን ረብሓታትን", "so": "Gunnooyinka", "ar": "التعويضات والمزايا", "sw": "Fidia na Marupurupu", "fr": "Rémunération"
+  },
+  "Deadline": {
+    "en": "Deadline", "am": "የማመልከቻ ማብቂያ ቀን", "om": "Guyyaa Dhumaa", "ti": "መዛዘሚ ዕለት", "so": "Waqtiga kama dambaysta ah", "ar": "الموعد النهائي", "sw": "Tarehe ya Mwisho", "fr": "Date limite"
+  },
+  "Posted": {
+    "en": "Posted", "am": "የተለጠፈበት ቀን", "om": "Kan Maxxanfame", "ti": "እተለጠፈሉ", "so": "La Daabacay", "ar": "تاريخ النشر", "sw": "Imechapishwa", "fr": "Publié le"
+  },
+  "Search Jobs": {
+    "en": "Search Jobs", "am": "ስራዎችን ፈልግ", "om": "Hojiiwwan Barbaadi", "ti": "ስራሕቲ ድለይ", "so": "Raadi Shaqooyin", "ar": "ابحث عن وظائف", "sw": "Tafuta Kazi", "fr": "Rechercher des emplois"
+  },
+  "All Jobs": {
+    "en": "All Jobs", "am": "ሁሉም ስራዎች", "om": "Hojiiwwan Hundumaa", "ti": "ኩሎም ስራሕቲ", "so": "Dhammaan Shaqooyinka", "ar": "جميع الوظائف", "sw": "Kazi Zote", "fr": "Tous les emplois"
+  },
+  "Filter": {
+    "en": "Filter", "am": "አጣራ (Filter)", "om": "Calali (Filter)", "ti": "ሕረ (Filter)", "so": "Shaandhee (Filter)", "ar": "تصفية (Filter)", "sw": "Chuja (Filter)", "fr": "Filtrer"
+  },
+  // ── Universal Learning & Course Platform Terminology ──
+  "Course": {
+    "en": "Course", "am": "ኮርስ / ትምህርት", "om": "Koorsii", "ti": "ኮርስ", "so": "Koorsada", "ar": "الدورة التدريبية", "sw": "Kozi", "fr": "Cours"
+  },
+  "Lesson": {
+    "en": "Lesson", "am": "ትምህርት (Lesson)", "om": "Barnoota", "ti": "ትምህርቲ", "so": "Casharka", "ar": "الدرس", "sw": "Somo", "fr": "Leçon"
+  },
+  "Assignment": {
+    "en": "Assignment", "am": "የተግባር ስራ (Assignment)", "om": "Hojii Manneenii (Assignment)", "ti": "ዕዮ ገዛ", "so": "Shaqo-guri (Assignment)", "ar": "واجب دراسي", "sw": "Kazi ya Mradi (Assignment)", "fr": "Devoir"
+  },
+  "Quiz": {
+    "en": "Quiz", "am": "ፈተና / ጥያቄዎች (Quiz)", "om": "Gaaffilee Madaallii (Quiz)", "ti": "ፈተና (Quiz)", "so": "Kedis (Quiz)", "ar": "اختبار قصير (Quiz)", "sw": "Jaribio (Quiz)", "fr": "Quiz"
+  },
+  "Certificate": {
+    "en": "Certificate", "am": "የምስክር ወረቀት", "om": "Waraqaa Ragaa", "ti": "ናይ ምስክር ወረቐት", "so": "Shahaado", "ar": "شهادة إتمام", "sw": "Cheti cha Kuhitimu", "fr": "Certificat"
+  },
+  "Completed": {
+    "en": "Completed", "am": "ተጠናቋል", "om": "Xumurameera", "ti": "ተወዲኡ", "so": "Waa la Dhameeyay", "ar": "مكتمل", "sw": "Imekamilika", "fr": "Terminé"
+  },
+  "In Progress": {
+    "en": "In Progress", "am": "በሂደት ላይ ያለ", "om": "Adeemsa Irra Jira", "ti": "ኣብ ከይዲ ዘሎ", "so": "Wuu Socdaa", "ar": "قيد التقدم", "sw": "Inaendelea", "fr": "En cours"
+  },
+  "Not Started": {
+    "en": "Not Started", "am": "አልተጀመረም", "om": "Hin Jalqabamne", "ti": "ኣይተጀመረን", "so": "Lama Bilaabin", "ar": "لم يبدأ بعد", "sw": "Haijaanza", "fr": "Non commencé"
+  },
+  "Enroll Now": {
+    "en": "Enroll Now", "am": "አሁን ይመዝገቡ", "om": "Amma Galmaa'aa", "ti": "ሕጂ ተመዝገቡ", "so": "Hadda Isdiiwaangeli", "ar": "سجّل الآن", "sw": "Jiandikishe Sasa", "fr": "S'inscrire maintenant"
   }
 };
 
@@ -719,6 +823,50 @@
     return cleanBase + '/translate';
   }
 
+  function detectHostSiteType() {
+    if (typeof window === 'undefined') return 'general';
+    // 1. Explicit configuration from window.SavannaConfig or script attribute
+    if (window.SavannaConfig && window.SavannaConfig.siteType) {
+      const explicit = String(window.SavannaConfig.siteType).toLowerCase();
+      if (['jobs', 'learning', 'general'].includes(explicit)) return explicit;
+    }
+    const currentScript = (typeof document !== 'undefined') ? (document.currentScript || document.querySelector('script[data-site-type]')) : null;
+    if (currentScript && currentScript.dataset && currentScript.dataset.siteType) {
+      const scriptType = currentScript.dataset.siteType.toLowerCase();
+      if (['jobs', 'learning', 'general'].includes(scriptType)) return scriptType;
+    }
+
+    // 2. Automated structural and semantic DOM inspection
+    if (typeof document === 'undefined' || !document.body) return 'general';
+    const doc = document;
+
+    // Job Searching site markers
+    const hasJobElements = !!doc.querySelector(
+      '#job-details, .job-details, .job-description, .job-card, .job-listing, .job-item, ' +
+      '.vacancy-card, [data-job-id], [data-job-content], .career-portal, .job-search-results, ' +
+      '#jobs-list, .application-modal'
+    );
+    const pageTitle = (doc.title || '').toLowerCase();
+    const metaKeywords = (doc.querySelector('meta[name="keywords"]')?.getAttribute('content') || '').toLowerCase();
+    const metaDesc = (doc.querySelector('meta[name="description"]')?.getAttribute('content') || '').toLowerCase();
+
+    if (hasJobElements || /job|career|vacancy|hiring|remote work|recruitment/i.test(pageTitle + ' ' + metaKeywords + ' ' + metaDesc)) {
+      return 'jobs';
+    }
+
+    // Learning / Course platform markers
+    const hasLearningElements = !!doc.querySelector(
+      '#curriculum_navigation_content, .formatted-content, .savanna-styles, .course-content, ' +
+      '.lesson-content, .curriculum-container, .module-body, [data-lesson-content], .quiz-container, ' +
+      '.assignment-content, #student-current-curriculum'
+    );
+    if (hasLearningElements || /course|lesson|curriculum|module|syllabus|academy|learn|student/i.test(pageTitle + ' ' + metaKeywords + ' ' + metaDesc)) {
+      return 'learning';
+    }
+
+    return 'general';
+  }
+
   function scheduleBatchTranslation(lang) {
     if (lang === 'en' || !pendingBatchStrings[lang] || pendingBatchStrings[lang].size === 0) return;
     if (translateDebounceTimer) {
@@ -752,13 +900,16 @@
     try {
       const fetchFn = (typeof window !== 'undefined' && window.fetch) ? window.fetch : (typeof fetch === 'function' ? fetch : null);
       if (fetchFn) {
+        const siteType = detectHostSiteType();
         const resp = await fetchFn(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             strings: stringsToTranslate,
             target_lang: lang,
-            source_lang: 'en'
+            source_lang: 'en',
+            site_type: siteType,
+            domain: (typeof window !== 'undefined' && window.location) ? window.location.hostname : 'unknown'
           })
         });
 
@@ -851,15 +1002,53 @@
       textNodes.push(walker.currentNode);
     }
 
-    // Prioritize text nodes inside course curriculum containers so the core educational content is translated first
+    function getContentPriorityScore(node) {
+      const parent = node.parentElement;
+      if (!parent) return 0;
+      let score = 0;
+
+      // 1. Core Semantic Main / Article Containers
+      if (parent.closest('main, article, [role="main"], [role="article"], [role="feed"]')) score += 50;
+
+      // 2. Learning Platform primary content selectors
+      if (parent.closest(
+        '#curriculum_navigation_content, .formatted-content, .savanna-styles, .course-content, ' +
+        '.lesson-content, .curriculum-container, .module-body, [data-lesson-content], .quiz-container, ' +
+        '.assignment-details, .learning-material, .reading-content'
+      )) {
+        score += 100;
+      }
+
+      // 3. Job Searching & Career Marketplace primary content selectors
+      if (parent.closest(
+        '#job-details, .job-details, .job-description, .job-card, .job-listing, .job-post, ' +
+        '.vacancy-card, [data-job-id], [data-job-content], .career-item, .posting-requirements, ' +
+        '.job-search-results, .application-modal, .candidate-portal'
+      )) {
+        score += 100;
+      }
+
+      // 4. Heading elements carry high hierarchical orientation value
+      if (parent.closest('h1, h2, h3, h4, h5, h6, [role="heading"]')) score += 30;
+
+      // 5. Dense text nodes (longer paragraphs or requirements specs)
+      const textLen = (node.nodeValue || '').trim().length;
+      if (textLen >= 40) score += 20;
+      if (textLen >= 120) score += 20;
+
+      // 6. Deprioritize chrome, footers, breadcrumbs, cookie notices
+      if (parent.closest('nav, header, footer, .sidebar, .navbar, .breadcrumb, .social-share, .cookie-banner, .footer')) {
+        score -= 40;
+      }
+
+      return score;
+    }
+
+    // Universal prioritization: Sort highest priority educational and career content to index 0
     textNodes.sort((a, b) => {
-      const aParent = a.parentElement;
-      const bParent = b.parentElement;
-      const aInCourse = aParent && aParent.closest('#curriculum_navigation_content, .formatted-content, .savanna-styles, main#content, article');
-      const bInCourse = bParent && bParent.closest('#curriculum_navigation_content, .formatted-content, .savanna-styles, main#content, article');
-      if (aInCourse && !bInCourse) return -1;
-      if (!aInCourse && bInCourse) return 1;
-      return 0;
+      const scoreA = getContentPriorityScore(a);
+      const scoreB = getContentPriorityScore(b);
+      return scoreB - scoreA;
     });
 
     for (const node of textNodes) {
@@ -3976,7 +4165,7 @@
     mutationTimeout = setTimeout(() => {
       adaptBlindAndScreenReader(true);
       if (currentLang && currentLang !== 'en') translateHostPage(currentLang);
-    }, 250);
+    }, 100);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
@@ -4021,6 +4210,37 @@
     initEngine();
   }
 
+  // Single Page Application (SPA) navigation observer (React, Next.js, Vue, Angular)
+  if (typeof window !== 'undefined' && window.history) {
+    try {
+      const wrapHistoryMethod = (type) => {
+        const orig = window.history[type];
+        if (typeof orig === 'function') {
+          return function() {
+            const rv = orig.apply(this, arguments);
+            window.dispatchEvent(new Event('savanna:locationchange'));
+            return rv;
+          };
+        }
+        return orig;
+      };
+      window.history.pushState = wrapHistoryMethod('pushState');
+      window.history.replaceState = wrapHistoryMethod('replaceState');
+      window.addEventListener('popstate', () => window.dispatchEvent(new Event('savanna:locationchange')));
+      window.addEventListener('hashchange', () => window.dispatchEvent(new Event('savanna:locationchange')));
+
+      window.addEventListener('savanna:locationchange', () => {
+        setTimeout(() => {
+          if (currentLang && currentLang !== 'en') {
+            translateHostPage(currentLang);
+          }
+        }, 100);
+      });
+    } catch (e) {
+      // Graceful fallback for non-standard environments
+    }
+  }
+
   // Expose API for host scripts or other modules
   window.SavannaA11y = {
     openSettings: (targetStep) => openOnboardingModal(true, targetStep || 1),
@@ -4036,6 +4256,8 @@
       }
     },
     getLanguage: () => currentLang,
+    detectDomain: () => detectHostSiteType(),
+    getSiteType: () => detectHostSiteType(),
     translatePage: () => translateHostPage(currentLang),
     getDynamicTranslations: (lang) => (dynamicTransCache[lang] ? { ...dynamicTransCache[lang] } : {}),
     setDynamicTranslations: (lang, map) => setDynamicTransBatch(lang, map),

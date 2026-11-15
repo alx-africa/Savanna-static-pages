@@ -99,6 +99,7 @@ class BatchTranslateRequest(BaseModel):
     target_lang: str = Field(..., description="Target language code (am, om, ti, so, ar, sw, fr, en)")
     source_lang: str = Field(default="en", description="Source language code")
     domain: Optional[str] = Field(default=None, description="Host website domain for context")
+    site_type: Optional[str] = Field(default="auto", description="Site type: auto, learning, jobs, or general")
 
 
 class BatchTranslateResponse(BaseModel):
@@ -115,9 +116,11 @@ async def _translate_with_gemini(
     target_lang: str,
     source_lang: str,
     api_key: str,
-    model: str = "gemini-3.5-flash-lite"
+    model: str = "gemini-3.5-flash-lite",
+    site_type: str = "auto",
+    domain: Optional[str] = None
 ) -> dict[str, str]:
-    """Translate an array of texts using Google Gemini with structured JSON output and pedagogical guidance."""
+    """Translate an array of texts using Google Gemini with structured JSON output and domain-adaptive guidance."""
     lang_name = LANGUAGE_NAMES.get(target_lang, target_lang)
     target_model = model or "gemini-3.5-flash-lite"
     if "gemini-3.5-flash" in target_model and not target_model.endswith("-lite"):
@@ -125,15 +128,58 @@ async def _translate_with_gemini(
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{target_model}:generateContent?key={api_key}"
 
+    # Auto-detect domain if requested
+    detected_type = (site_type or "auto").lower()
+    if detected_type == "auto":
+        combined_text = " ".join(texts).lower() + " " + (domain or "").lower()
+        has_job_terms = any(w in combined_text for w in [
+            "job", "career", "salary", "apply now", "applicant", "candidate", "resume",
+            "qualifications", "responsibilities", "compensation", "full-time", "part-time",
+            "contract", "internship", "hiring", "vacancy", "stipend"
+        ])
+        has_learn_terms = any(w in combined_text for w in [
+            "course", "lesson", "curriculum", "syllabus", "module", "assignment", "quiz",
+            "grade", "instructor", "enroll", "student", "learn", "academy"
+        ])
+        if has_job_terms and not has_learn_terms:
+            detected_type = "jobs"
+        elif has_learn_terms:
+            detected_type = "learning"
+        else:
+            detected_type = "general"
+
+    if detected_type == "jobs":
+        role_desc = "an expert career and workforce localization engine for African talent marketplaces, remote job boards, and digital hiring portals"
+        guidelines = (
+            "CRITICAL CAREER & JOB MARKETPLACE REQUIREMENTS:\n"
+            f"1. Professional & Actionable Clarity: Translate job responsibilities, minimum qualifications, candidate requirements, and benefits into clear, empowering, professional phrasing that resonates with African job seekers and remote professionals in {lang_name}.\n"
+            "2. Tech Stack & Qualifications: Preserve recognized technical tools, software, programming languages, and industry standards (e.g., Python, AWS, SQL, CRM, Excel, Agile, Full-Stack, VA) intact where standard, while translating the surrounding action, requirement, and experience expectation naturally.\n"
+            "3. Compensation, Deadlines & Application Terms: Ensure terms like 'Remote', 'Full-time', 'Contract', 'Competitive Salary', 'Application Deadline', and 'Apply Now' are translated into authentic local career terminology.\n"
+            "4. Formatting & JSON Output: Return ONLY a valid JSON object mapping each EXACT original string key to its intuitive translated string value."
+        )
+    elif detected_type == "learning":
+        role_desc = "an expert pedagogical localization engine for African digital professionals learning modern tech careers (ALX / Holberton / Online Academies)"
+        guidelines = (
+            "CRITICAL PEDAGOGICAL REQUIREMENTS:\n"
+            f"1. Contextual & Natural Clarity: Translate the real semantic meaning of the sentence rather than literal word-for-word replacement. Ensure the phrasing sounds completely natural, intuitive, and engaging to an educated native speaker of {lang_name}.\n"
+            f"2. Terminology Balance: Keep core tech acronyms and recognizable industry designations clear (e.g. AI, Virtual Assistant, VA, DevOps, Kubernetes) where standard in professional practice, while explaining the concepts clearly in {lang_name}.\n"
+            "3. Sentence Flow & Grammar: Where strings are clauses, bullet points, or callouts of an educational lesson, ensure grammatical alignment so they fit smoothly into the broader lesson context.\n"
+            "4. Formatting: Preserve numbers, bullet markers, and emojis intact.\n"
+            "5. Output: Return ONLY a valid JSON object mapping each EXACT original string key to its intuitive translated string value."
+        )
+    else:
+        role_desc = "an expert localization engine for African digital platforms, online learning academies, and modern job portals"
+        guidelines = (
+            "CRITICAL LOCALIZATION REQUIREMENTS:\n"
+            f"1. Natural Fluency: Translate the real semantic meaning into authentic, culturally fluent {lang_name}.\n"
+            "2. Professional Tech & Career Terms: Balance local linguistic clarity with global tech industry terminology.\n"
+            "3. Formatting & Output: Return ONLY a valid JSON object mapping each EXACT original string key to its translated string value."
+        )
+
     prompt = (
-        f"You are an expert pedagogical localization engine for African digital professionals learning modern tech careers (ALX / Holberton).\n"
-        f"Translate the following JSON array of course content and UI strings from {source_lang} into {lang_name}.\n\n"
-        f"CRITICAL PEDAGOGICAL REQUIREMENTS:\n"
-        f"1. Contextual & Natural Clarity: Translate the real semantic meaning of the sentence rather than literal word-for-word replacement. Ensure the phrasing sounds completely natural, intuitive, and engaging to an educated native speaker of {lang_name}.\n"
-        f"2. Terminology Balance: Keep core tech acronyms and recognizable industry designations clear (e.g. AI, Virtual Assistant, VA, DevOps, Kubernetes) where standard in professional practice, while explaining the concepts clearly in {lang_name}.\n"
-        f"3. Sentence Flow & Grammar: Where strings are clauses, bullet points, or callouts of an educational lesson, ensure grammatical alignment so they fit smoothly into the broader lesson context.\n"
-        f"4. Formatting: Preserve numbers, bullet markers, and emojis intact.\n"
-        f"5. Output: Return ONLY a valid JSON object mapping each EXACT original string key to its intuitive translated string value.\n\n"
+        f"You are {role_desc}.\n"
+        f"Translate the following JSON array of web content and UI strings from {source_lang} into {lang_name}.\n\n"
+        f"{guidelines}\n\n"
         f"Strings to translate:\n"
         f"{json.dumps(texts, ensure_ascii=False)}"
     )
@@ -313,6 +359,8 @@ async def batch_translate(req: BatchTranslateRequest) -> BatchTranslateResponse:
                     source_lang=source,
                     api_key=settings.gemini_api_key.strip(),
                     model=settings.gemini_model or "gemini-3.5-flash-lite",
+                    site_type=req.site_type or "auto",
+                    domain=req.domain,
                 )
                 for chunk in chunks
             ]
