@@ -266,7 +266,18 @@ async def chat(body: ChatRequest) -> ChatResponse:
             ),
             timeout=30.0,
         )
-        if ai_citations:
+        # If the model explicitly cited chunks, use them.
+        # If the response indicates the topic is not mentioned in course content, citations must be empty.
+        refusal_phrases = [
+            "does not mention", "not in the provided", "not mentioned",
+            "not in the course", "course material does not",
+            "አልጠቀሰም", "አይገልጽም", "መረጃ የለም", "hin caqasne", "hin ibsine",
+            "ኣይጠቐሰን", "ኣይገልጽን", "ma sheegin", "لم يذكر", "haikutaja"
+        ]
+        is_refusal = any(p in reply_text.lower() for p in refusal_phrases)
+        if is_refusal:
+            citations = []
+        elif ai_citations:
             citations = ai_citations
     except asyncio.TimeoutError:
         reply_text = _TIMEOUT_MESSAGES.get(language, _TIMEOUT_MESSAGES["en"])
