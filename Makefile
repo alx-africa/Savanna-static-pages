@@ -35,8 +35,8 @@ wcag:
 # ── Unit / integration tests ──────────────────────────────────────
 test:
 	@echo "Running backend test suite …"
-	cd api && PYTHONPATH=. ../.venv/bin/python -m unittest tests/test_assistant.py 2>/dev/null || \
-	  (cd api && PYTHONPATH=. python3 -m unittest tests/test_assistant.py)
+	cd api && PYTHONPATH=. ../.venv/bin/python -m unittest discover -s tests -p "test_*.py" 2>/dev/null || \
+	  (cd api && PYTHONPATH=. python3 -m unittest discover -s tests -p "test_*.py")
 
 # ── LTI key generation ────────────────────────────────────────────
 lti-keys:

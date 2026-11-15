@@ -104,6 +104,24 @@ def create_app() -> FastAPI:
     if os.path.isdir(teacher_dir):
         app.mount("/teacher-ui", StaticFiles(directory=teacher_dir, html=True), name="teacher-ui")
 
+    pages_dir = os.path.join(base_dir, "pages")
+    if not os.path.isdir(pages_dir):
+        pages_dir = os.path.join(base_dir, "..", "pages")
+    if os.path.isdir(pages_dir):
+        app.mount("/pages", StaticFiles(directory=pages_dir, html=True), name="pages")
+
+    assets_dir = os.path.join(base_dir, "assets")
+    if not os.path.isdir(assets_dir):
+        assets_dir = os.path.join(base_dir, "..", "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir, html=True), name="assets")
+
+    demo_dir = os.path.join(base_dir, "demo")
+    if not os.path.isdir(demo_dir):
+        demo_dir = os.path.join(base_dir, "..", "demo")
+    if os.path.isdir(demo_dir):
+        app.mount("/demo", StaticFiles(directory=demo_dir, html=True), name="demo")
+
     return app
 
 
