@@ -37,17 +37,95 @@ git clone <repo> && cd Hackathon2
 
 # 2. Configure
 cp .env.example .env
-# Edit .env — set OPENAI_API_KEY (or AI_PROVIDER=offline for no key)
+# Default runs with Gemini, Ollama, or AI_PROVIDER=offline (zero API key required)
 
-# 3. Start everything
-make dev
+# 3. Start everything with Docker Compose
+docker compose up -d
 # → API at http://localhost:8000
 # → Widget at http://localhost:80/widget/iframe.html
-# → Docs at http://localhost:8000/docs
+# → Interactive Docs at http://localhost:8000/docs
+# → Frozen Savanna Demo at http://localhost:8080/pages/homepage-v1-paced.html
+```
 
-# 4. Open a frozen Savanna page
-open pages/homepage-v1-paced.html
-# The floating chat bubble appears bottom-right.
+---
+
+## ⚡ The 1-Hour Judge Verification Runbook (Track 3 Checklist)
+
+Judges can execute and verify every Track 3 requirement within 10 minutes using the following commands:
+
+### 1. Health & Gate Verification (Slide 13 Gate)
+```bash
+# Verify API health
+curl -s http://localhost:8000/health | jq .
+
+# Verify 0 axe-core critical/serious violations & WCAG 2.2 AA gate
+npm test
+```
+
+### 2. Multilingual Course RAG Tutor with Citations (Slide 10)
+```bash
+# Ask course tutor in English (verifies source citations [chunk_id] & calendar)
+curl -s -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is the week 10 deliverable?", "language": "en"}' | jq .
+
+# Ask course tutor in Amharic (verifies Ge'\''ez response & Ethiopian date stamp)
+curl -s -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "ስለ ሳምንት 10 ማጠናቀቂያ አብራራልኝ", "language": "am"}' | jq .
+```
+
+### 3. Plain-Language "Simple Mode" Toggle (Cognitive A11y Bonus)
+```bash
+# Ask with simple_mode=true (returns clear, short-sentence explanations with zero jargon)
+curl -s -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is a virtual environment?", "simple_mode": true}' | jq .
+```
+
+### 4. Live Human Escalation & Ticket Management (Slide 10)
+```bash
+# User requests a human helper
+curl -s -X POST http://localhost:8000/escalate \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "Need help with Week 10 Python setup", "session_id": "judge-test-01"}' | jq .
+# Returns: {"ticket_id": "ESC-...", "status": "pending", "operator_url": "..."}
+```
+
+### 5. Career Gateway & Interview Accommodations (Slide 10 & 14)
+```bash
+# 5a. Query remote tech jobs indexed for African talent
+curl -s http://localhost:8000/jobs | jq .
+
+# 5b. Request interview accommodations WITHOUT requiring medical proof
+curl -s -X POST http://localhost:8000/accommodate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Abebe Kebede",
+    "email": "abebe@example.com",
+    "accommodation_type": "Screen Reader & Extended Time",
+    "job_id": "job-001",
+    "notes": "Requires NVDA compatibility during technical interview"
+  }' | jq .
+# Returns unique reference code (e.g. ACC-2026-XXXX) & confirmation
+```
+
+### 6. Anonymous Teacher Analytics (Slide 10 Bonus — Privacy Preserving)
+```bash
+# View aggregated student confusion hotspots (100% zero PII recorded)
+curl -s http://localhost:8000/teacher/analytics | jq .
+```
+
+### 7. Integration Tiers (Slide 11)
+```bash
+# Level 1 Drop-in Widget: Inspect host script embed
+# In browser: http://localhost:8080/pages/homepage-v1-paced.html
+
+# Level 2 REST API: OpenAPI 3.0 specification
+curl -s http://localhost:8000/openapi.json | jq .info
+
+# Level 3 LTI 1.3: Canvas/Moodle LMS JWKS Key Set
+curl -s http://localhost:8000/lti/jwks | jq .
 ```
 
 ---
