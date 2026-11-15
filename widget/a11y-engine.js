@@ -1060,9 +1060,9 @@
 
     // 1. Ensure primary content has role="main" if no <main> exists
     if (!document.querySelector('main, [role="main"]')) {
-      const primaryContainer = document.getElementById('curriculum_navigation_content') ||
-        document.getElementById('content') ||
-        document.querySelector('.content, article, .formatted-content');
+      const primaryContainer = document.querySelector(
+        '#main-content, #main, #content, .main-content, .content, article, .formatted-content, .post-content, .entry-content, .page-content, section.main, [role="region"].main'
+      ) || document.querySelector('section, .container');
       if (primaryContainer) {
         primaryContainer.setAttribute('role', 'main');
       }
@@ -1070,27 +1070,45 @@
 
     // 2. Ensure header has role="banner" if no <header> with banner role exists
     if (!document.querySelector('header, [role="banner"]')) {
-      const headerEl = document.querySelector('.header, #header, .navbar, .top-bar');
+      const headerEl = document.querySelector('.header, #header, .navbar, .top-bar, .site-header, header');
       if (headerEl) {
         headerEl.setAttribute('role', 'banner');
       }
     }
 
     // 3. Ensure navigation landmarks have distinguishing aria-labels for screen reader browse mode (D key)
-    const navCandidates = document.querySelectorAll('nav, [role="navigation"], .sidebar.navigation, #sidebar, #curriculum_navigation_menu');
+    const navCandidates = document.querySelectorAll('nav, [role="navigation"], .sidebar.navigation, #sidebar, .nav-menu, .navigation');
+    const navLabels = {
+      en: { sidebar: 'Sidebar Navigation', menu: 'Navigation Menu', main: 'Main Navigation' },
+      am: { sidebar: 'የጎን አሰሳ ማውጫ', menu: 'የአሰሳ ዝርዝር', main: 'ዋና አሰሳ' },
+      om: { sidebar: 'Kutaa cinaa', menu: 'Baafata', main: 'Qajeelcha ijoo' },
+      ti: { sidebar: 'ናይ ጎኒ መጎልበቲ', menu: 'ዝርዝር መጎልበቲ', main: 'ቀንዲ መጎልበቲ' },
+      so: { sidebar: 'Hagaha dhinaca', menu: 'Liiska hagaha', main: 'Hagaha guud' },
+      ar: { sidebar: 'التنقل الجانبي', menu: 'قائمة التنقل', main: 'التنقل الرئيسي' },
+      sw: { sidebar: 'Urambazaji wa pembeni', menu: 'Menyu ya urambazaji', main: 'Urambazaji mkuu' },
+      fr: { sidebar: 'Navigation latérale', menu: 'Menu de navigation', main: 'Navigation principale' }
+    };
+    const t = navLabels[currentLang] || navLabels.en;
+
     navCandidates.forEach((nav, idx) => {
       if (!nav.getAttribute('role')) {
         nav.setAttribute('role', 'navigation');
       }
       if (!nav.getAttribute('aria-label') && !nav.getAttribute('aria-labelledby')) {
-        const id = nav.id || '';
-        const cls = nav.className || '';
-        if (id.includes('sidebar') || cls.includes('sidebar')) {
-          nav.setAttribute('aria-label', currentLang === 'am' ? 'የጎን አሰሳ ማውጫ' : 'Sidebar Navigation');
-        } else if (id.includes('curriculum') || cls.includes('curriculum')) {
-          nav.setAttribute('aria-label', currentLang === 'am' ? 'የትምህርት ሞጁሎች አሰሳ' : 'Curriculum Modules Navigation');
+        // Derive label dynamically from inner heading if present
+        const innerHeading = nav.querySelector('h1, h2, h3, h4, h5, h6, .nav-title, .menu-title');
+        if (innerHeading && innerHeading.textContent.trim()) {
+          nav.setAttribute('aria-label', innerHeading.textContent.trim());
+          return;
+        }
+        const id = (nav.id || '').toLowerCase();
+        const cls = (nav.className || '').toLowerCase();
+        if (id.includes('sidebar') || cls.includes('sidebar') || nav.closest('aside')) {
+          nav.setAttribute('aria-label', t.sidebar || 'Sidebar Navigation');
+        } else if (id.includes('menu') || cls.includes('menu') || id.includes('curriculum')) {
+          nav.setAttribute('aria-label', t.menu || 'Navigation Menu');
         } else {
-          nav.setAttribute('aria-label', currentLang === 'am' ? `አሰሳ ${idx + 1}` : `Navigation ${idx + 1}`);
+          nav.setAttribute('aria-label', `${t.main || 'Navigation'} ${idx > 0 ? idx + 1 : ''}`.trim());
         }
       }
     });
@@ -3110,23 +3128,46 @@
     let prefix = '';
     const tag = node.tagName.toLowerCase();
     const role = (node.getAttribute('role') || '').toLowerCase();
+    const prefixes = {
+      callout: {
+        en: 'Important note: ',
+        am: 'ማሳሰቢያ፡ ',
+        om: 'Hubachiisa: ',
+        ti: 'መተሓሳሰቢ፡ ',
+        so: 'Ogeysiis muhiim ah: ',
+        ar: 'ملاحظة هامة: ',
+        sw: 'Taarifa muhimu: ',
+        fr: 'Remarque importante : '
+      },
+      job: {
+        en: 'Job opening: ',
+        am: 'የሥራ ማስታወቂያ፡ ',
+        om: 'Beeksisa hojii: ',
+        ti: 'ናይ ስራሕ ምልክታ፡ ',
+        so: 'Xayeysiinta shaqada: ',
+        ar: 'فرصة عمل: ',
+        sw: 'Nafasi ya kazi: ',
+        fr: 'Offre d’emploi : '
+      }
+    };
+
     if (/^h[1-6]$/.test(tag) || role === 'heading') {
       // Natural spoken reading: Speak heading content directly without repeating robotic level numbers
-      // (e.g. avoiding repetitive 'ርዕስ 4' / 'ርዕስ 5' prefixes before every card title)
       prefix = '';
     } else if (node.classList.contains('callout') || node.closest('.callout')) {
-      prefix = (currentLang === 'am') ? `ማሳሰቢያ፡ ` : `Important note: `;
+      prefix = (prefixes.callout[currentLang] || prefixes.callout.en);
     } else if (node.classList.contains('job-card') || role === 'article') {
-      prefix = (currentLang === 'am') ? `የሥራ ማስታወቂያ፡ ` : `Job opening: `;
+      prefix = (prefixes.job[currentLang] || prefixes.job.en);
     }
 
-    // If student selected Amharic but the educational paragraph is in English,
-    // translate and explain the detailed paragraph in authentic Amharic!
-    if (currentLang === 'am' && /[a-zA-Z]/.test(rawText) && !/[\u1200-\u137F]/.test(rawText)) {
-      if (node.dataset.amharicTranslation) {
-        const fullAmharic = `${prefix}${node.dataset.amharicTranslation}`;
-        announce(fullAmharic);
-        speakVisualDescription(fullAmharic);
+    // If user selected a non-English language but the paragraph is in English,
+    // dynamically translate and speak in their authentic chosen language!
+    if (currentLang !== 'en' && /[a-zA-Z]/.test(rawText)) {
+      const transKey = `trans_${currentLang}`;
+      if (node.dataset[transKey]) {
+        const fullText = `${prefix}${node.dataset[transKey]}`;
+        announce(fullText);
+        speakVisualDescription(fullText);
         return;
       }
       const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl)
@@ -3136,16 +3177,16 @@
         fetch(apiUrl + '/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ strings: [rawText], target_lang: 'am', source_lang: 'en' })
+          body: JSON.stringify({ strings: [rawText], target_lang: currentLang, source_lang: 'en' })
         })
         .then(r => r.json())
         .then(d => {
           const trans = (d.translations && d.translations[rawText]) || rawText;
-          node.dataset.amharicTranslation = trans;
+          node.dataset[transKey] = trans;
           if (document.activeElement === node || node.classList.contains('sa11y-text-focused')) {
-            const fullAmharic = `${prefix}${trans}`;
-            announce(fullAmharic);
-            speakVisualDescription(fullAmharic);
+            const fullText = `${prefix}${trans}`;
+            announce(fullText);
+            speakVisualDescription(fullText);
           }
         })
         .catch(() => {
@@ -3226,41 +3267,28 @@
 
       const { src, alt } = extractElementVisualDetails(img);
 
-      if (alt === 'va-content-banner' || src.includes('va-content-banner')) {
-        const label = currentLang === 'am' 
-          ? 'የቨርቹዋል አሲስታንት የትምህርት ፅንሰ-ሃሳብ አጠቃላይ እይታ ባነር' 
-          : 'Virtual Assistant concept overview banner illustrating global distributed remote work';
-        if (isImg) img.setAttribute('alt', label);
-        img.setAttribute('aria-label', label);
-      } else if (alt === 'evon afro' || src.includes('1lhlc1k4xrfvwdftjczeasorpklmy3dax')) {
-        const label = currentLang === 'am'
-          ? 'የቨርቹዋል አሲስታንት ባለሙያ ምስል'
-          : 'Photograph of Evon, Virtual Assistant specialist at work';
-        if (isImg) img.setAttribute('alt', label);
-        img.setAttribute('aria-label', label);
-      } else if (src.includes('graduation-badge-alx') || alt.includes('graduation') || alt.includes('badge')) {
-        const label = currentLang === 'am'
-          ? 'የALX የቨርቹዋል ረዳት የምረቃ ሜዳልያ ባጅ - ለምረቃ ብቁ ለመሆን 70% ይድረሱ'
-          : 'ALX Virtual Assistant Graduation Milestone Badge - Reach 70% to be eligible for graduation';
-        if (isImg) img.setAttribute('alt', label);
-        img.setAttribute('aria-label', label);
-      } else if (src.includes('holberton-logo-full-alx') || src.includes('alx-navy') || img.classList.contains('logo') || img.classList.contains('logo-container')) {
-        const label = currentLang === 'am'
-          ? 'የALX እና ሆልበርተን ትምህርት ቤት አርማ'
-          : 'ALX and Holberton School Institutional Logo';
-        if (isImg) img.setAttribute('alt', label);
-        img.setAttribute('aria-label', label);
-      } else if (src.includes('homepage-v1-paced-embed')) {
-        const label = currentLang === 'am'
-          ? 'የሳቫና ሳምንታዊ የትምህርት ሂደት እና የጊዜ ሰሌዳ ፍሰት'
-          : 'Savanna LMS weekly paced curriculum roadmap and schedule';
-        if (isImg) img.setAttribute('alt', label);
-        img.setAttribute('aria-label', label);
-      } else if (src.includes('tools-')) {
-        const label = currentLang === 'am'
-          ? 'የቨርቹዋል ረዳት የቴክኖሎጂ እና የAI መሣሪያዎች ንጽጽር'
-          : 'Virtual Assistant AI and productivity tools suite comparison';
-        if (isImg) img.setAttribute('alt', label);
+      // Generic Dynamic Accessible Image Labeling (Plug-and-play across any arbitrary website)
+      if (!img.getAttribute('aria-label')) {
+        let label = (alt || '').trim();
+        const parentLink = img.closest('a');
+        const isLogoOrBrand = img.closest('.logo, .logo-container, .brand, .site-logo') || (parentLink && parentLink.closest('header') && !label);
+
+        if (isLogoOrBrand) {
+          const siteName = (document.title || '').split(/[-|—]/)[0].trim() || (typeof window !== 'undefined' && window.location ? window.location.hostname.replace(/^www\./, '') : 'Site');
+          label = `${siteName} ${currentLang === 'am' ? 'አርማ' : 'Logo'}`;
+        } else if (!label || /^[a-z0-9_-]+\.(jpg|jpeg|png|webp|svg|gif)$/i.test(label) || /^[a-z0-9_-]{15,}$/i.test(label)) {
+          // Clean slug into natural human words: e.g. "sensor-diagram-v2" -> "Sensor Diagram V2"
+          const rawStem = (src.split('/').pop() || '').split('.')[0]
+            .replace(/[-_]+/g, ' ')
+            .replace(/([a-z])([A-Z])/g, '$1 $2')
+            .trim();
+          if (rawStem && !/^[0-9a-f]{20,}$/i.test(rawStem)) {
+            label = rawStem.charAt(0).toUpperCase() + rawStem.slice(1);
+          } else {
+            label = (i18n[currentLang] && i18n[currentLang].imgGeneric) || (currentLang === 'am' ? 'ምስል' : 'Visual content');
+          }
+        }
+        if (isImg && !img.getAttribute('alt')) img.setAttribute('alt', label);
         img.setAttribute('aria-label', label);
       }
 
@@ -3561,27 +3589,75 @@
   let voicePillEl = null;
   let isShortcutsOpen = false;
 
+  const navActionMsgs = {
+    next: {
+      en: 'Navigating to next section...',
+      am: 'ወደ ቀጣይ ክፍል በመሄድ ላይ...',
+      om: 'Gara kutaa itti aanutti...',
+      ti: 'ናብ ዝቕጽል ክፍሊ...',
+      so: 'U gudbaya qaybta xigta...',
+      ar: 'الانتقال إلى القسم التالي...',
+      sw: 'Inaelekea sehemu inayofuata...',
+      fr: 'Navigation vers la section suivante...'
+    },
+    nextLoaded: {
+      en: 'Next section loaded',
+      am: 'ቀጣይ ክፍል ተከፍቷል',
+      om: 'Kutaan itti aanaa banameera',
+      ti: 'ዝቕጽል ክፍሊ ተኸፊቱ',
+      so: 'Qaybta xigta waa furantay',
+      ar: 'تم تحميل القسم التالي',
+      sw: 'Sehemu inayofuata imepakiwa',
+      fr: 'Section suivante chargée'
+    },
+    prev: {
+      en: 'Navigating to previous section...',
+      am: 'ወደ ቀዳሚ ክፍል በመመለስ ላይ...',
+      om: 'Gara kutaa duraatti...',
+      ti: 'ናብ ዝሓለፈ ክፍሊ...',
+      so: 'Ku noqonaya qaybtii hore...',
+      ar: 'العودة إلى القسم السابق...',
+      sw: 'Inarudi sehemu iliyopita...',
+      fr: 'Retour à la section précédente...'
+    },
+    complete: {
+      en: 'Activity marked as complete!',
+      am: 'ተግባሩ ተጠናቋል ተብሎ ተመዝግቧል!',
+      om: 'Hojiin xumurameera!',
+      ti: 'እቲ ዕዮ ተወዲኡ!',
+      so: 'Hawshu way dhammaatay!',
+      ar: 'تم تحديد النشاط كمكتمل!',
+      sw: 'Shughuli imekamilika!',
+      fr: 'Activité marquée comme terminée !'
+    }
+  };
+
   /* ── 11. Navigation & Action Helpers ───────────────────────────────────── */
   function navigateNextLesson() {
-    // 1. Look for active item in curriculum sidebar
-    const activeItem = document.querySelector('.list-group-item.active');
+    const nextMsg = navActionMsgs.next[currentLang] || navActionMsgs.next.en;
+    const loadedMsg = navActionMsgs.nextLoaded[currentLang] || navActionMsgs.nextLoaded.en;
+
+    // 1. Look for active item in navigation list / sidebar / tabs
+    const activeItem = document.querySelector('.list-group-item.active, [aria-selected="true"], [aria-current="page"]');
     if (activeItem && activeItem.nextElementSibling) {
       const link = activeItem.nextElementSibling.querySelector('a') || activeItem.nextElementSibling;
-      if (link) {
-        announce(currentLang === 'am' ? 'ወደ ቀጣይ ትምህርት በመሄድ ላይ...' : 'Navigating to next lesson...');
-        triggerVisualAlert(currentLang === 'am' ? 'ወደ ቀጣይ ትምህርት በመሄድ ላይ...' : 'Navigating to next lesson...');
+      if (link && typeof link.click === 'function') {
+        announce(nextMsg);
+        triggerVisualAlert(nextMsg);
         link.click();
         return;
       }
     }
-    // 2. Look for Next buttons or hidden form fields
-    const nextBtn = Array.from(document.querySelectorAll('a, button')).find(el => {
-      const txt = (el.textContent || '').trim().toLowerCase();
-      return (txt.includes('next') || txt.includes('ቀጣይ')) && !el.closest('#sa11y-motor-toolbar');
-    });
+    // 2. Look for Next buttons or standard pagination links across any platform
+    const nextBtn = document.querySelector('[rel="next"], .pagination .next a, a.next, button.next, [data-action="next"]') ||
+      Array.from(document.querySelectorAll('a, button')).find(el => {
+        const txt = (el.textContent || '').trim().toLowerCase();
+        return (txt.includes('next') || txt.includes('ቀጣይ') || txt.includes('suivant') || txt.includes('التالي')) &&
+          !el.closest('#sa11y-motor-toolbar');
+      });
     if (nextBtn) {
-      announce(currentLang === 'am' ? 'ወደ ቀጣይ ትምህርት በመሄድ ላይ...' : 'Navigating to next lesson...');
-      triggerVisualAlert(currentLang === 'am' ? 'ወደ ቀጣይ ትምህርት በመሄድ ላይ...' : 'Navigating to next lesson...');
+      announce(nextMsg);
+      triggerVisualAlert(nextMsg);
       nextBtn.click();
       return;
     }
@@ -3589,30 +3665,33 @@
     if (activeItem && activeItem.nextElementSibling) {
       activeItem.classList.remove('active');
       activeItem.nextElementSibling.classList.add('active');
-      triggerVisualAlert(currentLang === 'am' ? 'ቀጣይ ትምህርት ተከፍቷል' : 'Next lesson loaded');
-      announce(currentLang === 'am' ? 'ቀጣይ ትምህርት ተከፍቷል' : 'Next lesson loaded');
+      triggerVisualAlert(loadedMsg);
+      announce(loadedMsg);
     }
   }
 
   function navigatePrevLesson() {
-    const activeItem = document.querySelector('.list-group-item.active');
+    const prevMsg = navActionMsgs.prev[currentLang] || navActionMsgs.prev.en;
+
+    const activeItem = document.querySelector('.list-group-item.active, [aria-selected="true"], [aria-current="page"]');
     if (activeItem && activeItem.previousElementSibling) {
       const link = activeItem.previousElementSibling.querySelector('a') || activeItem.previousElementSibling;
-      if (link) {
-        announce(currentLang === 'am' ? 'ወደ ቀዳሚ ትምህርት በመመለስ ላይ...' : 'Navigating to previous lesson...');
-        triggerVisualAlert(currentLang === 'am' ? 'ወደ ቀዳሚ ትምህርት በመመለስ ላይ...' : 'Navigating to previous lesson...');
+      if (link && typeof link.click === 'function') {
+        announce(prevMsg);
+        triggerVisualAlert(prevMsg);
         link.click();
         return;
       }
     }
-    const backBtn = document.querySelector('a.btn-default') ||
+    const backBtn = document.querySelector('[rel="prev"], .pagination .prev a, a.prev, button.prev, [data-action="back"]') ||
       Array.from(document.querySelectorAll('a, button')).find(el => {
         const txt = (el.textContent || '').trim().toLowerCase();
-        return (txt.includes('back') || txt.includes('ተመለስ')) && !el.closest('#sa11y-motor-toolbar');
+        return (txt.includes('back') || txt.includes('prev') || txt.includes('ተመለስ') || txt.includes('précédent') || txt.includes('السابق')) &&
+          !el.closest('#sa11y-motor-toolbar');
       });
     if (backBtn) {
-      announce(currentLang === 'am' ? 'ወደ ኋላ በመመለስ ላይ...' : 'Returning to previous page...');
-      triggerVisualAlert(currentLang === 'am' ? 'ወደ ኋላ በመመለስ ላይ...' : 'Returning to previous page...');
+      announce(prevMsg);
+      triggerVisualAlert(prevMsg);
       backBtn.click();
       return;
     }
@@ -3622,18 +3701,19 @@
   }
 
   function triggerCompleteLesson() {
-    const completeBtn = document.querySelector('form.button_to button[type="submit"]') ||
+    const completeMsg = navActionMsgs.complete[currentLang] || navActionMsgs.complete.en;
+    const completeBtn = document.querySelector('form.button_to button[type="submit"], [data-action="complete"], .btn-complete') ||
       Array.from(document.querySelectorAll('button')).find(b => {
         const txt = (b.textContent || '').trim().toLowerCase();
-        return (txt.includes('mark as complete') || txt.includes('complete') || txt.includes('ጨርስ')) &&
+        return (txt.includes('complete') || txt.includes('finish') || txt.includes('ጨርስ') || txt.includes('terminer') || txt.includes('إكمال')) &&
           !b.closest('#sa11y-motor-toolbar');
       });
 
     if (completeBtn) {
       completeBtn.click();
     } else {
-      triggerVisualAlert(currentLang === 'am' ? 'ተግባሩ ተጠናቋል ተብሎ ተመዝግቧል!' : 'Activity marked as complete!');
-      announce(currentLang === 'am' ? 'ተግባሩ ተጠናቋል ተብሎ ተመዝግቧል!' : 'Activity marked as complete!');
+      triggerVisualAlert(completeMsg);
+      announce(completeMsg);
     }
   }
 
