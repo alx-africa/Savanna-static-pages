@@ -285,8 +285,24 @@ async def chat(body: ChatRequest) -> ChatResponse:
         reply_text = _TIMEOUT_MESSAGES.get(language, _TIMEOUT_MESSAGES["en"])
         logger.warning("AI provider timed out for session %s", body.session_id)
     except Exception as exc:
-        logger.error("AI provider error: %s", exc)
-        reply_text = _ERROR_MESSAGES.get(language, _ERROR_MESSAGES["en"])
+        logger.warning("Primary AI provider encountered error (%s); falling back to OfflineProvider", exc)
+        try:
+            from ai.offline_provider import OfflineProvider
+            offline_prov = OfflineProvider(settings)
+            reply_text, ai_citations = await offline_prov.chat(
+                message=body.message,
+                language=language,
+                context_chunks=chunks,
+                history=body.history,
+                simple_mode=body.simple_mode,
+                page_context=body.page_context,
+            )
+            provider_name = "offline-fallback"
+            if ai_citations:
+                citations = ai_citations
+        except Exception as fallback_exc:
+            logger.error("Offline fallback also failed: %s", fallback_exc)
+            reply_text = _ERROR_MESSAGES.get(language, _ERROR_MESSAGES["en"])
 
     response = ChatResponse(
         id=response_id,
