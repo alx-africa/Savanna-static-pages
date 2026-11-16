@@ -18,16 +18,37 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
+def is_low_memory_environment() -> bool:
+    """Detect if running in a memory-constrained container (e.g. Render free tier 512MB)."""
+    import os
+    if os.getenv("DISABLE_DENSE_EMBEDDINGS", "").lower() in ("true", "1", "yes"):
+        return True
+    if os.getenv("RENDER"):  # Render automatically sets RENDER=true
+        return True
+    for path in ['/sys/fs/cgroup/memory.max', '/sys/fs/cgroup/memory/memory.limit_in_bytes']:
+        try:
+            with open(path) as f:
+                val = f.read().strip()
+                if val != 'max' and int(val) < 1024 * 1024 * 1024:
+                    return True
+        except Exception:
+            pass
+    return False
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: ingest documents if the vector store is empty."""
+    """Startup: initialize RAG corpus."""
     logger.info("Starting Savanna Multilingual Assistant API …")
-    try:
-        from rag.ingest import ensure_ingested
-        await ensure_ingested(settings.docs_path, settings.chroma_path)
-        logger.info("RAG corpus ready.")
-    except Exception as exc:
-        logger.warning("RAG ingest skipped: %s", exc)
+    if is_low_memory_environment():
+        logger.info("Operating in lightweight mode (<= 512MB RAM): using pure-Python BM25 semantic retrieval.")
+    else:
+        try:
+            from rag.ingest import ensure_ingested
+            await ensure_ingested(settings.docs_path, settings.chroma_path)
+            logger.info("Dense vector RAG corpus ready.")
+        except Exception as exc:
+            logger.warning("Dense RAG ingest skipped: %s", exc)
     yield
     logger.info("Shutdown complete.")
 

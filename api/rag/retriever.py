@@ -165,12 +165,25 @@ _chroma_path: str | None = None
 def _get_embed_model():
     global _embed_model  # noqa: PLW0603
     if _embed_model is None:
+        import os
+        if os.getenv("DISABLE_DENSE_EMBEDDINGS", "").lower() in ("true", "1", "yes") or os.getenv("RENDER"):
+            logger.info("Low-memory environment detected; using pure-Python BM25 semantic retrieval to preserve RAM.")
+            return None
+        for path in ['/sys/fs/cgroup/memory.max', '/sys/fs/cgroup/memory/memory.limit_in_bytes']:
+            try:
+                with open(path) as f:
+                    val = f.read().strip()
+                    if val != 'max' and int(val) < 1024 * 1024 * 1024:
+                        logger.info("Cgroup limit < 1GB; using pure-Python BM25 to prevent container OOM.")
+                        return None
+            except Exception:
+                pass
         try:
             from sentence_transformers import SentenceTransformer
             logger.info("Loading retriever embedding model %s …", _EMBED_MODEL_NAME)
             _embed_model = SentenceTransformer(_EMBED_MODEL_NAME)
-        except ImportError:
-            logger.warning("sentence_transformers not installed; dense retrieval unavailable.")
+        except (ImportError, Exception) as exc:
+            logger.warning("sentence_transformers unavailable (%s); dense retrieval falling back to BM25.", exc)
             return None
     return _embed_model
 
