@@ -1,4 +1,7 @@
-.gitignore
-.DS_Store
-_tooling
-*.zip
+.env
+.env.*
+*.env
+__pycache__/
+*.pyc
+venv/
+.venv/
