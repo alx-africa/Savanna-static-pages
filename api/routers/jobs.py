@@ -323,11 +323,12 @@ async def apply_to_job(job_id: str, body: JobApplicationRequest) -> JobApplicati
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
 
     from datetime import datetime, timezone
-    import random
+    import secrets
     import string
+    from utils.privacy import mask_email, mask_name
 
     year = datetime.now(timezone.utc).year
-    rand_digits = "".join(random.choices(string.digits, k=4))
+    rand_digits = "".join(secrets.choice(string.digits) for _ in range(4))
     app_id = f"APP-{year}-{rand_digits}"
     submitted_at = datetime.now(timezone.utc).isoformat()
 
@@ -376,8 +377,8 @@ async def apply_to_job(job_id: str, body: JobApplicationRequest) -> JobApplicati
         "[JOB_APPLICATION] app_id=%s job_id=%s name=%s email=%s acc_ref=%s",
         app_id,
         job_id,
-        body.applicant_name,
-        body.email,
+        mask_name(body.applicant_name),
+        mask_email(body.email),
         accommodation_ref,
     )
 

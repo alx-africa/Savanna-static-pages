@@ -631,6 +631,9 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
+    # Silence verbose HTTP logs to prevent bot token leakage in stdout/syslog
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     # Add the api/ directory to sys.path so local imports resolve
     api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

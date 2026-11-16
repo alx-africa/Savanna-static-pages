@@ -35,6 +35,16 @@
   }
   injectStylesheet();
 
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   /* ── 2. Multilingual Support (8 Supported Languages) ─────────────────── */
   const ALL_LANGUAGES = ['en', 'am', 'om', 'ti', 'so', 'ar', 'sw', 'fr'];
   const storedLang = localStorage.getItem(LANG_KEY);
@@ -2959,33 +2969,33 @@
       };
 
       const tagsHtml = (breakdown.visual_elements || [])
-        .map(el => `<span class="sa11y-image-desc-tag">📊 ${el}</span>`)
+        .map(el => `<span class="sa11y-image-desc-tag">📊 ${escapeHtml(el)}</span>`)
         .join('');
 
       card.innerHTML = `
         <div class="sa11y-image-desc-header">
           <span>🤖 ${i18n[lang].imgDescTitle}</span>
-          <span class="badge bg-success" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: #166534; color: #ffffff;">${data.ai_provider || 'savanna-ai-vision'}</span>
+          <span class="badge bg-success" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: #166534; color: #ffffff;">${escapeHtml(data.ai_provider || 'savanna-ai-vision')}</span>
           <button type="button" class="btn btn-sm btn-outline-secondary sa11y-desc-close-btn" aria-label="${i18n[lang].imgDescClose}">✕</button>
         </div>
         <div class="sa11y-ai-breakdown-body">
           <p style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: #14532d;">
-            <strong>🎯 ${lang === 'am' ? 'የምስሉ ዝርዝር መግለጫ' : 'Visual Description'}:</strong> ${breakdown.primary_subject}
+            <strong>🎯 ${lang === 'am' ? 'የምስሉ ዝርዝር መግለጫ' : 'Visual Description'}:</strong> ${escapeHtml(breakdown.primary_subject)}
           </p>
           <div class="sa11y-image-desc-tags" style="margin-bottom: 0.6rem;">${tagsHtml}</div>
           ${breakdown.intent_and_purpose ? `
             <div style="margin: 0 0 0.6rem 0; font-size: 0.92rem; color: #065f46; background: #ecfdf5; border-left: 4px solid #10b981; padding: 8px 12px; border-radius: 4px; line-height: 1.5;">
-              <strong>💡 ${lang === 'am' ? 'የምስሉ ዓላማና ትርጉም' : 'Visual Intent & Purpose'}:</strong> ${breakdown.intent_and_purpose}
+              <strong>💡 ${lang === 'am' ? 'የምስሉ ዓላማና ትርጉም' : 'Visual Intent & Purpose'}:</strong> ${escapeHtml(breakdown.intent_and_purpose)}
             </div>
           ` : ''}
           ${breakdown.pedagogical_context && breakdown.pedagogical_context !== breakdown.intent_and_purpose ? `
             <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #166534; line-height: 1.5;">
-              <strong>🎓 ${lang === 'am' ? 'ትምህርታዊ ፋይዳ' : 'Pedagogical Context'}:</strong> ${breakdown.pedagogical_context}
+              <strong>🎓 ${lang === 'am' ? 'ትምህርታዊ ፋይዳ' : 'Pedagogical Context'}:</strong> ${escapeHtml(breakdown.pedagogical_context)}
             </p>
           ` : ''}
           ${breakdown.composition_and_palette ? `
             <p style="margin: 0 0 0.75rem 0; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
-              <strong>🎨 ${lang === 'am' ? 'የቀለምና ዲዛይን ቅንብር' : 'Composition & Palette'}:</strong> ${breakdown.composition_and_palette}
+              <strong>🎨 ${lang === 'am' ? 'የቀለምና ዲዛይን ቅንብር' : 'Composition & Palette'}:</strong> ${escapeHtml(breakdown.composition_and_palette)}
             </p>
           ` : ''}
           <div class="sa11y-image-desc-actions">
@@ -3565,7 +3575,7 @@
     banner.className = 'sa11y-visual-alert-banner';
     banner.setAttribute('role', 'status');
     banner.setAttribute('aria-live', 'assertive');
-    banner.innerHTML = `<span aria-hidden="true">✓</span><span>${message}</span>`;
+    banner.innerHTML = `<span aria-hidden="true">✓</span><span>${escapeHtml(message)}</span>`;
     document.body.appendChild(banner);
 
     setTimeout(() => {
@@ -4515,7 +4525,7 @@
         const bodyEl = cardEl.querySelector('.sa11y-simplified-body');
         if (bodyEl) {
           const lines = plainSummary.split('\n').filter(l => l.trim().length > 0);
-          bodyEl.innerHTML = `<ul class="sa11y-plain-list">${lines.map(line => `<li>${line.replace(/^[•\-\*]\s*/, '')}</li>`).join('')}</ul>`;
+          bodyEl.innerHTML = `<ul class="sa11y-plain-list">${lines.map(line => `<li>${escapeHtml(line.replace(/^[•\-\*]\s*/, ''))}</li>`).join('')}</ul>`;
         }
 
         const audioBtn = cardEl.querySelector('.sa11y-card-audio-btn');

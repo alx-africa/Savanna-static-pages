@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 import os
-import random
+import secrets
 import string
 from datetime import datetime, timezone
 from typing import Optional
@@ -21,6 +21,7 @@ from fastapi import APIRouter
 from config import get_settings
 from models import AccommodationRequest, AccommodationResponse
 from utils.ethiopian_calendar import gregorian_to_ethiopian
+from utils.privacy import mask_email, mask_name
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -113,7 +114,7 @@ _CONFIRM_MSG = {
 
 def _generate_reference() -> str:
     year = datetime.now(timezone.utc).year
-    digits = "".join(random.choices(string.digits, k=4))
+    digits = "".join(secrets.choice(string.digits) for _ in range(4))
     return f"ACC-{year}-{digits}"
 
 
@@ -125,8 +126,8 @@ async def _notify_operator(ref: str, body: AccommodationRequest) -> None:
         logger.info(
             "[ACCOMMODATION] ref=%s name=%s email=%s type=%s",
             ref,
-            body.name,
-            body.email,
+            mask_name(body.name),
+            mask_email(body.email),
             body.accommodation_type,
         )
         return

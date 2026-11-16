@@ -11,6 +11,8 @@ from config import get_settings
 from routers import chat, escalate, jobs, accommodate, lti, sms as sms_router, teacher, vision, speech, translate, v1_contract
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
@@ -48,8 +50,8 @@ def create_app() -> FastAPI:
     # ── CORS ──────────────────────────────────────────────────────────────────
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],           # Restrict to widget_origin in production
-        allow_credentials=True,
+        allow_origins=["*"],           # Permissive for pluggable cross-origin host sites
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
     )

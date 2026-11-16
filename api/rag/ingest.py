@@ -142,7 +142,7 @@ def extract_semantic_sections(html: str, source_name: str, domain: str = "course
 def _stable_id(source: str, chunk_index: int) -> str:
     """Generate a deterministic chunk ID."""
     raw = f"{source}::{chunk_index}"
-    return "chunk_" + hashlib.md5(raw.encode()).hexdigest()[:12]
+    return "chunk_" + hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()[:12]
 
 
 # ─── Sync ingestion helpers ───────────────────────────────────────────────────

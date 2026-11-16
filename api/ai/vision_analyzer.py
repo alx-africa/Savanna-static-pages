@@ -13,14 +13,41 @@ Architecture:
 from __future__ import annotations
 
 import base64
+import ipaddress
 import json
 import logging
+import socket
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 from config import Settings
 
 logger = logging.getLogger(__name__)
+
+
+def _is_safe_remote_url(url_str: str) -> bool:
+    """Validate that a URL is safe to fetch and does not point to internal resources (SSRF protection)."""
+    try:
+        parsed = urlparse(url_str)
+        if parsed.scheme not in ("http", "https"):
+            return False
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        hostname_lower = hostname.lower()
+        if hostname_lower in ("localhost", "127.0.0.1", "::1", "0.0.0.0", "api", "redis", "nginx", "worker", "telegram-bot"):  # nosec B104
+            return False
+        if hostname_lower in ("169.254.169.254", "metadata.google.internal"):
+            return False
+        addr_info = socket.getaddrinfo(hostname, None)
+        for _, _, _, _, sockaddr in addr_info:
+            ip = ipaddress.ip_address(sockaddr[0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
+                return False
+        return True
+    except Exception:
+        return False
 
 # Search paths for local curriculum assets
 ASSET_DIRS = [
@@ -116,13 +143,13 @@ async def analyze_image_with_ai(
             except Exception as e:
                 logger.warning("Could not read local image %s: %s", local_path, e)
 
-    # 3. Remote URL download
-    if not img_bytes and not svg_markup and url and url.startswith(("http://", "https://")):
+    # 3. Remote URL download (with SSRF validation and 10MB size limit)
+    if not img_bytes and not svg_markup and url and _is_safe_remote_url(url):
         try:
             import httpx
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.get(url)
-                if resp.status_code == 200:
+                if resp.status_code == 200 and len(resp.content) <= 10 * 1024 * 1024:
                     ct = resp.headers.get("content-type", "image/png").split(";")[0].strip()
                     if "svg" in ct:
                         svg_markup = resp.text
