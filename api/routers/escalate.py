@@ -47,39 +47,31 @@ def _get_redis() -> Optional[aioredis.Redis]:
 
 async def _notify_operator(ticket_id: str, body: EscalateRequest) -> bool:
     """
-    Send a Telegram message to the operator chat.
-    Falls back to logging if the chat_id or token is not configured.
+    Send a Telegram message to the operator chat (via env var or Redis registered operator chat).
+    Falls back to logging if chat_id is not configured.
     """
-    if not ESCALATION_OPERATOR_CHAT_ID or not settings.telegram_bot_token:
-        logger.info(
-            "[ESCALATION] ticket=%s session=%s reason=%s",
-            ticket_id,
-            body.session_id,
-            body.reason,
-        )
-        return False
+    import html
+    from utils.notifications import notify_operator_telegram
 
     text = (
-        f"🚨 *Escalation Request*\n"
-        f"Ticket ID: `{ticket_id}`\n"
-        f"Session: `{body.session_id}`\n"
-        f"User: `{body.user_id or 'anonymous'}`\n"
-        f"Reason: {body.reason or 'Not specified'}\n"
-        f"WebRTC: {'Yes' if body.sdp_offer else 'No'}\n"
-        f"Time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"
+        f"🚨 <b>Escalation Request</b>\n"
+        f"<b>Ticket ID:</b> <code>{html.escape(ticket_id)}</code>\n"
+        f"<b>Session:</b> <code>{html.escape(body.session_id)}</code>\n"
+        f"<b>User:</b> <code>{html.escape(body.user_id or 'anonymous')}</code>\n"
+        f"<b>Reason:</b> {html.escape(body.reason or 'Not specified')}\n"
+        f"<b>WebRTC:</b> {'Yes' if body.sdp_offer else 'No'}\n"
+        f"<b>Time:</b> {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"
     )
 
-    url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
-    payload = {
-        "chat_id": ESCALATION_OPERATOR_CHAT_ID,
-        "text": text,
-        "parse_mode": "Markdown",
-    }
+    logger.info(
+        "[ESCALATION] ticket=%s session=%s reason=%s",
+        ticket_id,
+        body.session_id,
+        body.reason,
+    )
+
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.post(url, json=payload)
-            resp.raise_for_status()
-        return True
+        return await notify_operator_telegram(text, parse_mode="HTML")
     except Exception as exc:
         logger.error("Telegram notification failed: %s", exc)
         return False

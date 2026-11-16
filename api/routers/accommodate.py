@@ -120,43 +120,34 @@ def _generate_reference() -> str:
 
 async def _notify_operator(ref: str, body: AccommodationRequest) -> None:
     """
-    Send a Telegram message to the operator, or log if not configured.
+    Send a Telegram message to the operator (via env var or Redis registered operator chat).
     """
-    if not ESCALATION_OPERATOR_CHAT_ID or not settings.telegram_bot_token:
-        logger.info(
-            "[ACCOMMODATION] ref=%s name=%s email=%s type=%s",
-            ref,
-            mask_name(body.name),
-            mask_email(body.email),
-            body.accommodation_type,
-        )
-        return
+    import html
+    from utils.notifications import notify_operator_telegram
 
     text = (
-        f"♿ *Accommodation Request*\n"
-        f"Ref: `{ref}`\n"
-        f"Name: {body.name}\n"
-        f"Email: {body.email}\n"
-        f"Phone: {body.phone or 'N/A'}\n"
-        f"Type: {body.accommodation_type}\n"
-        f"Interview Date: {body.interview_date or 'Not specified'}\n"
-        f"Notes: {body.notes or 'None'}\n"
-        f"Language: {body.language.upper()}\n"
-        f"Time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"
+        f"♿ <b>Accommodation Request</b>\n"
+        f"<b>Ref:</b> <code>{html.escape(ref)}</code>\n"
+        f"<b>Name:</b> {html.escape(body.name)}\n"
+        f"<b>Email:</b> {html.escape(body.email)}\n"
+        f"<b>Phone:</b> {html.escape(body.phone or 'N/A')}\n"
+        f"<b>Type:</b> {html.escape(body.accommodation_type)}\n"
+        f"<b>Interview Date:</b> {html.escape(body.interview_date or 'Not specified')}\n"
+        f"<b>Notes:</b> {html.escape(body.notes or 'None')}\n"
+        f"<b>Language:</b> {html.escape(body.language.upper())}\n"
+        f"<b>Time:</b> {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"
     )
 
-    url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
+    logger.info(
+        "[ACCOMMODATION] ref=%s name=%s email=%s type=%s",
+        ref,
+        mask_name(body.name),
+        mask_email(body.email),
+        body.accommodation_type,
+    )
+
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.post(
-                url,
-                json={
-                    "chat_id": ESCALATION_OPERATOR_CHAT_ID,
-                    "text": text,
-                    "parse_mode": "Markdown",
-                },
-            )
-            resp.raise_for_status()
+        await notify_operator_telegram(text, parse_mode="HTML")
     except Exception as exc:
         logger.error("Telegram notification for accommodation failed: %s", exc)
 

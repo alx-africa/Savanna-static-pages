@@ -161,7 +161,9 @@ class Job(BaseModel):
 class JobAlertRequest(BaseModel):
     user_id: str
     channel: Literal["telegram", "sms", "both"] = "both"
-    contact: str                          # Telegram chat_id or phone number
+    contact: str = ""                     # Telegram chat_id or phone number
+    phone: Optional[str] = None           # Optional dedicated phone number
+    telegram_chat_id: Optional[str] = None # Optional dedicated Telegram chat ID
     keywords: list[str] = []
     language: SupportedLanguage | str = "en"
 
@@ -174,7 +176,8 @@ class JobAlertResponse(BaseModel):
 class JobApplicationRequest(BaseModel):
     applicant_name: str
     email: str
-    resume_url: str
+    phone: Optional[str] = None
+    resume_url: str = ""
     cover_note: Optional[str] = ""
     accommodation_type: Optional[str] = None
     language: Optional[str] = "en"
