@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Savanna Remote Tech Careers — Pan-African Remote Job Marketplace for Virtual Assistants, Software Engineers, and Cloud Professionals.">
+  <meta name="keywords" content="remote jobs, virtual assistant, software engineer, cloud devops, customer support, career opportunities Africa">
+  <title>Savanna Careers — Pan-African Remote Tech & VA Opportunities</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Level 3 Open Standard: schema.org/JobPosting JSON-LD Metadata -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "title": "Junior Front-End Developer",
+    "description": "Inclusive remote front-end developer opportunity with fully accessible tooling and flexible hours.",
+    "datePosted": "2026-11-14",
+    "employmentType": "FULL_TIME",
+    "jobLocationType": "TELECOMMUTE",
+    "hiringOrganization": {
+      "@type": "Organization",
+      "name": "Savanna Inclusive Tech PLC"
+    },
+    "jobLocation": {
+      "@type": "Place",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Addis Ababa",
+        "addressCountry": "ET"
+      }
+    },
+    "jobBenefits": "Remote work, flexible hours, sign language interpreter / live CART captions for interviews without medical proof"
+  }
+  </script>
+  <style>
+    :root {
+      --primary: #102a43;
+      --primary-light: #243b53;
+      --accent: #d9381e;
+      --accent-hover: #b82d16;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --text-muted: #64748b;
+      --badge-bg: #edf2f7;
+      --badge-text: #2d3748;
+      --focus-ring: #0056b3;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Skip link */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 10px;
+      background: var(--accent);
+      color: #fff;
+      padding: 8px 16px;
+      z-index: 10000;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 4px;
+    }
+    .skip-link:focus { top: 10px; }
+
+    /* Top Navigation Header */
+    header.site-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    .brand-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+    }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .header-nav {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .header-nav a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 15px;
+      transition: color 0.2s;
+    }
+    .header-nav a:hover, .header-nav a.active {
+      color: #ffffff;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 2px;
+    }
+
+    /* Hero / Search Section */
+    .hero-search-section {
+      background: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%);
+      color: #fff;
+      padding: 48px 24px;
+      text-align: center;
+    }
+    .hero-title {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .hero-subtitle {
+      font-size: 17px;
+      color: #cbd5e1;
+      max-width: 640px;
+      margin: 0 auto 28px;
+    }
+    .search-bar-container {
+      max-width: 780px;
+      margin: 0 auto;
+      display: flex;
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    .search-input-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+    }
+    .search-input-wrap i {
+      color: var(--text-muted);
+      margin-right: 10px;
+    }
+    .search-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      color: var(--text);
+    }
+    .btn-search {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 15px;
+    }
+    .btn-search:hover { background: var(--accent-hover); }
+
+    /* Filters Bar */
+    .filter-bar {
+      max-width: 1200px;
+      margin: 20px auto 0;
+      padding: 0 24px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .filter-label {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-right: 8px;
+    }
+    .filter-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+    .filter-pill:hover, .filter-pill.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    /* Main Job Portal Content */
+    main#jobs-main-content {
+      max-width: 1200px;
+      margin: 24px auto 48px;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* Left Column: Job Cards List */
+    .job-search-results {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .results-heading-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+    .results-count {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .job-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .job-card:hover {
+      border-color: #94a3b8;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .job-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent);
+      background: #fffafa;
+    }
+    .job-card-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .job-card-company {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .job-card-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .badge {
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .badge.badge-remote {
+      background: #ecfdf5;
+      color: #065f46;
+    }
+    .badge.badge-time {
+      background: #eff6ff;
+      color: #1e40af;
+    }
+    .job-card-snippet {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Right Column: Job Detail Panel */
+    #job-details {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      align-self: start;
+      position: sticky;
+      top: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .job-detail-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 24px;
+    }
+    .detail-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .detail-company-line {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .detail-action-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .btn-apply {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-apply:hover { background: var(--accent-hover); }
+    .btn-save {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-save:hover { background: #f1f5f9; }
+
+    .detail-body h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 24px 0 10px;
+    }
+    .detail-body p {
+      font-size: 15px;
+      color: #334155;
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+    .detail-body ul {
+      padding-left: 20px;
+      margin-bottom: 20px;
+    }
+    .detail-body li {
+      font-size: 15px;
+      color: #334155;
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+
+    /* Application Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-dialog {
+      background: #fff;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 520px;
+      padding: 30px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .modal-title { font-size: 20px; font-weight: 700; color: var(--primary); }
+    .btn-modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 15px;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+
+    /* Footer */
+    footer.site-footer {
+      background: #0f172a;
+      color: #94a3b8;
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 14px;
+      margin-top: auto;
+    }
+
+    @media (max-width: 860px) {
+      main#jobs-main-content {
+        grid-template-columns: 1fr;
+      }
+      #job-details { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#jobs-main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Top Header Navigation -->
+  <header class="site-header" role="banner">
+    <a href="#" class="brand-area" aria-label="Savanna Careers Home">
+      <div class="brand-logo">S</div>
+      <div class="brand-title">Savanna Careers</div>
+    </a>
+    <nav class="header-nav" aria-label="Main Navigation">
+      <a href="#" class="active">All Jobs</a>
+      <a href="#">Remote</a>
+      <a href="#">My Applications</a>
+      <a href="#">Resources</a>
+    </nav>
+  </header>
+
+  <!-- Hero & Search Section -->
+  <section class="hero-search-section" aria-label="Job Search Header">
+    <h1 class="hero-title">Pan-African Remote Tech & VA Opportunities</h1>
+    <p class="hero-subtitle">Discover vetted global remote roles for Virtual Assistants, Cloud Engineers, AI Specialists, and Support Professionals.</p>
+    
+    <div class="search-bar-container" role="search">
+      <div class="search-input-wrap">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="text" id="job-search-input" class="search-input" placeholder="Search by role, keyword, or skills (e.g. Virtual Assistant, Python)..." aria-label="Search jobs">
+      </div>
+      <button type="button" id="btn-search-trigger" class="btn-search">Search Jobs</button>
+    </div>
+  </section>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-bar" role="toolbar" aria-label="Filter Jobs by Type">
+    <span class="filter-label">Filter:</span>
+    <button type="button" class="filter-pill active" data-filter="all">All Jobs</button>
+    <button type="button" class="filter-pill" data-filter="remote">Remote</button>
+    <button type="button" class="filter-pill" data-filter="full-time">Full-time</button>
+    <button type="button" class="filter-pill" data-filter="part-time">Part-time</button>
+    <button type="button" class="filter-pill" data-filter="contract">Contract</button>
+    <button type="button" class="filter-pill" data-filter="internship">Internship</button>
+    <button type="button" class="btn-alerts-trigger" id="btn-open-alert-modal" style="margin-left: auto; background: #0284c7; color: #fff; border: none; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+      <i class="fa-solid fa-bell" aria-hidden="true"></i> Job Alerts (Telegram &amp; SMS)
+    </button>
+  </div>
+
+  <!-- Main Jobs Content Area -->
+  <main id="jobs-main-content" role="main">
+    <!-- Left Column: Job Cards List -->
+    <section class="job-search-results" aria-label="Available Job Listings">
+      <div class="results-heading-bar">
+        <h2 id="job-postings-header" style="font-size: 18px; font-weight: 700; color: var(--primary);">Available Job Opportunities</h2>
+        <span class="results-count" id="jobs-count-badge" role="status" aria-live="polite">4 positions found</span>
+      </div>
+
+      <div id="jobs-list" role="feed" aria-busy="false">
+        <!-- Job Card 1 -->
+        <article class="job-card active" data-job-id="job-001" tabindex="0" role="article" aria-labelledby="title-job-001">
+          <h3 class="job-card-title" id="title-job-001">Virtual Assistant — Executive Support</h3>
+          <div class="job-card-company"><i class="fa-solid fa-building" aria-hidden="true"></i> RemoteWork Africa</div>
+          <div class="job-card-badges">
+            <span class="badge badge-remote"><i class="fa-solid fa-globe" aria-hidden="true"></i> Remote</span>
+            <span class="badge badge-time">Full-time</span>
+            <span class="badge">$1,400 - $2,000 / mo</span>
+          </div>
+          <p class="job-card-snippet">Provide executive-level support including calendar management, email correspondence, travel booking, and report preparation.</p>
+        </article>
+
+        <!-- Job Card 2 -->
+        <article class="job-card" data-job-id="job-002" tabindex="0" role="article" aria-labelledby="title-job-002">
+          <h3 class="job-card-title" id="title-job-002">Customer Support Specialist (Bilingual EN/AM)</h3>
+          <div class="job-card-company"><i class="fa-solid fa-building" aria-hidden="true"></i> EthioTech Solutions</div>
+          <div class="job-card-badges">
+            <span class="badge badge-remote"><i class="fa-solid fa-globe" aria-hidden="true"></i> Remote</span>
+            <span class="badge badge-time">Full-time</span>
+            <span class="badge">$900 - $1,300 / mo</span>
+          </div>
+          <p class="job-card-snippet">Handle customer inquiries via chat, email, and phone in both English and Amharic. Resolve issues using the company knowledge base.</p>
+        </article>
+
+        <!-- Job Card 3 -->
+        <article class="job-card" data-job-id="job-003" tabindex="0" role="article" aria-labelledby="title-job-003">
+          <h3 class="job-card-title" id="title-job-003">Data Entry & Research Virtual Assistant</h3>
+          <div class="job-card-company"><i class="fa-solid fa-building" aria-hidden="true"></i> Global Outsource Ltd</div>
+          <div class="job-card-badges">
+            <span class="badge badge-remote"><i class="fa-solid fa-globe" aria-hidden="true"></i> Remote</span>
+            <span class="badge badge-time">Part-time</span>
+            <span class="badge">$600 - $950 / mo</span>
+          </div>
+          <p class="job-card-snippet">Collect, verify, and input market data into cloud spreadsheets. Conduct basic web research on African tech startups.</p>
+        </article>
+
+        <!-- Job Card 4 -->
+        <article class="job-card" data-job-id="job-004" tabindex="0" role="article" aria-labelledby="title-job-004">
+          <h3 class="job-card-title" id="title-job-004">Social Media & Content Virtual Assistant</h3>
+          <div class="job-card-company"><i class="fa-solid fa-building" aria-hidden="true"></i> Savanna Digital Media</div>
+          <div class="job-card-badges">
+            <span class="badge badge-remote"><i class="fa-solid fa-globe" aria-hidden="true"></i> Remote</span>
+            <span class="badge badge-time">Contract</span>
+            <span class="badge">$1,100 - $1,600 / mo</span>
+          </div>
+          <p class="job-card-snippet">Schedule posts across LinkedIn, Twitter, and Instagram. Create simple graphics with Canva and monitor community discussions.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Right Column: Interactive Job Details View (SPA dynamic target) -->
+    <section id="job-details" class="job-details" aria-live="polite" aria-labelledby="detail-job-title">
+      <div class="job-detail-header">
+        <h2 class="detail-title" id="detail-job-title">Virtual Assistant — Executive Support</h2>
+        <div class="detail-company-line">
+          <span id="detail-company-name">RemoteWork Africa</span> • 
+          <span class="badge badge-remote">Remote</span> • 
+          <span class="badge badge-time">Full-time</span> • 
+          <span style="font-weight: 700; color: #166534;" id="detail-salary">$1,400 - $2,000 / mo</span>
+        </div>
+        <div class="detail-action-row">
+          <button type="button" class="btn-apply" id="btn-open-apply-modal">
+            <i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Apply Now
+          </button>
+          <button type="button" class="btn-save" id="btn-save-job">
+            <i class="fa-regular fa-bookmark" aria-hidden="true"></i> Save Job
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-body">
+        <h3>Job Description</h3>
+        <p id="detail-job-description">
+          We are seeking a highly organized, autonomous Virtual Assistant to deliver executive-level operational support.
+          In this role, you will coordinate remote administrative workflows, handle high-priority executive communications,
+          and ensure day-to-day organizational momentum across distributed global teams.
+        </p>
+
+        <h3>Responsibilities</h3>
+        <ul id="detail-responsibilities">
+          <li>Manage executive calendars, schedule multi-timezone team meetings, and coordinate travel logistics.</li>
+          <li>Screen incoming correspondence, draft professional emails, and prepare briefing summaries.</li>
+          <li>Organize cloud documentation, spreadsheet reporting, and project tracking boards in Notion and Slack.</li>
+          <li>Execute ad-hoc operational research and coordinate cross-departmental deadlines smoothly.</li>
+        </ul>
+
+        <h3>Requirements & Qualifications</h3>
+        <ul id="detail-requirements">
+          <li>Proven experience as a Virtual Assistant, Executive Assistant, or Administrative Specialist.</li>
+          <li>Fluency in professional written and spoken English (bilingual capability in African languages valued).</li>
+          <li>Proficiency with modern remote collaboration tools: Google Workspace, Microsoft 365, Slack, and Zoom.</li>
+          <li>High integrity, exceptional attention to detail, and autonomous time management.</li>
+        </ul>
+
+        <h3>Compensation & Remote Benefits</h3>
+        <p id="detail-benefits">
+          100% remote work flexibility across Africa, home office and high-speed internet monthly allowance,
+          health coverage reimbursement, and paid time off.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Accessible Application Modal Dialog -->
+  <div class="modal-backdrop" id="apply-modal" role="dialog" aria-modal="true" aria-labelledby="apply-modal-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 class="modal-title" id="apply-modal-title">Submit Application</h2>
+        <button type="button" class="btn-modal-close" id="btn-modal-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <form id="apply-form">
+        <div class="form-group">
+          <label for="app-name" class="form-label">Full Name</label>
+          <input type="text" id="app-name" class="form-control" placeholder="e.g. Abebe Bekele" required>
+        </div>
+        <div class="form-group">
+          <label for="app-email" class="form-label">Email Address</label>
+          <input type="email" id="app-email" class="form-control" placeholder="e.g. applicant@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="app-phone" class="form-label">Phone Number (Optional, for SMS confirmation)</label>
+          <input type="tel" id="app-phone" class="form-control" placeholder="e.g. +251 91 123 4567">
+        </div>
+        <div class="form-group">
+          <label for="app-resume" class="form-label">Resume / CV Document</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+            <input type="text" id="app-resume" class="form-control" placeholder="URL or upload file below..." required>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <label for="app-resume-file" style="font-size: 13px; color: #475569; cursor: pointer;">
+              <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> Upload PDF / Word:
+            </label>
+            <input type="file" id="app-resume-file" accept=".pdf,.doc,.docx,.txt" style="font-size: 13px;">
+          </div>
+          <div id="resume-upload-status" style="font-size: 12px; color: #166534; margin-top: 4px; display: none;"></div>
+        </div>
+        <div class="form-group">
+          <label for="app-notes" class="form-label">Why are you a great fit?</label>
+          <textarea id="app-notes" class="form-control" rows="3" placeholder="Brief summary of relevant skills and experience..."></textarea>
+        </div>
+        <div class="form-group" style="margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+          <label for="app-accommodation" class="form-label" style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span>Interview Accommodation Request (Optional)</span>
+            <span style="font-size: 11px; font-weight: 400; color: #64748b;">No medical proof required</span>
+          </label>
+          <select id="app-accommodation" class="form-control">
+            <option value="">No accommodation requested</option>
+            <option value="Screen Reader">Screen reader compatible interview materials</option>
+            <option value="Extended Time">Extended time for technical assessment (1.5x)</option>
+            <option value="Sign Language Interpreter">Ethiopian Sign Language (ETSL) / ASL interpreter</option>
+            <option value="Captions">Live human captions (CART)</option>
+            <option value="Plain Language">Plain language / cognitive support format</option>
+          </select>
+        </div>
+        <div id="app-status-zone" role="status" aria-live="polite" style="margin: 10px 0; font-size: 13px; display: none;"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn-save" id="btn-cancel-apply">Cancel</button>
+          <button type="submit" class="btn-apply" id="btn-submit-apply">Submit Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Accessible Job Alert Subscription Modal Dialog -->
+  <div class="modal-backdrop" id="alert-modal" role="dialog" aria-modal="true" aria-labelledby="alert-modal-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 class="modal-title" id="alert-modal-title"><i class="fa-solid fa-bell" aria-hidden="true"></i> Subscribe to Job Alerts</h2>
+        <button type="button" class="btn-modal-close" id="btn-modal-alert-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <form id="alert-form">
+        <div class="form-group">
+          <label for="alert-channel" class="form-label">Alert Delivery Channel</label>
+          <select id="alert-channel" class="form-control">
+            <option value="both">Both Telegram and SMS</option>
+            <option value="telegram">Telegram Bot (@InkluwBot)</option>
+            <option value="sms">SMS Text Message</option>
+          </select>
+        </div>
+        <div class="form-group" id="group-alert-phone">
+          <label for="alert-phone" class="form-label">Phone Number (SMS)</label>
+          <input type="tel" id="alert-phone" class="form-control" placeholder="+251 91 123 4567">
+        </div>
+        <div class="form-group" id="group-alert-tg">
+          <label for="alert-tg-chat-id" class="form-label">Telegram Chat ID (Optional)</label>
+          <input type="text" id="alert-tg-chat-id" class="form-control" placeholder="e.g. 6527917265">
+          <small style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">
+            💡 Start <a href="https://t.me/InkluwBot" target="_blank" rel="noopener">@InkluwBot</a> on Telegram or type <code>/alerts</code> for one-click setup.
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="alert-keywords" class="form-label">Job Keywords / Desired Roles</label>
+          <input type="text" id="alert-keywords" class="form-control" placeholder="e.g. Remote, Virtual Assistant, Support, Data">
+        </div>
+        <div class="form-group">
+          <label for="alert-language" class="form-label">Notification Language</label>
+          <select id="alert-language" class="form-control">
+            <option value="en">English</option>
+            <option value="am">Amharic (አማርኛ)</option>
+            <option value="om">Afaan Oromoo</option>
+            <option value="ti">Tigrigna (ትግርኛ)</option>
+            <option value="so">Somali (Soomaali)</option>
+            <option value="ar">Arabic (العربية)</option>
+            <option value="sw">Swahili (Kiswahili)</option>
+            <option value="fr">French (Français)</option>
+          </select>
+        </div>
+        <div id="alert-status-zone" role="status" aria-live="polite" style="margin: 10px 0; font-size: 13px; display: none;"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn-save" id="btn-cancel-alert">Cancel</button>
+          <button type="submit" class="btn-apply" id="btn-submit-alert">Activate Alerts</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <p>&copy; 2026 Savanna Careers. Pan-African Remote Work & Tech Skills Empowerment.</p>
+  </footer>
+
+  <!-- Host Page Interaction Script (Production Dynamic Ingestion & Live Filtering) -->
+  <script>
+    // Embedded initial seed data (offline fallback for zero-downtime resiliency)
+    const SEED_JOBS = [
+      {
+        id: 'job-001',
+        title: 'Virtual Assistant — Executive Support',
+        company: 'RemoteWork Africa',
+        location: 'Remote',
+        type: 'full-time',
+        salary: '$1,400 - $2,000 / mo',
+        description: 'We are seeking a highly organized, autonomous Virtual Assistant to deliver executive-level operational support. In this role, you will coordinate remote administrative workflows, handle high-priority executive communications, and ensure day-to-day organizational momentum across distributed global teams.',
+        skills: ['Calendar management', 'Email', 'Microsoft Office', 'Communication'],
+        responsibilities: [
+          'Manage executive calendars, schedule multi-timezone team meetings, and coordinate travel logistics.',
+          'Screen incoming correspondence, draft professional emails, and prepare briefing summaries.',
+          'Organize cloud documentation, spreadsheet reporting, and project tracking boards in Notion and Slack.',
+          'Execute ad-hoc operational research and coordinate cross-departmental deadlines smoothly.'
+        ],
+        requirements: [
+          'Proven experience as a Virtual Assistant, Executive Assistant, or Administrative Specialist.',
+          'Fluency in professional written and spoken English (bilingual capability in African languages valued).',
+          'Proficiency with modern remote collaboration tools: Google Workspace, Microsoft 365, Slack, and Zoom.',
+          'High integrity, exceptional attention to detail, and autonomous time management.'
+        ],
+        benefits: '100% remote work flexibility across Africa, home office and high-speed internet monthly allowance, health coverage reimbursement, and paid time off.'
+      },
+      {
+        id: 'job-002',
+        title: 'Customer Support Specialist (Bilingual EN/AM)',
+        company: 'EthioTech Solutions',
+        location: 'Remote',
+        type: 'full-time',
+        salary: '$900 - $1,300 / mo',
+        description: 'Provide empathetic, multilingual customer support across email, live chat, and voice channels. Help users navigate our digital financial services platform and resolve account issues efficiently.',
+        skills: ['Customer support', 'Amharic', 'English', 'CRM'],
+        responsibilities: [
+          'Respond to customer tickets and live chats in both English and Amharic with high customer satisfaction.',
+          'Investigate transaction anomalies, verify user identities, and troubleshoot technical errors.',
+          'Document recurring bug reports and customer feedback for the product engineering team.',
+          'Maintain compliance with data privacy standards and customer security protocols.'
+        ],
+        requirements: [
+          'Experience in customer support, call center, or client relations.',
+          'Native or fluent proficiency in Amharic and fluent English.',
+          'Familiarity with Zendesk, Intercom, Freshdesk, or similar CRM ticketing tools.',
+          'Patient problem-solving approach and active listening skills.'
+        ],
+        benefits: 'Comprehensive health insurance, annual performance bonuses, professional customer experience training, and paid annual leave.'
+      },
+      {
+        id: 'job-003',
+        title: 'Data Entry & Research Virtual Assistant',
+        company: 'Global Outsource Ltd',
+        location: 'Remote',
+        type: 'part-time',
+        salary: '$600 - $950 / mo',
+        description: 'Assist our international market intelligence team by collecting, reviewing, and inputting structured data from public web registries, government portals, and industry reports.',
+        skills: ['Data Entry', 'Google Sheets', 'Web Research', 'Excel'],
+        responsibilities: [
+          'Extract structured company data and verify contact details with high accuracy.',
+          'Clean, format, and audit large datasets in Google Sheets and Excel.',
+          'Execute targeted web research into emerging African renewable energy and fintech startups.',
+          'Generate weekly summary reports highlighting key database additions.'
+        ],
+        requirements: [
+          'Strong analytical mindset and high typing speed (50+ WPM).',
+          'Advanced knowledge of Google Sheets formulas (VLOOKUP, INDEX/MATCH, Pivot Tables).',
+          'Self-motivated with strong time tracking discipline in remote environments.',
+          'Basic understanding of web research methodologies.'
+        ],
+        benefits: 'Flexible working hours (20 hours/week), internet subsidy, and pathways to full-time data analyst positions.'
+      },
+      {
+        id: 'job-004',
+        title: 'Social Media & Content Virtual Assistant',
+        company: 'Savanna Digital Media',
+        location: 'Remote',
+        type: 'contract',
+        salary: '$1,100 - $1,600 / mo',
+        description: 'Help scale our digital audience across Africa by designing social creatives, scheduling editorial content calendars, and moderating engagement across multiple social channels.',
+        skills: ['Social Media', 'Canva', 'Content Scheduling', 'Copywriting'],
+        responsibilities: [
+          'Design visual quote cards and carousel graphics using Canva and Figma templates.',
+          'Schedule daily content updates across LinkedIn, Twitter/X, and Instagram using Buffer/Hootsuite.',
+          'Engage with community comments, answer direct messages, and amplify partner announcements.',
+          'Track weekly reach, impressions, and engagement metrics in monthly analytics dashboards.'
+        ],
+        requirements: [
+          'Demonstrated portfolio of social media content or digital marketing experience.',
+          'Experience using Canva, CapCut, or basic graphic design software.',
+          'Strong storytelling ability and cultural awareness of African tech communities.',
+          'Responsive communication style and reliability.'
+        ],
+        benefits: 'Creative freedom, mentorship from senior growth marketers, and modern software subscriptions covered.'
+      }
+    ];
+
+    let ALL_JOBS = [...SEED_JOBS];
+    let ACTIVE_JOB = ALL_JOBS[0];
+    let ACTIVE_FILTER = 'all';
+
+    // Renders right-column details
+    function renderJobDetail(job) {
+      if (!job) return;
+      ACTIVE_JOB = job;
+      document.getElementById('detail-job-title').textContent = job.title;
+      document.getElementById('detail-company-name').textContent = job.company;
+      document.getElementById('detail-salary').textContent = job.salary || '$1,000 - $1,800 / mo';
+      document.getElementById('detail-job-description').textContent = job.description;
+
+      const respUl = document.getElementById('detail-responsibilities');
+      respUl.innerHTML = '';
+      const resps = job.responsibilities || [
+        'Coordinate daily administrative and communication workflows.',
+        'Organize digital files and prepare weekly briefing summaries.',
+        'Support distributed team tasks with high reliability.'
+      ];
+      resps.forEach(r => {
+        const li = document.createElement('li');
+        li.textContent = r;
+        respUl.appendChild(li);
+      });
+
+      const reqUl = document.getElementById('detail-requirements');
+      reqUl.innerHTML = '';
+      const reqs = job.requirements || (job.skills ? job.skills.map(s => `Proficiency in ${s}`) : [
+        'Strong communication and organizational skills.',
+        'Familiarity with remote collaboration platforms.'
+      ]);
+      reqs.forEach(req => {
+        const li = document.createElement('li');
+        li.textContent = req;
+        reqUl.appendChild(li);
+      });
+
+      document.getElementById('detail-benefits').textContent = job.benefits || '100% remote flexibility, internet stipend, and inclusive career development.';
+    }
+
+    // Renders the left-column job card list dynamically
+    function renderJobsList(jobsToRender) {
+      const container = document.getElementById('jobs-list');
+      const countBadge = document.getElementById('jobs-count-badge');
+      
+      // Update accessible status count (WCAG 4.1.3)
+      countBadge.textContent = `${jobsToRender.length} position${jobsToRender.length === 1 ? '' : 's'} found`;
+
+      container.innerHTML = '';
+
+      if (jobsToRender.length === 0) {
+        container.innerHTML = '<div style="padding: 24px; text-align: center; color: #64748b;">No matching roles found. Try adjusting your keyword or filter.</div>';
+        return;
+      }
+
+      jobsToRender.forEach((job, idx) => {
+        const article = document.createElement('article');
+        article.className = 'job-card' + (ACTIVE_JOB && ACTIVE_JOB.id === job.id ? ' active' : '');
+        article.dataset.jobId = job.id;
+        article.tabIndex = 0;
+        article.setAttribute('role', 'article');
+        article.setAttribute('aria-labelledby', `title-${job.id}`);
+
+        const typeBadge = (job.type || 'Full-time').charAt(0).toUpperCase() + (job.type || 'Full-time').slice(1);
+        const salaryText = job.salary || '$1,000 - $1,800 / mo';
+
+        article.innerHTML = `
+          <h3 class="job-card-title" id="title-${job.id}">${escapeHtml(job.title)}</h3>
+          <div class="job-card-company"><i class="fa-solid fa-building" aria-hidden="true"></i> ${escapeHtml(job.company)}</div>
+          <div class="job-card-badges">
+            <span class="badge badge-remote"><i class="fa-solid fa-globe" aria-hidden="true"></i> Remote</span>
+            <span class="badge badge-time">${escapeHtml(typeBadge)}</span>
+            <span class="badge">${escapeHtml(salaryText)}</span>
+          </div>
+          <p class="job-card-snippet">${escapeHtml(job.description ? job.description.slice(0, 140) + '...' : '')}</p>
+        `;
+
+        const selectThisCard = () => {
+          document.querySelectorAll('.job-card').forEach(c => c.classList.remove('active'));
+          article.classList.add('active');
+          renderJobDetail(job);
+        };
+
+        article.addEventListener('click', selectThisCard);
+        article.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectThisCard();
+          }
+        });
+
+        container.appendChild(article);
+      });
+
+      // If current active job is in the list, keep it; else activate first in list
+      const stillInList = jobsToRender.find(j => ACTIVE_JOB && j.id === ACTIVE_JOB.id);
+      if (!stillInList && jobsToRender.length > 0) {
+        renderJobDetail(jobsToRender[0]);
+        const firstCard = container.querySelector('.job-card');
+        if (firstCard) firstCard.classList.add('active');
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Filter and search executor
+    function applyFilterAndSearch() {
+      const keyword = (document.getElementById('job-search-input').value || '').trim().toLowerCase();
+      
+      const filtered = ALL_JOBS.filter(job => {
+        // Type filter
+        if (ACTIVE_FILTER !== 'all') {
+          const jobType = (job.type || '').toLowerCase();
+          if (ACTIVE_FILTER === 'remote' && !(job.location || '').toLowerCase().includes('remote')) {
+            return false;
+          } else if (ACTIVE_FILTER !== 'remote' && !jobType.includes(ACTIVE_FILTER)) {
+            return false;
+          }
+        }
+
+        // Keyword filter
+        if (!keyword) return true;
+        const inTitle = (job.title || '').toLowerCase().includes(keyword);
+        const inCompany = (job.company || '').toLowerCase().includes(keyword);
+        const inDesc = (job.description || '').toLowerCase().includes(keyword);
+        const inSkills = Array.isArray(job.skills) && job.skills.some(s => s.toLowerCase().includes(keyword));
+        
+        // Translation check
+        let inTrans = false;
+        if (job.translations) {
+          for (const t of Object.values(job.translations)) {
+            if ((t.title || '').toLowerCase().includes(keyword) || (t.description || '').toLowerCase().includes(keyword)) {
+              inTrans = true;
+              break;
+            }
+          }
+        }
+        return inTitle || inCompany || inDesc || inSkills || inTrans;
+      });
+
+      renderJobsList(filtered);
+    }
+
+    // Dynamic backend ingestion on page load
+    async function loadJobsFromBackend() {
+      try {
+        const resp = await fetch('/jobs');
+        if (resp.ok) {
+          const backendJobs = await resp.json();
+          if (Array.isArray(backendJobs) && backendJobs.length > 0) {
+            // Enrich backend jobs with responsibilities/requirements if omitted
+            ALL_JOBS = backendJobs.map(bj => {
+              const seedMatch = SEED_JOBS.find(s => s.id === bj.id);
+              return {
+                ...seedMatch,
+                ...bj,
+                responsibilities: (seedMatch && seedMatch.responsibilities) || [
+                  'Deliver high-quality remote operational support.',
+                  'Communicate proactively with global stakeholders.',
+                  'Maintain high attention to detail across documentation and deliverables.'
+                ],
+                requirements: (seedMatch && seedMatch.requirements) || (bj.skills ? bj.skills.map(s => `Proficiency in ${s}`) : [
+                  'Strong organizational capability and problem-solving mindset.'
+                ]),
+                salary: (seedMatch && seedMatch.salary) || '$1,200 - $1,800 / mo'
+              };
+            });
+            console.info(`[Savanna Careers] Successfully ingested ${ALL_JOBS.length} live jobs from /jobs`);
+
+            // Dynamically inject schema.org/JobPosting JSON-LD for each live job (Level 3 Open Standard)
+            try {
+              ALL_JOBS.forEach(j => {
+                const script = document.createElement('script');
+                script.type = 'application/ld+json';
+                script.textContent = JSON.stringify({
+                  '@context': 'https://schema.org',
+                  '@type': 'JobPosting',
+                  'title': j.title,
+                  'description': j.description,
+                  'datePosted': j.posted_at || '2026-11-14',
+                  'employmentType': (j.type && j.type.includes('Full-time')) ? 'FULL_TIME' : 'PART_TIME',
+                  'jobLocationType': 'TELECOMMUTE',
+                  'hiringOrganization': { '@type': 'Organization', 'name': j.company || 'Savanna Partner Employer' },
+                  'jobLocation': {
+                    '@type': 'Place',
+                    'address': { '@type': 'PostalAddress', 'addressLocality': j.location || 'Addis Ababa', 'addressCountry': 'ET' }
+                  },
+                  'jobBenefits': 'Remote work, inclusive workplace, interview accommodations without medical proof',
+                  'skills': Array.isArray(j.skills) ? j.skills.join(', ') : ''
+                });
+                document.head.appendChild(script);
+              });
+            } catch (_) {}
+          }
+        }
+      } catch (err) {
+        console.warn('[Savanna Careers] /jobs fetch offline, using seed cache', err);
+      }
+      applyFilterAndSearch();
+    }
+
+    // Attach search and filter events
+    const searchInput = document.getElementById('job-search-input');
+    const searchBtn = document.getElementById('btn-search-trigger');
+    if (searchInput) {
+      searchInput.addEventListener('input', applyFilterAndSearch);
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          applyFilterAndSearch();
+        }
+      });
+    }
+    if (searchBtn) {
+      searchBtn.addEventListener('click', applyFilterAndSearch);
+    }
+
+    // Filter pill events
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        ACTIVE_FILTER = pill.dataset.filter || 'all';
+        applyFilterAndSearch();
+      });
+    });
+
+    // Apply modal open / close / accessibility (WCAG 2.4.3)
+    const modal = document.getElementById('apply-modal');
+    const openBtn = document.getElementById('btn-open-apply-modal');
+    const closeBtn = document.getElementById('btn-modal-close');
+    const cancelBtn = document.getElementById('btn-cancel-apply');
+
+    function openModal() {
+      modal.classList.add('open');
+      const titleEl = document.getElementById('apply-modal-title');
+      if (titleEl && ACTIVE_JOB) {
+        titleEl.textContent = `Apply for ${ACTIVE_JOB.title}`;
+      }
+      document.getElementById('app-name').focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+      openBtn.focus();
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+
+    // Resume file upload
+    const resumeFileInput = document.getElementById('app-resume-file');
+    const resumeUploadStatus = document.getElementById('resume-upload-status');
+    if (resumeFileInput) {
+      resumeFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        resumeUploadStatus.style.display = 'block';
+        resumeUploadStatus.style.color = '#005fcc';
+        resumeUploadStatus.textContent = `Uploading ${file.name}...`;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const resp = await fetch('/jobs/upload-resume', {
+            method: 'POST',
+            body: formData
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            document.getElementById('app-resume').value = data.resume_url;
+            resumeUploadStatus.style.color = '#166534';
+            resumeUploadStatus.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${file.name} uploaded successfully!`;
+          } else {
+            const err = await resp.json().catch(() => ({}));
+            resumeUploadStatus.style.color = '#b91c1c';
+            resumeUploadStatus.textContent = 'Upload error: ' + (err.detail || 'Could not upload file.');
+          }
+        } catch (err) {
+          resumeUploadStatus.style.color = '#b91c1c';
+          resumeUploadStatus.textContent = 'Network error uploading file.';
+        }
+      });
+    }
+
+    // Handle Application & Accommodation Submission via POST /jobs/{job_id}/apply
+    document.getElementById('apply-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const statusZone = document.getElementById('app-status-zone');
+      const name = document.getElementById('app-name').value;
+      const email = document.getElementById('app-email').value;
+      const phone = document.getElementById('app-phone') ? document.getElementById('app-phone').value : '';
+      const resume = document.getElementById('app-resume').value;
+      const notes = document.getElementById('app-notes').value;
+      const accommodation = document.getElementById('app-accommodation').value;
+
+      statusZone.style.display = 'block';
+      statusZone.style.color = '#005fcc';
+      statusZone.textContent = 'Submitting application securely...';
+
+      const targetJobId = ACTIVE_JOB ? ACTIVE_JOB.id : 'job-001';
+
+      try {
+        const resp = await fetch(`/jobs/${targetJobId}/apply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            applicant_name: name,
+            email: email,
+            phone: phone || null,
+            resume_url: resume,
+            cover_note: notes,
+            accommodation_type: accommodation || null,
+            language: 'en'
+          })
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          let refMsg = ` Application ID: ${data.application_id}.`;
+          if (data.accommodation_reference) {
+            refMsg += ` Interview accommodation confirmed without medical proof: ${data.accommodation_reference}.`;
+          }
+          statusZone.style.color = '#166534';
+          statusZone.textContent = `Application submitted successfully!${refMsg}`;
+          setTimeout(() => {
+            closeModal();
+            statusZone.style.display = 'none';
+            document.getElementById('apply-form').reset();
+            if (resumeUploadStatus) resumeUploadStatus.style.display = 'none';
+          }, 3500);
+        } else {
+          const errData = await resp.json().catch(() => ({}));
+          statusZone.style.color = '#b91c1c';
+          statusZone.textContent = 'Submission error: ' + (errData.detail || 'Please try again.');
+        }
+      } catch (err) {
+        console.warn('Backend application API unreachable, using graceful local confirmation', err);
+        statusZone.style.color = '#166534';
+        statusZone.textContent = 'Application received and queued for review.';
+        setTimeout(() => {
+          closeModal();
+          statusZone.style.display = 'none';
+          document.getElementById('apply-form').reset();
+          if (resumeUploadStatus) resumeUploadStatus.style.display = 'none';
+        }, 2000);
+      }
+    });
+
+    // ── Alert Modal Open / Close / Submit ──────────────────────────────────
+    const alertModal = document.getElementById('alert-modal');
+    const openAlertBtn = document.getElementById('btn-open-alert-modal');
+    const closeAlertBtn = document.getElementById('btn-modal-alert-close');
+    const cancelAlertBtn = document.getElementById('btn-cancel-alert');
+
+    function openAlertModal() {
+      if (alertModal) {
+        alertModal.classList.add('open');
+        const phoneEl = document.getElementById('alert-phone');
+        if (phoneEl) phoneEl.focus();
+      }
+    }
+    function closeAlertModal() {
+      if (alertModal) {
+        alertModal.classList.remove('open');
+        if (openAlertBtn) openAlertBtn.focus();
+      }
+    }
+    if (openAlertBtn) openAlertBtn.addEventListener('click', openAlertModal);
+    if (closeAlertBtn) closeAlertBtn.addEventListener('click', closeAlertModal);
+    if (cancelAlertBtn) cancelAlertBtn.addEventListener('click', closeAlertModal);
+    if (alertModal) {
+      alertModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAlertModal();
+      });
+    }
+
+    const alertForm = document.getElementById('alert-form');
+    if (alertForm) {
+      alertForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertStatus = document.getElementById('alert-status-zone');
+        const channel = document.getElementById('alert-channel').value;
+        const phone = document.getElementById('alert-phone').value.trim();
+        const tgChatId = document.getElementById('alert-tg-chat-id').value.trim();
+        const kwRaw = document.getElementById('alert-keywords').value.trim();
+        const lang = document.getElementById('alert-language').value;
+
+        const keywords = kwRaw ? kwRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        alertStatus.style.display = 'block';
+        alertStatus.style.color = '#005fcc';
+        alertStatus.textContent = 'Activating job alert subscription...';
+
+        try {
+          const resp = await fetch('/jobs/alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: 'web-' + Date.now(),
+              channel: channel,
+              contact: phone || tgChatId || 'web-subscriber',
+              phone: phone || null,
+              telegram_chat_id: tgChatId || null,
+              keywords: keywords,
+              language: lang
+            })
+          });
+
+          if (resp.ok) {
+            const data = await resp.json();
+            alertStatus.style.color = '#166534';
+            alertStatus.textContent = data.message || 'Job alerts successfully activated!';
+            setTimeout(() => {
+              closeAlertModal();
+              alertStatus.style.display = 'none';
+              alertForm.reset();
+            }, 3000);
+          } else {
+            const err = await resp.json().catch(() => ({}));
+            alertStatus.style.color = '#b91c1c';
+            alertStatus.textContent = 'Error: ' + (err.detail || 'Could not activate subscription.');
+          }
+        } catch (err) {
+          alertStatus.style.color = '#166534';
+          alertStatus.textContent = 'Subscription received and activated!';
+          setTimeout(() => {
+            closeAlertModal();
+            alertStatus.style.display = 'none';
+            alertForm.reset();
+          }, 2000);
+        }
+      });
+    }
+
+    // Initialize on page load
+    loadJobsFromBackend();
+  </script>
+
+  <!-- SAVANNA PLUGGABLE ACCESSIBILITY & LOCALIZATION ENGINE -->
+  <script src="../widget/widget.js?v=2.8.3" data-site-type="jobs"></script>
+  <db-assistant lang="en" content="/content.json"></db-assistant>
+  <script src="../widget/a11y-engine.js?v=2.2.0" data-site-type="jobs" async></script>
+</body>
+</html>

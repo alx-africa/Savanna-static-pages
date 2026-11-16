@@ -1,0 +1,272 @@
+[
+  {
+    "question": "What is the overall score threshold for graduation?",
+    "answer": "The graduation threshold is 70%. You can see your progress on the course-progression gauge on your homepage.",
+    "source": "VA-1 Learner Homepage",
+    "language": "en"
+  },
+  {
+    "question": "How do I mark a concept as complete?",
+    "answer": "Scroll to the bottom of the concept page and click the 'Mark as complete' button. Your progress will be saved and the item will appear as read in the curriculum navigation panel.",
+    "source": "Concept Page — The Future of the VA Industry",
+    "language": "en"
+  },
+  {
+    "question": "What happens if I miss a week deadline?",
+    "answer": "If you miss a week's deadline your score for that period may be marked 'slightly behind'. Contact your cohort coordinator or use the escalation button in the assistant to speak with a support agent.",
+    "source": "WR 100 Paced Homepage",
+    "language": "en"
+  },
+  {
+    "question": "How do I switch between courses?",
+    "answer": "Click the course name at the top of the page to open the course switcher dropdown. It shows all courses in your programme along with their current status.",
+    "source": "Learner Homepage",
+    "language": "en"
+  },
+  {
+    "question": "What is a pacing boost?",
+    "answer": "A pacing boost notification appears when you are within 11 days of falling behind the recommended completion pace. It shows you how many activities to complete to get back on track.",
+    "source": "VA-1 Self-Paced Homepage",
+    "language": "en"
+  },
+  {
+    "question": "How do I access conference rooms?",
+    "answer": "Click 'Conference rooms' in the left sidebar navigation. You can join scheduled video sessions with peers and instructors.",
+    "source": "Learner Homepage Sidebar",
+    "language": "en"
+  },
+  {
+    "question": "Where can I find upcoming events?",
+    "answer": "Upcoming events are displayed in the right column of your homepage. They include deadlines, live sessions, and office hours.",
+    "source": "Learner Homepage",
+    "language": "en"
+  },
+  {
+    "question": "What is the VA industry?",
+    "answer": "The Virtual Assistant (VA) industry involves providing remote administrative, technical, creative, or personal support services to businesses and entrepreneurs. It is one of the fastest-growing sectors for remote work in Africa.",
+    "source": "Concept: The Future of the VA Industry",
+    "language": "en"
+  },
+  {
+    "question": "How do I request a QA review?",
+    "answer": "Navigate to 'QA Reviews I can make' in the left sidebar. You can submit your work for peer review or request a review from a qualified peer.",
+    "source": "Learner Homepage Sidebar",
+    "language": "en"
+  },
+  {
+    "question": "What tools are recommended for the course?",
+    "answer": "The course recommends AI tools such as ChatGPT for drafting and Grammarly for editing. These are shown in the 'Tools' section of relevant concept pages.",
+    "source": "Concept Page",
+    "language": "en"
+  },
+  {
+    "question": "የኮርስ ማጠናቀቂያ ደረጃ ምን ያህል ነው?",
+    "answer": "ለምረቃ አስፈላጊው ደረጃ 70% ነው። እድገትዎን በዋና ገጽዎ ላይ ባለው የኮርስ ሂደት መለኪያ ማየት ይችላሉ።",
+    "source": "VA-1 Learner Homepage",
+    "language": "am"
+  },
+  {
+    "question": "ኮንሴፕቱን እንዴት ማጠናቀቄን ምልክት ማድረግ እችላለሁ?",
+    "answer": "ወደ ኮንሴፕቱ ገጽ ስር ወርደው 'Mark as complete' የሚለውን ቁልፍ ይጫኑ። እድገትዎ ይቀመጣል።",
+    "source": "Concept Page",
+    "language": "am"
+  },
+  {
+    "question": "Describe the banner image in the VA lesson",
+    "answer": "The lesson banner for 'VA Foundations & Professional Identity' is illustrated in purple and deep navy gradients. It depicts modern digital workspace icons: a calendar for scheduling, an email envelope for communication, and cloud tools representing remote executive assistance.",
+    "source": "Image: VA-Content-Banner.png",
+    "language": "en"
+  },
+  {
+    "question": "Describe the photograph of Evon",
+    "answer": "The image shows a professional close-up portrait of Evon, an empowered African female Virtual Assistant with natural afro hair and a warm, confident expression, seated at an organized workspace with laptop and notebook.",
+    "source": "Image: 1lhlc1k4XRfVWDFTjczeaSoRpKlMY3dAX.png",
+    "language": "en"
+  },
+  {
+    "question": "በትምህርቱ ላይ ያለውን ባነር ምስል ግለጽልኝ (Describe the VA banner)",
+    "answer": "የ'ቨርቹዋል ረዳት መሰረታዊ ዕውቀት እና የሙያ ማንነት' ትምህርት ባነር ምስል በጥልቅ ሰማያዊ እና ወይን-ጠጅ ቀለሞች የተዋቀረ ሲሆን፣ የቀን መቁጠሪያ፣ የኢሜይል መልዕክት እና የደመና ምርታማነት ምልክቶችን በደማቅ ሁኔታ ያሳያል።",
+    "source": "Image: VA-Content-Banner.png",
+    "language": "am"
+  },
+  {
+    "question": "የኢቮንን ፎቶግራፍ ግለጽልኝ (Describe Evon photo)",
+    "answer": "ፎቶግራፉ በራስ መተማመን የተሞላች አፍሪካዊት ሴት ቨርቹዋል ረዳት ኢቮንን ያሳያል። ተፈጥሯዊ የአፍሮ ጸጉር አሠራር ያላት ሲሆን፣ በላፕቶፕ እና ማስታወሻ ደብተር በተደራጀ ጽዱ የሥራ ጠረጴዛ ላይ ተቀምጣ ትታያለች።",
+    "source": "Image: 1lhlc1k4XRfVWDFTjczeaSoRpKlMY3dAX.png",
+    "language": "am"
+  },
+  {
+    "question": "صف لي صورة البانر في الدورة (Describe banner image in Arabic)",
+    "answer": "بانر دورة 'أساسيات المساعد الافتراضي والهوية المهنية' مصمم بتدرجات الأرجواني والأزرق الداكن، ويحتوي على أيقونات تمثل مساحة العمل الرقمية: تقويم مواعيد، مظروف بريد إلكتروني، وأدوات إنتاجية سحابية.",
+    "source": "Image: VA-Content-Banner.png",
+    "language": "ar"
+  },
+  {
+    "question": "Ibsa fakkii baanarii barnootaa (Describe banner image in Oromo)",
+    "answer": "Baanarii qabiyyee barnootaa 'Bu'uuraalee Gargaaraa Dijitaalaa' bifa cuquliisa gadi fagoo fi dhiilgaan kan tolfame yoo ta'u, kalandarii sagantaa hojii, ergaa imeelii fi meeshaalee tajaajila koodii fageenyaa agarsiisa.",
+    "source": "Image: VA-Content-Banner.png",
+    "language": "om"
+  },
+  {
+    "question": "የተደራሽነት ማስተካከያ ጥያቄ እንዴት ማቅረብ እችላለሁ? (How to request accommodations in Amharic)",
+    "answer": "የቃለ-መጠይቅ እና የትምህርት ተደራሽነት ማስተካከያ ጥያቄዎችን ያለምንም የህክምና ማስረጃ በምስጢር በ /accommodate በኩል ማቅረብ ይችላሉ።",
+    "source": "Accommodation Gateway",
+    "language": "am"
+  },
+  {
+    "question": "ቨርቹዋል ረዳት (VA) ምንድን ነው? የስራ ዘርፉስ ምን ይመስላል?",
+    "answer": "የቨርቹዋል ረዳት (VA) የስራ ዘርፍ ለድርጅቶች እና ለስራ ፈጣሪዎች የርቀት አስተዳደራዊ፣ ቴክኒካዊ እና ሙያዊ ድጋፍ አገልግሎት መስጠትን ያካትታል።",
+    "source": "Concept: The Future of the VA Industry",
+    "language": "am"
+  },
+  {
+    "question": "Sadarkaan eebbifamaa koorsii kanaa meeqa? Qabxiin darbiinsaa meeqa? (Graduation threshold in Oromo)",
+    "answer": "Qabxiin darbiinsa eebbaa 70% dha. Adeumsa keessan fuula duraa keessan irratti 'course-progression gauge' jedhu irraa ilaaluu dandeessu.",
+    "source": "VA-1 Learner Homepage",
+    "language": "om"
+  },
+  {
+    "question": "Barnoota xumuruu koo akkamittan mallatteessa? Mark as complete akkamitti godhama?",
+    "answer": "Fuula barnootaa gara gadii deemuun qabduu 'Mark as complete' jedhu cuqaasaa. Adeumsi keessan ni qabama, barruun sunis akka dubbifametti galmaa'a.",
+    "source": "Concept Page",
+    "language": "om"
+  },
+  {
+    "question": "Yoon yeroo daangaa (deadline) darbe maaltu ta'a?",
+    "answer": "Yoo daangaan yeroo isin darbe, qabxiin keessan 'slightly behind' ta'uu danda'a. Qindeessaa cohort keessanii ykn qabduu gargaarsaa (escalation) fayyadamuun gargaaraa dubbisaa.",
+    "source": "WR 100 Paced Homepage",
+    "language": "om"
+  },
+  {
+    "question": "Deeggarsa ykn mijeeffannaa addaa akkamitti gaafadha? (Accommodations in Oromo)",
+    "answer": "Mijeeffannaa qormaataa fi barnootaa ragaa yaalaa malee karaa fuula /accommodate ykn gargaaraa gaafachuun dhiyeessuu dandeessu.",
+    "source": "Accommodation Gateway",
+    "language": "om"
+  },
+  {
+    "question": "Industiriin Virtual Assistant (VA) maali?",
+    "answer": "Industiriin Virtual Assistant (VA) tajaajila bulchiinsaa, teeknikaa fi ogummaa fageenya irraa daldalootaaf kennuudha. Afrikaa keessatti damee saffisaan guddachaa jirudha.",
+    "source": "Concept: The Future of the VA Industry",
+    "language": "om"
+  },
+  {
+    "question": "ናይ ምረቓ መስፈርቲ ደረጃ ወይ ነጥቢ ክንደይ እዩ? (Graduation threshold in Tigrinya)",
+    "answer": "ናይ ምረቓ መስፈርቲ 70% እዩ። ዕቤትኩም ኣብቲ ናይ መበገሲ ገጽኩም ዘሎ 'course-progression gauge' ክትርእዩ ትኽእሉ ኢኹም።",
+    "source": "VA-1 Learner Homepage",
+    "language": "ti"
+  },
+  {
+    "question": "ትምህርቲ ከም ዝዛዘምኩ ከመይ ገይረ ምልክት ይገብር? (Mark complete in Tigrinya)",
+    "answer": "ናብቲ ናይቲ ትምህርቲ ገጽ ታሕቲ ወሪድኩም 'Mark as complete' ዝብል መልጎም ጠውቑ። ዕቤትኩም ክዕቀብ እዩ።",
+    "source": "Concept Page",
+    "language": "ti"
+  },
+  {
+    "question": "ቀነ-ገደብ እንተሓሊፉኒ እንታይ ይኸውን? (Deadline in Tigrinya)",
+    "answer": "ናይ ሰሙን ቀነ-ገደብ እንተሓሊፉኩም፣ ነጥብኹም 'slightly behind' ተባሂሉ ክምዝገብ ይኽእል እዩ። ምስ ኣተሓባባሪኹም ተራኸቡ ወይ ናይ ሓገዝ መልጎም ጠውቑ።",
+    "source": "WR 100 Paced Homepage",
+    "language": "ti"
+  },
+  {
+    "question": "ናይ ተበጻሕነት ሓገዝ ከመይ ገይረ ይሓትት? (Accommodations in Tigrinya)",
+    "answer": "ናይ ቃለ-መሕትት ወይ ትምህርቲ ተበጻሕነት ምምችቻው ብዘይ ናይ ሕክምና መርትዖ ብ /accommodate ገይርኩም ብምስጢር ክትሓቱ ትኽእሉ ኢኹም።",
+    "source": "Accommodation Gateway",
+    "language": "ti"
+  },
+  {
+    "question": "ቨርቹዋል ረዳት (Virtual Assistant) እንታይ እዩ?",
+    "answer": "ቨርቹዋል ረዳት (VA) ንትካላትን ነጋዶን ካብ ርሑቕ ኮይንካ ናይ ምምሕዳር፣ ቴክኒክን ደገፍን ግልጋሎት ምሃብ ማለት እዩ።",
+    "source": "Concept: The Future of the VA Industry",
+    "language": "ti"
+  },
+  {
+    "question": "Waa maxay buundada looga baahan yahay qalinjabinta? (Graduation threshold in Somali)",
+    "answer": "Heerka qalinjabintu waa 70%. Waxaad horumarkaaga ka arki kartaa qiyaasta horumarka koorsada ee boggaaga hore.",
+    "source": "VA-1 Learner Homepage",
+    "language": "so"
+  },
+  {
+    "question": "Sideen ugu calaamadeeyaa casharka inuu dhammaaday? (Mark complete in Somali)",
+    "answer": "U dhaadhac dhinaca hoose ee bogga casharka oo guji badhanka 'Mark as complete'. Horumarkaaga waa la badbaadin doonaa.",
+    "source": "Concept Page",
+    "language": "so"
+  },
+  {
+    "question": "Sideen u codsadaa wax-ka-beddelka u gaarka ah naafada? (Accommodations in Somali)",
+    "answer": "Waxaad ku codsan kartaa habaynta waraysiga iyo waxbarashada si gaar ah adigoon keenin caddayn caafimaad adoo isticmaalaya dariiqa /accommodate.",
+    "source": "Accommodation Gateway",
+    "language": "so"
+  },
+  {
+    "question": "Waa maxay shaqada Kaaliyaha Khaaska ah (Virtual Assistant)?",
+    "answer": "Warshadaha Virtual Assistant (VA) waxay ku lug leeyihiin bixinta maamulka fog, farsamada, iyo taageerada ganacsiyada.",
+    "source": "Concept: The Future of the VA Industry",
+    "language": "so"
+  },
+  {
+    "question": "ما هي النسبة أو الدرجة المطلوبة للتخرج؟ (Graduation threshold in Arabic)",
+    "answer": "نسبة التخرج المطلوبة هي 70%. يمكنك متابعة تقدمك عبر مقياس تقدم الدورة التدريبية في صفحتك الرئيسية.",
+    "source": "VA-1 Learner Homepage",
+    "language": "ar"
+  },
+  {
+    "question": "كيف أقوم بتحديد الدرس كمكتمل؟ (Mark complete in Arabic)",
+    "answer": "انتقل إلى أسفل صفحة الدرس وانقر على زر 'Mark as complete'. سيتم حفظ تقدمك تلقائيًا في لوحة التنقل.",
+    "source": "Concept Page",
+    "language": "ar"
+  },
+  {
+    "question": "كيف يمكنني طلب تسهيلات لذوي الإعاقة للمقابلة؟ (Accommodations in Arabic)",
+    "answer": "يمكنك طلب تسهيلات المقابلة والتعلم بخصوصية وبدون الحاجة لشهادة طبية عبر نقطة النهاية /accommodate أو عبر التحدث مع المساعد.",
+    "source": "Accommodation Gateway",
+    "language": "ar"
+  },
+  {
+    "question": "ما هي مهنة المساعد الافتراضي (Virtual Assistant)؟",
+    "answer": "تتضمن صناعة المساعد الافتراضي (VA) تقديم خدمات الدعم الإداري والتقني والتنفيذي عن بُعد للشركات ورواد الأعمال.",
+    "source": "Concept: The Future of the VA Industry",
+    "language": "ar"
+  },
+  {
+    "question": "Kiwango cha kufaulu ili kuhitimu ni kiasi gani? (Graduation threshold in Swahili)",
+    "answer": "Kiwango cha kufaulu kuhitimu ni 70%. Unaweza kuona maendeleo yako kwenye kipimo cha maendeleo ya kozi kwenye ukurasa wako wa nyumbani.",
+    "source": "VA-1 Learner Homepage",
+    "language": "sw"
+  },
+  {
+    "question": "Ninawezaje kuashiria somo kama limekamilika? (Mark complete in Swahili)",
+    "answer": "Sogeza chini ya ukurasa wa somo na ubofye kitufe cha 'Mark as complete'. Maendeleo yako yatahifadhiwa kwenye paneli ya urambazaji.",
+    "source": "Concept Page",
+    "language": "sw"
+  },
+  {
+    "question": "Ninawezaje kuomba huduma za malazi na ufikiaji? (Accommodations in Swahili)",
+    "answer": "Unaweza kuomba marekebisho ya mahojiano na kujifunza kwa faragha bila uthibitisho wa matibabu kupitia /accommodate.",
+    "source": "Accommodation Gateway",
+    "language": "sw"
+  },
+  {
+    "question": "Kazi ya Msaidizi Halisi (Virtual Assistant) ni nini?",
+    "answer": "Sekta ya Msaidizi Halisi (VA) inajumuisha kutoa huduma za kiutawala, kiufundi, na usaidizi wa mbali kwa biashara.",
+    "source": "Concept: The Future of the VA Industry",
+    "language": "sw"
+  },
+  {
+    "question": "Quel est le seuil de note requis pour l'obtention du diplôme ? (Graduation threshold in French)",
+    "answer": "Le seuil de réussite pour obtenir le diplôme est de 70%. Vous pouvez suivre votre progression sur la jauge de cours sur votre page d'accueil.",
+    "source": "VA-1 Learner Homepage",
+    "language": "fr"
+  },
+  {
+    "question": "Comment marquer un cours comme terminé ? (Mark complete in French)",
+    "answer": "Faites défiler jusqu'au bas de la page et cliquez sur le bouton 'Mark as complete'. Vos progrès seront enregistrés.",
+    "source": "Concept Page",
+    "language": "fr"
+  },
+  {
+    "question": "Comment demander des aménagements pour l'accessibilité ? (Accommodations in French)",
+    "answer": "Vous pouvez demander des aménagements pour les entretiens et l'apprentissage de manière confidentielle et sans justificatif médical via /accommodate.",
+    "source": "Accommodation Gateway",
+    "language": "fr"
+  }
+]

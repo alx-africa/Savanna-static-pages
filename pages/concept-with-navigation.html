@@ -50,15 +50,17 @@
   </head>
 
   <body class="signed_in env_development notranslate" translate="no" data-theme-suffix="_alx">
+    <!-- Skip to main content link for keyboard and screen reader accessibility -->
+    <a href="#content" class="visually-hidden-focusable p-3 bg-primary text-white position-absolute top-0 start-0" style="z-index: 9999;">Skip to main content</a>
     <!-- Google Tag Manager (noscript) -->
 
     <!-- End Google Tag Manager (noscript) -->
 
     <div data-react-class="header/Header" data-react-cache-id="header/Header-0">
-      <div class="header d-flex align-items-center position-fixed top-0 w-100" style="z-index: 1000">
+      <header role="banner" class="header d-flex align-items-center position-fixed top-0 w-100" style="z-index: 1000">
         <div class="header-left align-items-center d-flex position-fixed px-2" style="z-index: 2">
-          <div class="hamburger mb-0 p-2 color-primary" style="cursor: pointer; font-size: 24px">
-            <i class="fa-solid fa-fas fa-bars"></i>
+          <div class="hamburger mb-0 p-2 color-primary" role="button" tabindex="0" aria-label="Toggle navigation menu" aria-expanded="true" style="cursor: pointer; font-size: 24px">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
           </div>
           <a class="logo-container p-1" href="#" rel="noreferrer" target=""
             ><div
@@ -68,8 +70,10 @@
           ></a>
         </div>
         <div class="header-right d-flex align-items-center flex-grow-1 justify-content-center" style="z-index: 1"></div>
-      </div>
-      <div
+      </header>
+      <nav
+        role="navigation"
+        aria-label="Main sidebar navigation"
         class="sidebar navigation bg-white border-end position-fixed overflow-scroll bottom-0 start-0 expanded"
         id="sidebar"
         style="background-color: rgb(255, 255, 255); border-color: rgb(238, 238, 238)"
@@ -135,7 +139,7 @@
             >
           </li>
         </ul>
-      </div>
+      </nav>
     </div>
 
     <main class="content" id="content">
@@ -341,7 +345,7 @@
             </button>
           </div>
 
-          <div class="collapse" id="curriculum_navigation_menu">
+          <nav role="navigation" aria-label="Curriculum modules navigation" class="collapse" id="curriculum_navigation_menu">
             <div class="d-flex flex-column gap-3 p-3">
               <div class="btn-group">
                 <button
@@ -530,7 +534,7 @@
                 </div>
               </div>
             </div>
-          </div>
+          </nav>
 
           <div class="flex-grow-1" id="curriculum_navigation_content">
             <h1 class="d-flex flex-column gap-2">
@@ -565,7 +569,7 @@
                     </div>
                   </div>
                   <hr />
-                  <h4>
+                  <h2>
                     <a
                       href="#"
                       aria-hidden="true"
@@ -576,47 +580,47 @@
                       title=""
                     ></a
                     >What is Shaping the Future of VA Work?
-                  </h4>
+                  </h2>
                   <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px">
                     <div style="border: 2px solid rgb(106, 169, 255); border-radius: 10px; padding: 16px">
-                      <h5 style="margin-top: 0px">
+                      <h3 style="margin-top: 0px">
                         <ol>
                           <li>More remote-first businesses</li>
                         </ol>
-                      </h5>
+                      </h3>
                       <p>
                         Companies are now more comfortable building distributed teams, hiring remotely, and working
                         across locations and time zones. That makes remote support roles more normal and more scalable.
                       </p>
                     </div>
                     <div style="border: 2px solid rgb(102, 194, 165); border-radius: 10px; padding: 16px">
-                      <h5 style="margin-top: 0px">
+                      <h3 style="margin-top: 0px">
                         <ol start="2">
                           <li>Growing demand for flexibility</li>
                         </ol>
-                      </h5>
+                      </h3>
                       <p>
                         Many businesses do not want to hire full-time, in-office staff for every task. They increasingly
                         value support that is flexible, efficient, and easy to scale up or down.
                       </p>
                     </div>
                     <div style="border: 2px solid rgb(246, 178, 107); border-radius: 10px; padding: 16px">
-                      <h5 style="margin-top: 0px">
+                      <h3 style="margin-top: 0px">
                         <ol start="3">
                           <li>More digital operations</li>
                         </ol>
-                      </h5>
+                      </h3>
                       <p>
                         As businesses move more of their work online, they need people who can manage digital tools,
                         communication systems, content workflows, and online coordination smoothly.
                       </p>
                     </div>
                     <div style="border: 2px solid rgb(197, 138, 249); border-radius: 10px; padding: 16px">
-                      <h5 style="margin-top: 0px">
+                      <h3 style="margin-top: 0px">
                         <ol start="4">
                           <li>Rising specialization</li>
                         </ol>
-                      </h5>
+                      </h3>
                       <p>
                         General support will still matter, but more clients are looking for VAs with niche strengths in
                         areas like customer support, e-commerce, project coordination, social media, tech tools, and
@@ -624,11 +628,11 @@
                       </p>
                     </div>
                     <div style="border: 2px solid rgb(242, 139, 130); border-radius: 10px; padding: 16px">
-                      <h5 style="margin-top: 0px">
+                      <h3 style="margin-top: 0px">
                         <ol start="5">
                           <li>AI-powered productivity</li>
                         </ol>
-                      </h5>
+                      </h3>
                       <p>
                         Artificial Intelligence is making it easier to draft, summarize, organize, research, schedule,
                         and automate routine tasks. This will not remove the need for human VAs, but it will change what
@@ -636,11 +640,11 @@
                       </p>
                     </div>
                     <div style="border: 2px solid rgb(124, 199, 201); border-radius: 10px; padding: 16px">
-                      <h5 style="margin-top: 0px">
+                      <h3 style="margin-top: 0px">
                         <ol start="6">
                           <li>Greater value placed on human skills</li>
                         </ol>
-                      </h5>
+                      </h3>
                       <p>
                         As automation handles more routine work, qualities like judgment, reliability, communication,
                         empathy, problem-solving, and client care become even more valuable.
@@ -648,7 +652,7 @@
                     </div>
                   </div>
                   <hr />
-                  <h4>
+                  <h2>
                     <a
                       href="#"
                       aria-hidden="true"
@@ -659,7 +663,7 @@
                       title=""
                     ></a
                     >Artificial Intelligence and the Future of VA Work
-                  </h4>
+                  </h2>
                   <p>
                     Artificial Intelligence is one of the most important forces shaping the future of the Virtual
                     Assistant profession. Many modern workplaces already use AI tools to help draft, summarize,
@@ -713,7 +717,7 @@
                     </div>
                   </div>
                   <hr />
-                  <h4>
+                  <h2>
                     <a
                       href="#"
                       aria-hidden="true"
@@ -724,28 +728,28 @@
                       title=""
                     ></a
                     >What Clients Are Likely to Value More and More
-                  </h4>
+                  </h2>
                   <p>
                     As the profession evolves, the most valuable VAs will likely be those who combine
                     <span class="bold-accent">tool fluency</span> with <span class="bold-accent">human strength</span>.
                   </p>
                   <div style="display: flex; gap: 18px; margin-top: 14px">
                     <div style="flex: 1 1 0%; border: 2px solid rgb(106, 169, 255); border-radius: 10px; padding: 18px">
-                      <h5 style="margin-top: 0px"><p>AI fluency</p></h5>
+                      <h3 style="margin-top: 0px"><p>AI fluency</p></h3>
                       <p>
                         Clients will increasingly value VAs who can use AI tools responsibly to save time, improve
                         output quality, and streamline repetitive work.
                       </p>
                     </div>
                     <div style="flex: 1 1 0%; border: 2px solid rgb(102, 194, 165); border-radius: 10px; padding: 18px">
-                      <h5 style="margin-top: 0px"><p>Specialized expertise</p></h5>
+                      <h3 style="margin-top: 0px"><p>Specialized expertise</p></h3>
                       <p>
                         The future will likely reward VAs who go beyond general support and develop deeper skills in one
                         or two service areas.
                       </p>
                     </div>
                     <div style="flex: 1 1 0%; border: 2px solid rgb(246, 178, 107); border-radius: 10px; padding: 18px">
-                      <h5 style="margin-top: 0px"><p>Excellent human service</p></h5>
+                      <h3 style="margin-top: 0px"><p>Excellent human service</p></h3>
                       <p>
                         Responsiveness, dependability, emotional intelligence, professionalism, and clear communication
                         will remain major differentiators.
@@ -753,7 +757,7 @@
                     </div>
                   </div>
                   <hr />
-                  <h4>
+                  <h2>
                     <a
                       href="#"
                       aria-hidden="true"
@@ -764,7 +768,7 @@
                       title=""
                     ></a
                     >What This Means for Aspiring Virtual Assistants
-                  </h4>
+                  </h2>
                   <p>
                     The future of this profession is encouraging, but it does call for growth. A strong future-ready VA
                     will likely need to:
@@ -786,7 +790,7 @@
                     </div>
                   </div>
                   <hr />
-                  <h4>
+                  <h2>
                     <a
                       href="#"
                       aria-hidden="true"
@@ -797,7 +801,7 @@
                       title=""
                     ></a
                     >So, is the Future of VA Promising?
-                  </h4>
+                  </h2>
                   <p>
                     Yes, but not in a passive way. The profession appears to be moving toward a future where Virtual
                     Assistants who are
@@ -810,7 +814,7 @@
                   </p>
                   <hr />
 
-                  <h4>
+                  <h2>
                     <a
                       href="#"
                       aria-hidden="true"
@@ -821,7 +825,7 @@
                       title=""
                     ></a
                     >Optional Reads and Market Signals
-                  </h4>
+                  </h2>
                   <p>
                     If you would like to explore the future of the VA industry further, start with these articles and
                     reports:
@@ -893,7 +897,7 @@
                     </li>
                   </ul>
                   <hr />
-                  <h4>
+                  <h2>
                     <a
                       href="#"
                       aria-hidden="true"
@@ -904,7 +908,7 @@
                       title=""
                     ></a
                     >Up Next
-                  </h4>
+                  </h2>
                   <p>
                     Now that you have explored where the VA industry is heading, the next question becomes personal:
                     <mark>Why might becoming a Virtual Assistant be the right path for you?</mark> In the next lesson,
@@ -925,7 +929,7 @@
                 </a>
               </div>
               <div>
-                <form class="button_to" method="post" action="#">
+                <form class="button_to" method="post" action="#" onsubmit="event.preventDefault(); return false;">
                   <button class="btn btn-primary" type="submit">
                     <span class="align-items-baseline d-inline-flex gap-2">
                       <i aria-hidden="true" class="fa-solid fa-check fa-fw"></i>
@@ -1037,24 +1041,24 @@
       <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title fs-5" id="markdown-guide-modal-label">Markdown guide</h1>
+            <h2 class="modal-title fs-5" id="markdown-guide-modal-label">Markdown guide</h2>
             <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
           </div>
           <div class="modal-body">
-            <h4>Emphasis</h4>
+            <h3>Emphasis</h3>
             <pre>
 **<strong>bold</strong>**
 *<em>italics</em>*
 ~~<strike>strikethrough</strike>~~</pre
             >
-            <h4>Headers</h4>
+            <h3>Headers</h3>
             <pre>
 # Big header
 ## Medium header
 ### Small header
 #### Tiny header</pre
             >
-            <h4>Lists</h4>
+            <h3>Lists</h3>
             <pre>
 * Generic list item
 * Generic list item
@@ -1064,14 +1068,14 @@
 2. Numbered list item
 3. Numbered list item</pre
             >
-            <h4>Links</h4>
+            <h3>Links</h3>
             <pre>[Text to display](http://www.example.com)</pre>
-            <h4>Quotes</h4>
+            <h3>Quotes</h3>
             <pre>
 &gt; This is a quote.
 &gt; It can span multiple lines!</pre
             >
-            <h4>Images</h4>
+            <h3>Images</h3>
             <p>CSS style available: <code>width, height, opacity</code></p>
             <pre>
 ![](http://www.example.com/image.jpg)
@@ -1079,7 +1083,7 @@
 ![](http://www.example.com/image.jpg | height: 124px | width: 80px | opacity: 0.6)
 </pre
             >
-            <h4>Downloadable file</h4>
+            <h3>Downloadable file</h3>
             <p>
               Insert a file hosted at a public <code>https://</code> URL as a clickable download link. The icon and
               label are auto-detected from the file extension. Use the <i class="fa-solid fa-file-arrow-down"></i> tool
@@ -1096,7 +1100,7 @@
               <code>c</code> (.c, .h), <code>text</code> (.txt, .md, .csv, .log). Unrecognized extensions render with a
               generic file icon.
             </p>
-            <h4>Video</h4>
+            <h3>Video</h3>
             <p>
               Embed a single on-demand video by its <code>id</code> from the Video library. Use the
               <i class="fa-solid fa-film"></i> tool in the editor toolbar to pick a video — only online, public, and
@@ -1106,7 +1110,7 @@
 ::video 42 ::
 </pre
             >
-            <h4>Rive Animations</h4>
+            <h3>Rive Animations</h3>
             <p>
               The recommended way to embed a Rive animation is the <strong>Library Files</strong> tool (<i
                 class="fa-solid fa-photo-film"
@@ -1176,7 +1180,7 @@
 ::rive data: eyJzcmMiOiJodHRwczovL2V4YW1wbGUuY29tL2FuaW1hdGlvbi5yaXYiLCJzdGF0ZU1hY2hpbmUiOiJTdGF0ZSBNYWNoaW5lIDEifQ== ::
 </pre
             >
-            <h4>GitHub Content</h4>
+            <h3>GitHub Content</h3>
             <p>
               GitHub content embeds pull a file from a repository's default branch at render time and display it inline.
               Use the GitHub insert tool in the editor toolbar to fill in the fields and validate the paths — you do not
@@ -1222,7 +1226,7 @@
 ::github-content data: eyJvcmciOiJhY21lLWNvcnAiLCJyZXBvIjoiY29uY2VwdHMiLCJwYXRoIjoiZG9jcy90b3BpYy9yZWFkbWUubWQiLCJmaWxlcyI6WyJkb2NzL3RvcGljL2hlbHBlci5weSIsImRvY3MvdG9waWMvYXNzZXRzL2RpYWdyYW0ucG5nIl19 ::
 </pre
             >
-            <h4>Chidi InlineChat</h4>
+            <h3>Chidi InlineChat</h3>
             <p>
               Chidi embeds use a single <code>data:</code> attribute holding a Base64-encoded JSON config. Use the Chidi
               insert tool (<i class="fa-solid fa-robot"></i>) in the editor toolbar to generate it; double-click an
@@ -1259,7 +1263,7 @@
                 <code>content_clarity</code>
               </li>
             </ul>
-            <h4>Tables</h4>
+            <h3>Tables</h3>
             <pre>| Column 1 | Column 2 | Column 3 |
 | -------- | -------- | -------- |
 | John     | Doe      | Male     |
@@ -1272,7 +1276,7 @@
 | John | Doe | Male |
 | Mary | Smith | Female |
 </pre>
-            <h4>Displaying code</h4>
+            <h3>Displaying code</h3>
             <pre>`var example = "hello!";`
 
 <em>Or spanning multiple lines...</em>
@@ -1288,5 +1292,8 @@ alert(example);
     <script src="../assets/js/popper.js"></script>
     <script src="../assets/js/bootstrap.bundle.js"></script>
     <script src="../assets/js/static-page.js"></script>
+    <!-- Savanna Multilingual Assistant & Live Help Widget (Level 1 Drop-in) -->
+    <script src="../widget/widget.js?v=2.8.3" data-lang="en"></script>
+    <db-assistant lang="en" content="/content.json"></db-assistant>
   </body>
 </html>

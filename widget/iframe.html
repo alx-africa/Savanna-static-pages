@@ -1,0 +1,3137 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Savanna Learning Assistant</title>
+  <link rel="stylesheet" href="style.css?v=2.8.3" />
+  <style>
+    /* Iframe-specific overrides — full-height shell */
+    html, body { height: 100%; overflow: hidden; }
+    body { margin: 0; }
+
+    /* Guarantee no text duplication: visually hide the screen-reader label element */
+    .input-label,
+    #chat-input-label,
+    .input-label-wrapper > label {
+      display: none !important;
+      position: absolute !important;
+      width: 0 !important;
+      height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    #chat-input::placeholder {
+      color: var(--c-text-muted, #767676);
+      opacity: 1;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Skip link -->
+<a href="#chat-input" class="skip-link">Skip to chat input</a>
+
+<!-- ── Escalation consent modal ──────────────────────────── -->
+<div id="escalation-modal" class="modal-backdrop" hidden
+     role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <h2 id="modal-title">Share your screen with a human agent?</h2>
+    <p>
+      To get personalised help, an operator will view your screen.
+      You will be asked to choose what to share. You can stop at any time.
+    </p>
+    <div class="modal-actions">
+      <button type="button" id="modal-cancel-btn" class="btn btn-ghost">Cancel</button>
+      <button type="button" id="modal-confirm-btn" class="btn btn-primary">Share &amp; Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Widget shell ───────────────────────────────────────── -->
+<main class="widget-shell" role="main" aria-label="Savanna Learning Assistant">
+
+  <!-- Header -->
+  <header class="widget-header" role="banner">
+    <h1 id="widget-title">Savanna Assistant</h1>
+
+    <!-- Multilingual Language Selector (8 Languages + Auto-Detect) -->
+    <div class="lang-select-container">
+      <label for="lang-select" class="sr-only">Choose language / ቋንቋ ይምረጡ</label>
+      <select id="lang-select" class="lang-select" aria-label="Choose Assistant Language / ቋንቋ ይምረጡ" title="Choose language / ቋንቋ ይምረጡ">
+        <option value="auto">✨ Auto</option>
+        <option value="en">EN • English</option>
+        <option value="am">AM • አማርኛ</option>
+        <option value="om">OM • Oromoo</option>
+        <option value="ti">TI • ትግርኛ</option>
+        <option value="so">SO • Soomaali</option>
+        <option value="ar">AR • العربية (RTL)</option>
+        <option value="sw">SW • Kiswahili</option>
+        <option value="fr">FR • Français</option>
+      </select>
+    </div>
+    <button type="button" id="lang-toggle-btn" style="display:none" aria-hidden="true"></button>
+
+    <!-- Voice Guide (Self-voicing focus reader) -->
+    <button type="button" id="voice-guide-btn" class="icon-btn"
+            aria-pressed="true"
+            aria-label="Voice guidance enabled. Click to disable."
+            title="Voice guidance (reads elements on focus)">
+      <svg id="voice-guide-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true" focusable="false">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      </svg>
+    </button>
+
+    <!-- Simple Mode (Plain language for cognitive accessibility) -->
+    <button type="button" id="simple-mode-btn" class="icon-btn"
+            aria-pressed="false"
+            aria-label="Simple mode off. Click to enable plain language."
+            title="Simple mode / ቀላል ሁነታ (Plain language explanations)">
+      <span style="font-weight: 800; font-size: 0.85rem; letter-spacing: -0.05em;" aria-hidden="true">Aa</span>
+    </button>
+
+    <!-- Minimise -->
+    <button type="button" id="minimize-btn" class="icon-btn"
+            aria-label="Minimise assistant">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true" focusable="false">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+
+    <!-- Close -->
+    <button type="button" id="close-btn" class="icon-btn"
+            aria-label="Close assistant">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true" focusable="false">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- ── Error / alert zone ──────────────────────────────── -->
+  <div id="error-zone" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- ── Ticket confirmation zone ───────────────────────── -->
+  <div id="ticket-zone" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ── Language suggestion banner ─────────────────────── -->
+  <aside id="lang-suggestion-banner" class="lang-suggestion-banner" hidden
+         role="region" aria-label="Language suggestion">
+    <div class="suggestion-content">
+      <span class="suggestion-icon" aria-hidden="true">🌐</span>
+      <span id="suggestion-text">Would you like to switch language?</span>
+    </div>
+    <div class="suggestion-actions">
+      <button type="button" id="suggestion-accept-btn" class="btn btn-sm btn-primary">Switch</button>
+      <button type="button" id="suggestion-dismiss-btn" class="btn btn-sm btn-ghost">Dismiss</button>
+    </div>
+  </aside>
+
+  <!-- ── Context & Starter Pills Bar ─────────────────────── -->
+  <section class="prompt-pills-bar" aria-label="Suggested learning prompts">
+    <div id="active-context-badge" class="active-context-badge" hidden>
+      <span class="context-badge-icon" aria-hidden="true">📖</span>
+      <span id="active-context-title" class="context-badge-text"></span>
+    </div>
+    <div class="prompt-pills-scroll" role="toolbar" aria-label="Quick questions for this concept">
+      <button type="button" class="prompt-pill" id="pill-simple" data-prompt-id="simple" aria-label="Ask assistant to explain this concept simply">
+        <span class="pill-icon" aria-hidden="true">💡</span>
+        <span class="pill-text" id="pill-text-simple">Explain simply</span>
+      </button>
+      <button type="button" class="prompt-pill" id="pill-example" data-prompt-id="example" aria-label="Ask assistant for a real-world Ethiopian example">
+        <span class="pill-icon" aria-hidden="true">🇪🇹</span>
+        <span class="pill-text" id="pill-text-example">Give an example</span>
+      </button>
+      <button type="button" class="prompt-pill" id="pill-quiz" data-prompt-id="quiz" aria-label="Ask assistant to quiz me on this concept">
+        <span class="pill-icon" aria-hidden="true">❓</span>
+        <span class="pill-text" id="pill-text-quiz">Quiz me</span>
+      </button>
+      <button type="button" class="prompt-pill" id="selection-pill" hidden data-prompt-id="selection" aria-label="Ask assistant to explain highlighted text">
+        <span class="pill-icon" aria-hidden="true">📝</span>
+        <span class="pill-text" id="pill-text-selection">Explain highlighted</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ── Message area ────────────────────────────────────── -->
+  <div class="message-area" role="log" aria-live="polite" aria-atomic="false" aria-label="Conversation" aria-busy="false">
+    <ul id="message-list">
+    </ul>
+  </div>
+
+  <!-- ── Input area ──────────────────────────────────────── -->
+  <section class="input-area" aria-label="Message input">
+    <div id="voice-recording-status" class="voice-status-banner" role="status" aria-live="polite" style="display: none;"></div>
+
+    <!-- Voice Review & Approval Panel for blind & low-vision learners -->
+    <div id="voice-review-panel" class="voice-review-panel" role="region" aria-label="Voice question review" style="display: none;">
+      <div class="voice-review-header">
+        <span class="voice-review-title">
+          <span class="rec-dot-done" aria-hidden="true">●</span>
+          <span id="voice-review-title-text">Voice Question Ready</span>
+        </span>
+        <span id="voice-review-time" class="voice-review-time" aria-label="Recording length"></span>
+      </div>
+      <p id="voice-review-instructions" class="voice-review-instructions">
+        Listen to your recording to make sure it is clear, or approve and send it to the assistant.
+      </p>
+      <div class="voice-review-actions">
+        <button type="button" id="voice-preview-btn" class="btn btn-secondary btn-voice-action" aria-label="Listen to your recording">
+          <span id="voice-preview-icon" aria-hidden="true">▶️</span>
+          <span id="voice-preview-label">Listen to Recording</span>
+        </button>
+        <button type="button" id="voice-rerecord-btn" class="btn btn-ghost btn-voice-action" aria-label="Discard recording and record again">
+          <span aria-hidden="true">🔄</span>
+          <span id="voice-rerecord-label">Re-record</span>
+        </button>
+        <button type="button" id="voice-approve-btn" class="btn btn-primary btn-voice-action" aria-label="Approve recording and send question to assistant">
+          <span aria-hidden="true">✅</span>
+          <span id="voice-approve-label">Approve & Send</span>
+        </button>
+      </div>
+    </div>
+    <div class="input-wrapper">
+      <div class="input-label-wrapper">
+        <label id="chat-input-label" for="chat-input" class="input-label visually-hidden" style="display: none !important;">
+          Message (English or Amharic)
+        </label>
+        <textarea
+          id="chat-input"
+          name="chat-input"
+          placeholder="Message (English, Amharic, Oromo, Arabic...)"
+          aria-label="Type your message in English or Amharic"
+          aria-describedby="chat-input-label"
+          rows="2"
+          autocomplete="off"
+          spellcheck="true"
+        ></textarea>
+      </div>
+
+      <div class="input-actions">
+        <!-- Voice input -->
+        <button type="button" id="voice-btn" class="btn btn-ghost btn-icon"
+                aria-label="Start voice input"
+                aria-pressed="false"
+                title="Voice input">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true" focusable="false">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+
+        <!-- Send -->
+        <button type="button" id="send-btn" class="btn btn-primary"
+                aria-label="Send message"
+                disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true" focusable="false">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          <span id="send-btn-label">Send</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Escalation bar ──────────────────────────────────── -->
+  <div class="escalation-bar" role="complementary" aria-label="Human assistance">
+    <button type="button" id="escalate-btn"
+            aria-label="Escalate to a human agent">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true" focusable="false">
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.42 2 2 0 0 1 3.6 1.26h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l1.06-1.06a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.73 16z"/>
+      </svg>
+      <span id="escalate-label">Get human help</span>
+    </button>
+  </div>
+
+</main>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   Savanna Widget — iframe.html script
+   WCAG 2.2 AA | zero external JS deps
+   ════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  /* ── Resolve API base URL & initial language ────────────── */
+  const params    = new URLSearchParams(window.location.search);
+  let rawApi = (params.get('api') || '').replace(/\/$/, '');
+  if (rawApi.includes('localhost') && typeof window !== 'undefined' && window.location) {
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      rawApi = window.location.origin;
+    }
+  }
+  const apiUrl    = rawApi || (typeof window !== 'undefined' && window.location ? window.location.origin : '/api');
+  const paramLang = params.get('lang');
+
+  /* ── Safe Web Storage Wrapper (prevents sandboxed iframe security crashes) ── */
+  function safeGet(storage, key, fallback = null) {
+    try {
+      const val = storage ? storage.getItem(key) : null;
+      return (val !== null && val !== undefined) ? val : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+  function safeSet(storage, key, val) {
+    try {
+      if (storage) storage.setItem(key, val);
+    } catch (_) {}
+  }
+
+  /* ── Session & history ───────────────────────────────────── */
+  const SESSION_KEY = 'savanna_session_id';
+  function uuidv4() {
+    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+  }
+  let sessionId = safeGet(sessionStorage, SESSION_KEY);
+  if (!sessionId) {
+    sessionId = uuidv4();
+    safeSet(sessionStorage, SESSION_KEY, sessionId);
+  }
+  const history   = []; // { role: 'user'|'assistant', content: string }
+
+  /* ── Language state (8-Language Matrix + Auto-Detect) ────── */
+  const LANG_KEY          = 'savanna_lang';
+  const VOICE_GUIDE_KEY   = 'savanna_voice_guide';
+  const SIMPLE_MODE_KEY   = 'savanna_simple_mode';
+  const USER_CHOSEN_KEY   = 'savanna_lang_user_chosen';
+  const SUGGESTION_DISMISSED_KEY = 'savanna_suggestion_dismissed';
+
+  const BCP47_MAP = {
+    'en': 'en-US',
+    'am': 'am-ET',
+    'ti': 'ti-ET',
+    'ar': 'ar-SA',
+    'om': 'om-ET',
+    'so': 'so-SO',
+    'sw': 'sw-KE',
+    'fr': 'fr-FR',
+    'auto': 'en-US'
+  };
+
+  let currentLanguage = safeGet(localStorage, LANG_KEY);
+  if (!currentLanguage) {
+    if (paramLang && (paramLang === 'auto' || BCP47_MAP[paramLang])) {
+      currentLanguage = paramLang;
+    } else {
+      currentLanguage = 'auto';
+    }
+  }
+  let voiceGuideEnabled = safeGet(localStorage, VOICE_GUIDE_KEY) !== 'false';
+  let simpleModeEnabled = safeGet(localStorage, SIMPLE_MODE_KEY) === 'true';
+  let isListening = false;
+  let recognition = null;
+  let activePageContext = null;
+
+  /* ── DOM refs ────────────────────────────────────────────── */
+  const htmlEl            = document.documentElement;
+  const widgetTitle       = document.getElementById('widget-title');
+  const langSelect        = document.getElementById('lang-select');
+  const langToggleBtn     = document.getElementById('lang-toggle-btn');
+  const voiceGuideBtn     = document.getElementById('voice-guide-btn');
+  const simpleModeBtn     = document.getElementById('simple-mode-btn');
+  const closeBtn          = document.getElementById('close-btn');
+  const minimizeBtn       = document.getElementById('minimize-btn');
+  const messageList       = document.getElementById('message-list');
+  const chatInput         = document.getElementById('chat-input');
+  const inputLabel        = document.querySelector('.input-label');
+  const sendBtn           = document.getElementById('send-btn');
+  const sendBtnLabel      = document.getElementById('send-btn-label');
+  const voiceBtn          = document.getElementById('voice-btn');
+  const escalateBtn       = document.getElementById('escalate-btn');
+  const escalateLabel     = document.getElementById('escalate-label');
+  const errorZone         = document.getElementById('error-zone');
+  const ticketZone        = document.getElementById('ticket-zone');
+  const escalModal        = document.getElementById('escalation-modal');
+  const modalConfirm      = document.getElementById('modal-confirm-btn');
+  const modalCancel       = document.getElementById('modal-cancel-btn');
+  const modalTitle        = document.getElementById('modal-title');
+  const modalDesc         = document.querySelector('#escalation-modal p');
+  const suggestionBanner  = document.getElementById('lang-suggestion-banner');
+  const suggestionText    = document.getElementById('suggestion-text');
+  const suggestionAccept  = document.getElementById('suggestion-accept-btn');
+  const suggestionDismiss = document.getElementById('suggestion-dismiss-btn');
+  const contextBadge      = document.getElementById('active-context-badge');
+  const contextTitle      = document.getElementById('active-context-title');
+  const pillSimple        = document.getElementById('pill-simple');
+  const pillExample       = document.getElementById('pill-example');
+  const pillQuiz          = document.getElementById('pill-quiz');
+  const selectionPill     = document.getElementById('selection-pill');
+  const pillTextSimple    = document.getElementById('pill-text-simple');
+  const pillTextExample   = document.getElementById('pill-text-example');
+  const pillTextQuiz      = document.getElementById('pill-text-quiz');
+  const pillTextSelection = document.getElementById('pill-text-selection');
+  const voiceReviewPanel  = document.getElementById('voice-review-panel');
+  const voiceReviewTitleText = document.getElementById('voice-review-title-text');
+  const voiceReviewInstructions = document.getElementById('voice-review-instructions');
+  const voiceReviewTime   = document.getElementById('voice-review-time');
+  const voicePreviewBtn   = document.getElementById('voice-preview-btn');
+  const voicePreviewIcon  = document.getElementById('voice-preview-icon');
+  const voicePreviewLabel = document.getElementById('voice-preview-label');
+  const voiceRerecordBtn  = document.getElementById('voice-rerecord-btn');
+  const voiceRerecordLabel = document.getElementById('voice-rerecord-label');
+  const voiceApproveBtn   = document.getElementById('voice-approve-btn');
+  const voiceApproveLabel = document.getElementById('voice-approve-label');
+
+  let pendingAudioBlob = null;
+  let pendingAudioUrl = null;
+  let reviewAudio = null;
+  let autoPlayResponseAudio = false;
+
+  /* ── i18n strings (8 languages + fallback) ────────────────── */
+  const i18n = {
+    en: {
+      title:        'Savanna Assistant',
+      langLabel:    'Select language',
+      langBtn:      'EN',
+      inputPlaceholder: 'Message (English, Amharic, Oromo, Arabic...)',
+      send:         'Send',
+      voiceStart:   'Start voice input',
+      voiceStop:    'Stop voice input',
+      escalate:     'Get human help',
+      closeLabel:   'Close assistant',
+      minimiseLabel:'Make small / Compact size (Alt+S)',
+      restoreLabel: 'Restore normal size (Alt+S)',
+      thinking:     'Thinking…',
+      voiceGuideOn: 'Voice guidance enabled. Click to disable.',
+      voiceGuideOff:'Voice guidance disabled. Click to enable.',
+      voiceGuideActive: 'Voice guidance enabled',
+      voiceGuideInactive: 'Voice guidance disabled',
+      simpleModeOn: 'Simple mode on. Click to disable plain language.',
+      simpleModeOff:'Simple mode off. Click to enable plain language.',
+      simpleModeActive: 'Simple mode enabled. Answers will use plain language.',
+      simpleModeInactive: 'Simple mode disabled.',
+      roleButton:   'button',
+      roleLink:     'link',
+      roleTextEntry:'text entry',
+      statePressed: 'pressed',
+      stateNotPressed: 'not pressed',
+      stateExpanded:'expanded',
+      stateCollapsed:'collapsed',
+      stateDisabled:'disabled',
+      modalTitle:   'Share your screen with a human agent?',
+      modalDesc:    'To get personalised help, an operator will view your screen. You will be asked to choose what to share. You can stop at any time.',
+      modalCancel:  'Cancel',
+      modalConfirm: 'Share & Connect',
+      escalateAlert:'Live help desk opened. Share your screen with a human agent?',
+      welcome:      'Savanna assistant opened. Type your message or use voice.',
+      suggestionText:'Would you like to switch language?',
+      switchBtn:    'Switch',
+      dismissBtn:   'Dismiss',
+      listen:       'Listen',
+      stopAudio:    'Stop',
+      audioLoading: 'Loading audio...',
+      recPrompt:    'Recording question... Speak now.',
+      recStop:      'Stop recording',
+      recProcessing:'Transcribing speech...',
+      recSuccess:   '✓ Audio transcribed! You can edit text below before sending.',
+      recReviewPrompt: 'Recording captured. Press Listen to hear your recording, Re-record to try again, or Approve and Send to ask the AI.',
+      voiceListenPreview: 'Listen to recording',
+      voicePausePreview: 'Pause recording playback',
+      voiceRerecord: 'Re-record',
+      voiceApproveSend: 'Approve & Send',
+      voiceReviewTitle: 'Voice Question Ready',
+      voiceReviewInstructions: 'Listen to your recording to make sure it is clear, or approve and send it to the assistant.',
+      recNoSpeech:  'No speech detected. Please try again.',
+      recUnavailable:'Transcription service currently unavailable. You can type your question.',
+      ttsUnavailable:'Voice synthesis is not currently available for this language. Text response is provided above.',
+      micPermissionDenied:'Microphone access denied. Please grant permission in browser settings.',
+      pillSimple:   'Explain simply',
+      pillExample:  'Give an example',
+      pillQuiz:     'Quiz me',
+      pillSelection:'Explain highlighted',
+      activeTopic:  'Topic',
+      speedLabel:   'Playback speed',
+      noResponseYet:'No assistant response to play yet.',
+      quizTitle:    'Quiz',
+      quizQuestionOf:'Question {curr} of {total}',
+      checkAnswer:  'Check Answer',
+      nextQuestion: 'Next Question',
+      prevQuestion: 'Previous',
+      viewSummary:  'View Summary',
+      retakeQuiz:   'Retake Quiz',
+      quizCorrect:  '✓ Correct!',
+      quizIncorrect:'✕ Not quite',
+      correctAnswerWas:'Correct answer: Option',
+      quizExplanation:'Explanation',
+      quizComplete: 'Quiz Complete!',
+      quizScore:    'Your score: {score} / {total} ({pct}%)'
+    },
+    am: {
+      title:        'ሳቫና ረዳት',
+      langLabel:    'ቋንቋ ይምረጡ',
+      langBtn:      'AM',
+      inputPlaceholder: 'መልእክት ይፃፉ (በአማርኛ፣ ኦሮምኛ፣ አረብኛ...)',
+      send:         'ላክ',
+      voiceStart:   'የድምፅ ግቤት ጀምር',
+      voiceStop:    'የድምፅ ግቤት አቁም',
+      escalate:     'የሰው እርዳታ ያግኙ',
+      closeLabel:   'ረዳትን ዝጋ',
+      minimiseLabel:'መጠኑን አሳንስ / ትንሽ አድርግ (Alt+S)',
+      restoreLabel: 'ወደ መደበኛ መጠን መልስ (Alt+S)',
+      thinking:     'እያሰብኩ…',
+      voiceGuideOn: 'የድምፅ መመሪያ ነቅቷል። ለማጥፋት ይጫኑ።',
+      voiceGuideOff:'የድምፅ መመሪያ ጠፍቷል። ለማብራት ይጫኑ።',
+      voiceGuideActive: 'የድምፅ መመሪያ ነቅቷል',
+      voiceGuideInactive: 'የድምፅ መመሪያ ጠፍቷል',
+      simpleModeOn: 'ቀላል ሁነታ ነቅቷል። ለማጥፋት ይጫኑ።',
+      simpleModeOff:'ቀላል ሁነታ ጠፍቷል። ለማብራት ይጫኑ።',
+      simpleModeActive: 'ቀላል ሁነታ ነቅቷል። ማብራሪያዎች በቀላል ቃላት ይሆናሉ።',
+      simpleModeInactive: 'ቀላል ሁነታ ጠፍቷል።',
+      roleButton:   'አዝራር',
+      roleLink:     'አገናኝ',
+      roleTextEntry:'የፅሑፍ ማስገቢያ',
+      statePressed: 'ነቅቷል',
+      stateNotPressed: 'ጠፍቷል',
+      stateExpanded:'ተከፍቷል',
+      stateCollapsed:'ተዘግቷል',
+      stateDisabled:'ተሰናክሏል',
+      modalTitle:   'ከሰው ወኪል ጋር ስክሪንዎን ያጋሩ?',
+      modalDesc:    'ለግል እርዳታ ለማግኘት፣ አንድ ኦፕሬተር ስክሪንዎን ይመለከታል። ምን ማጋራት እንደሚፈልጉ ይጠየቃሉ። በማንኛውም ጊዜ ማቆም ይችላሉ።',
+      modalCancel:  'ይቅር',
+      modalConfirm: 'አጋራና ተገናኝ',
+      escalateAlert:'የቀጥታ እርዳታ ጠረጴዛ ተከፍቷል። ከሰው ወኪል ጋር ስክሪንዎን ያጋሩ?',
+      welcome:      'ሳቫና ረዳት ተከፍቷል። መልዕክትዎን በእንግሊዝኛ ወይም በአማርኛ ይፃፉ።',
+      suggestionText:'ቋንቋዎን ወደ አማርኛ መቀየር ይፈልጋሉ?',
+      switchBtn:    'ቀይር',
+      dismissBtn:   'ተወው',
+      listen:       'አድምጥ',
+      stopAudio:    'አቁም',
+      audioLoading: 'ድምፅ እየተጫነ ነው...',
+      recPrompt:    'ጥያቄዎን እየቀረጽኩ ነው... አሁን ይናገሩ።',
+      recStop:      'መቅረጽ አቁም',
+      recProcessing:'ድምፅ ወደ ፅሑፍ እየተቀየረ ነው...',
+      recSuccess:   '✓ ድምፅዎ ወደ ፅሑፍ ተቀይሯል! ከመላክዎ በፊት ማስተካከል ይችላሉ።',
+      recReviewPrompt: 'ድምፅዎ ተቀርጿል። ለማዳመጥ አዳምጥ፣ እንደገና ለመቅረጽ እንደገና ቅረጽ፣ ወይም ለመላክ አጽድቅና ላክ የሚለውን ይጫኑ።',
+      voiceListenPreview: 'ድምፅዎን ያዳምጡ',
+      voicePausePreview: 'አፍታ አቁም',
+      voiceRerecord: 'እንደገና ቅረጽ',
+      voiceApproveSend: 'አጽድቅና ላክ',
+      voiceReviewTitle: 'የድምፅ ጥያቄ ተዘጋጅቷል',
+      voiceReviewInstructions: 'ድምፅዎን ያዳምጡ ወይም አጽድቀው ለአሲስታንቱ ይላኩ።',
+      recNoSpeech:  'ምንም ድምፅ አልተገኘም። እባክዎ እንደገና ይሞክሩ።',
+      recUnavailable:'የድምፅ ግልባጭ አገልግሎት ለጊዜው አይገኝም። ጥያቄዎን መጻፍ ይችላሉ።',
+      ttsUnavailable:'ለዚህ ቋንቋ የድምፅ ውህደት ለጊዜው አይገኝም። የፅሑፍ ምላሽ ከላይ ተሰጥቷል።',
+      micPermissionDenied:'የማይክሮፎን ፈቃድ ተከልክሏል። እባክዎ በአሳሽ ቅንብሮች ውስጥ ፍቃድ ይስጡ።',
+      pillSimple:   'በቀላል አማርኛ',
+      pillExample:  'ምሳሌ ስጠኝ',
+      pillQuiz:     'ፈትነኝ',
+      pillSelection:'የተመረጠውን አብራራ',
+      activeTopic:  'ርዕስ',
+      speedLabel:   'የድምፅ ፍጥነት',
+      noResponseYet:'እስካሁን ምንም ምላሽ አልተሰጠም።',
+      quizTitle:    'ፈተና',
+      quizQuestionOf:'ጥያቄ {curr} ከ {total}',
+      checkAnswer:  'መልስ አረጋግጥ',
+      nextQuestion: 'ቀጣይ ጥያቄ',
+      prevQuestion: 'የቀድሞ',
+      viewSummary:  'ውጤት እይ',
+      retakeQuiz:   'እንደገና ሞክር',
+      quizCorrect:  '✓ ትክክል!',
+      quizIncorrect:'✕ ትክክል አይደለም',
+      correctAnswerWas:'ትክክለኛው መልስ፡ ምርጫ',
+      quizExplanation:'ማብራሪያ',
+      quizComplete: 'ፈተናው ተጠናቋል!',
+      quizScore:    'ውጤትዎ፡ {score} ከ {total} ({pct}%)'
+    },
+    om: {
+      title:        'Gargaaraa Savanna',
+      langLabel:    'Afaan filadhaa',
+      langBtn:      'OM',
+      inputPlaceholder: 'Ergaa barreessi (Afaan Oromoo, English...)',
+      send:         'Ergi',
+      voiceStart:   'Sagalee jalqabi',
+      voiceStop:    'Sagalee dhaabi',
+      escalate:     'Gargaarsa namaa argadhaa',
+      closeLabel:   'Gargaaraa cufi',
+      minimiseLabel:'Xiqqeessi / Guddina xiqqaa (Alt+S)',
+      restoreLabel: 'Gara guddina duraatti deebisi (Alt+S)',
+      thinking:     'Yaadaa jira…',
+      voiceGuideOn: 'Qajeelchi sagalee banaadha. Cufuuf cuqaasaa.',
+      voiceGuideOff:'Qajeelchi sagalee cufaadha. Banuuf cuqaasaa.',
+      voiceGuideActive: 'Qajeelchi sagalee hojjetaa jira',
+      voiceGuideInactive: 'Qajeelchi sagalee dhaabbateera',
+      simpleModeOn: 'Haalli salphaan banaadha. Cufuuf cuqaasaa.',
+      simpleModeOff:'Haalli salphaan cufaadha. Banuuf cuqaasaa.',
+      simpleModeActive: 'Haalli salphaan banameera. Ibsi ifaa fi salphaa ta\'a.',
+      simpleModeInactive: 'Haalli salphaan cufameera.',
+      roleButton:   'qabduu',
+      roleLink:     'hidhata',
+      roleTextEntry:'galmee barreeffamaa',
+      statePressed: 'cuqaasameera',
+      stateNotPressed: 'hin cuqaasamne',
+      stateExpanded:'bal\'ateera',
+      stateCollapsed:'dudduubatti deebi\'eera',
+      stateDisabled:'hojii ala',
+      modalTitle:   'Iskiriinii keessan ogeessa wajjin qoodduu?',
+      modalDesc:    'Gargaarsa dhuunfaa argachuuf, gargaaraan iskiriinii keessan ilaala. Waan qooddan isintu filata. Yeroo barbaaddan dhaabuu dandeessu.',
+      modalCancel:  'Dhiisi',
+      modalConfirm: 'Qoodiitii Wal-qunnami',
+      escalateAlert:'Tajaajilli gargaarsa kallattii banameera. Iskiriinii keessan qoodduu?',
+      welcome:      'Gargaaraan Savanna banameera. Ergaa keessan barreessaa ykn dubbadhaa.',
+      suggestionText:'Afaan gara Afaan Oromootti jijjiiruu barbaadduu?',
+      switchBtn:    'Jijjiiri',
+      dismissBtn:   'Dhiisi',
+      listen:       'Dhaggeeffadhu',
+      stopAudio:    'Dhaabi',
+      audioLoading: 'Sagalee fe\'aa jira...',
+      recPrompt:    'Gaaffii waraabaa jira... Amma dubbadhaa.',
+      recStop:      'Waraabuu dhaabi',
+      recProcessing:'Sagalee gara barreeffamatti jijjiiraa jira...',
+      recSuccess:   '✓ Sagaleen gara barreeffamatti jijjiirameera! Erguuf dura sirreessuu dandeessu.',
+      recReviewPrompt: 'Waraabbiin qabameera. Dhaggeeffachuuf Dhaggeeffadhu, irra deebi\'uuf Irra deebi\'i, ykn erguuf Mirkaneessi & Ergi cuqaasi.',
+      voiceListenPreview: 'Waraabbii dhaggeeffadhu',
+      voicePausePreview: 'Dhaabi',
+      voiceRerecord: 'Irra deebi\'i',
+      voiceApproveSend: 'Mirkaneessi & Ergi',
+      voiceReviewTitle: 'Gaaffiin Sagalee Qophii Dha',
+      voiceReviewInstructions: 'Waraabbii kee dhaggeeffadhu ykn mirkaneessitee ergi.',
+      recNoSpeech:  'Sagaleen hin dhaga\'amne. Maaloo irra deebiaatii yaalaa.',
+      recUnavailable:'Tajaajilli waraabbii yeroof hin jiru. Gaaffii keessan barreessuu dandeessu.',
+      ttsUnavailable:'Sagaleen afaan kanaaf yeroof hin jiru. Barreeffamni armaan olitti kennameera.',
+      micPermissionDenied:'Hayyamni maayikiroofoonii dhowwameera. Qindaa\'ina keessatti hayyama kennaa.',
+      pillSimple:   'Haala salphaan',
+      pillExample:  'Fakkeenya kenni',
+      pillQuiz:     'Na qori',
+      pillSelection:'Kan filatame ibsi',
+      activeTopic:  'Mata duree',
+      speedLabel:   'Saffisa sagalee',
+      noResponseYet:'Deebiin gargaaraa hin jiru.',
+      quizTitle:    'Qormaata',
+      quizQuestionOf:'Gaaffii {curr} / {total}',
+      checkAnswer:  'Deebii Mirkaneessi',
+      nextQuestion: 'Gaaffii Ittiaanu',
+      prevQuestion: 'Kan Duraa',
+      viewSummary:  'Cuunfaa Ilaali',
+      retakeQuiz:   'Irra Deebi\'ii Qori',
+      quizCorrect:  '✓ Sirrii dha!',
+      quizIncorrect:'✕ Sirrii miti',
+      correctAnswerWas:'Deebiin sirrii: Filannoo',
+      quizExplanation:'Ibsa',
+      quizComplete: 'Qormaanni Xumurameera!',
+      quizScore:    'Qabxiin keessan: {score} / {total} ({pct}%)'
+    },
+    ti: {
+      title:        'ሳቫና ሓጋዚ',
+      langLabel:    'ቋንቋ ምረጹ',
+      langBtn:      'TI',
+      inputPlaceholder: 'መልእኽቲ ጸሓፉ (ትግርኛ፣ እንግሊዝኛ...)',
+      send:         'ስደድ',
+      voiceStart:   'ናይ ድምጺ ምእታው ጀምር',
+      voiceStop:    'ናይ ድምጺ ምእታው ኣቋርጽ',
+      escalate:     'ናይ ሰብ ሓገዝ ርኸቡ',
+      closeLabel:   'ሓጋዚ ዕጸዉ',
+      minimiseLabel:'ኣንእስ / ንኡስ መጠን (Alt+S)',
+      restoreLabel: 'ናብ ንቡር መጠን ምለስ (Alt+S)',
+      thinking:     'ይሓስብ ኣሎ…',
+      voiceGuideOn: 'ናይ ድምጺ መምርሒ በርሀ። ንምዕጻው ጠውቑ።',
+      voiceGuideOff:'ናይ ድምጺ መምርሒ ጠፍአ። ንምብራህ ጠውቑ።',
+      voiceGuideActive: 'ናይ ድምጺ መምርሒ ተኸፊቱ ኣሎ',
+      voiceGuideInactive: 'ናይ ድምጺ መምርሒ ተዓጽዩ ኣሎ',
+      simpleModeOn: 'ቀሊል ሁነታ በርሀ። ንምዕጻው ጠውቑ።',
+      simpleModeOff:'ቀሊል ሁነታ ጠፍአ። ንምብራህ ጠውቑ።',
+      simpleModeActive: 'ቀሊል ሁነታ ተኸፊቱ ኣሎ። መብርሂታት ብቐሊል ቃላት ይኸውን።',
+      simpleModeInactive: 'ቀሊል ሁነታ ተዓጽዩ ኣሎ።',
+      roleButton:   'መልጎም',
+      roleLink:     'መላገቢ',
+      roleTextEntry:'መእተዊ ጽሑፍ',
+      statePressed: 'ተጠዊቑ',
+      stateNotPressed: 'ኣይተጠወቐን',
+      stateExpanded:'ተዘርጊሑ',
+      stateCollapsed:'ተዓጺፉ',
+      stateDisabled:'ተሰናኺሉ',
+      modalTitle:   'ስክሪንኩም ምስ ሰብ ወኪል ከተካፍሉ ትደልዩዶ?',
+      modalDesc:    'ብሕታዊ ሓገዝ ንምርካብ፣ ሓደ ኦፕሬተር ስክሪንኩም ክርኢ እዩ። እንታይ ከም እተካፍሉ ባዕልኹም ትመርጹ። ኣብ ዝኾነ ግዜ ደው ከተብሉዎ ትኽእሉ ኢኹም።',
+      modalCancel:  'ይቕረታ',
+      modalConfirm: 'ኣካፍልን ተራኸብን',
+      escalateAlert:'ቀጥታዊ ናይ ሓገዝ ሰሌዳ ተኸፊቱ ኣሎ። ስክሪንኩም ከተካፍሉ ትደልዩዶ?',
+      welcome:      'ሳቫና ሓጋዚ ተኸፊቱ ኣሎ። መልእኽትኹም ጸሓፉ ወይ ብድምጺ ተዛረቡ።',
+      suggestionText:'ቋንቋ ናብ ትግርኛ ክቕየር ትደልዩዶ?',
+      switchBtn:    'ቐይር',
+      dismissBtn:   'ሕደጎ',
+      listen:       'ስምዑ',
+      stopAudio:    'ኣቋርጽ',
+      audioLoading: 'ድምጺ ይጽዕን ኣሎ...',
+      recPrompt:    'ሕቶኹም ይቕዳሕ ኣሎ... ሕጂ ተዛረቡ።',
+      recStop:      'ምቕዳሕ ኣቋርጽ',
+      recProcessing:'ድምጺ ናብ ጽሑፍ ይቕየር ኣሎ...',
+      recSuccess:   '✓ ድምጽኹም ናብ ጽሑፍ ተቐይሩ ኣሎ! ቅድሚ ምስዳድኩም ከተዐርዩዎ ትኽእሉ ኢኹም።',
+      recReviewPrompt: 'ድምጽኹም ተቐሪጹ ኣሎ። ንምስማዕ ስማዕ፣ እንደገና ንምቕራጽ እንደገና ቅረጽ፣ ወይ ንምስዳድ ኣጽዲቕካ ስደድ ዝብል ጠውቑ።',
+      voiceListenPreview: 'ድምጽኹም ስምዑ',
+      voicePausePreview: 'ደው ኣብል',
+      voiceRerecord: 'እንደገና ቅረጽ',
+      voiceApproveSend: 'ኣጽዲቕካ ስደድ',
+      voiceReviewTitle: 'ናይ ድምጺ ሕቶ ድሉው ኣሎ',
+      voiceReviewInstructions: 'ድምጽኹም ስምዑ ወይ ኣጽዲቕኩም ናብ ረዳኢ ስደዱ።',
+      recNoSpeech:  'ዝተሰምዐ ድምጺ የለን። በጃኹም ደጊምኩም ፈትኑ።',
+      recUnavailable:'ናይ ድምጺ ምቕያር ኣገልግሎት ንግዚኡ ኣይርከብን። ሕቶኹም ክትጽሕፉ ትኽእሉ ኢኹም።',
+      ttsUnavailable:'ንዚ ቋንቋ ናይ ድምጺ ኣገልግሎት ንግዚኡ ኣይርከብን። ናይ ጽሑፍ መልሲ ተዋሂቡ ኣሎ።',
+      micPermissionDenied:'ናይ ማይክሮፎን ፍቓድ ተኸልኪሉ ኣሎ። በጃኹም ኣብ ናይ መርበብ ቅጥዕታት ፍቓድ ሃቡ።',
+      pillSimple:   'ብቐሊሉ ግለጽ',
+      pillExample:  'ኣብነት ሃበኒ',
+      pillQuiz:     'ፈትነኒ',
+      pillSelection:'ዝተመረጸ ኣብርህ',
+      activeTopic:  'ኣርእስቲ',
+      speedLabel:   'ናይ ድምጺ ፍጥነት',
+      noResponseYet:'ዝኾነ መልሲ ኣይተዋህበን።',
+      quizTitle:    'ፈተና',
+      quizQuestionOf:'ሕቶ {curr} ካብ {total}',
+      checkAnswer:  'መልሲ ኣረጋግጽ',
+      nextQuestion: 'ቀጻሊ ሕቶ',
+      prevQuestion: 'ዝሓለፈ',
+      viewSummary:  'ውጽኢት ርአ',
+      retakeQuiz:   'ደጊምካ ፈትን',
+      quizCorrect:  '✓ ቅኑዕ!',
+      quizIncorrect:'✕ ኣይኮነን',
+      correctAnswerWas:'ትክክለኛ መልሲ: ምርጫ',
+      quizExplanation:'መብርሂ',
+      quizComplete: 'ፈተና ተወዲኡ!',
+      quizScore:    'ውጽኢትኩም: {score} ካብ {total} ({pct}%)'
+    },
+    so: {
+      title:        'Kaaliyaha Savanna',
+      langLabel:    'Dooro luuqadda',
+      langBtn:      'SO',
+      inputPlaceholder: 'Farriin qor (Soomaali, English...)',
+      send:         'Dir',
+      voiceStart:   'Bilow codka',
+      voiceStop:    'Jooji codka',
+      escalate:     'Hel caawimaad qof ah',
+      closeLabel:   'Xir kaaliyaha',
+      minimiseLabel:'Yaree / Cabbir yar (Alt+S)',
+      restoreLabel: 'Ku celi cabbirka caadiga ah (Alt+S)',
+      thinking:     'Fikiraya…',
+      voiceGuideOn: 'Tilmaamaha codka waa shidan yahay. Guji si aad u damiso.',
+      voiceGuideOff:'Tilmaamaha codka waa dansan yahay. Guji si aad u shido.',
+      voiceGuideActive: 'Tilmaamaha codka waa la shiday',
+      voiceGuideInactive: 'Tilmaamaha codka waa la damiyay',
+      simpleModeOn: 'Qaabka fudud waa shidan yahay. Guji si aad u damiso.',
+      simpleModeOff:'Qaabka fudud waa dansan yahay. Guji si aad u shido.',
+      simpleModeActive: 'Qaabka fudud waa shidan yahay. Sharraxaadu waxay noqon doontaa mid fudud.',
+      simpleModeInactive: 'Qaabka fudud waa la damiyay.',
+      roleButton:   'badhan',
+      roleLink:     'xiriir',
+      roleTextEntry:'meel qoraal',
+      statePressed: 'la riixay',
+      stateNotPressed: 'aan la riixin',
+      stateExpanded:'la fidiyay',
+      stateCollapsed:'la laabay',
+      stateDisabled:'shaqaynayn',
+      modalTitle:   'Shaashaddaada ma la wadaagaysaa shaqaale caawinaad ah?',
+      modalDesc:    'Si aad u hesho caawimaad shaqsiyeed, shaqaale ayaa daawan doona shaashaddaada. Waxaad dooran kartaa waxaad wadaagayso. Waad joojin kartaa waqti kasta.',
+      modalCancel:  'Jooji',
+      modalConfirm: 'Wadaag oo Ku Xirno',
+      escalateAlert:'Miiska caawimaada tooska ah waa la furay. Shaashaddaada ma la wadaagaysaa qof?',
+      welcome:      'Kaaliyaha Savanna waa furan yahay. Qor farriintaada ama isticmaal codka.',
+      suggestionText:'Ma doonaysaa inaad luuqadda u beddesho Soomaali?',
+      switchBtn:    'Beddel',
+      dismissBtn:   'Iska daa',
+      listen:       'Dhageyso',
+      stopAudio:    'Jooji',
+      audioLoading: 'Codka ayaa la soo dejinayaa...',
+      recPrompt:    'Su\'aasha waa la duubayaa... Hadda hadal.',
+      recStop:      'Jooji duubista',
+      recProcessing:'Codka waxaa loo beddelayaa qoraal...',
+      recSuccess:   '✓ Codka waxaa loo beddelay qoraal! Waad sixi kartaa inta aadan dirin.',
+      recReviewPrompt: 'Duubista waa la qabtay. Riix Dhageyso, Dib u duub ama Ansixi & Dir.',
+      voiceListenPreview: 'Dhageyso codkaaga',
+      voicePausePreview: 'Jooji',
+      voiceRerecord: 'Dib u duub',
+      voiceApproveSend: 'Ansixi & Dir',
+      voiceReviewTitle: 'Su\'aasha Codka waa Diyaar',
+      voiceReviewInstructions: 'Dhageyso codkaaga ka hor intaadan dirin.',
+      recNoSpeech:  'Wax cod ah lama helin. Fadlan mar kale isku day.',
+      recUnavailable:'Adeegga codka hadda ma heli karo. Waad qori kartaa su\'aashaada.',
+      ttsUnavailable:'Codka luuqaddan hadda ma heli karo. Jawaabta qoraalka ayaa kor ku taal.',
+      micPermissionDenied:'Ogolaanshaha makarafoonka waa la diiday. Fadlan u oggolow goobaha biraawsarka.',
+      pillSimple:   'Si fudud u sharax',
+      pillExample:  'Bixi tusaale',
+      pillQuiz:     'I tijaabi',
+      pillSelection:'Sharax waxa la doortay',
+      activeTopic:  'Cinwaan',
+      speedLabel:   'Xawaaraha codka',
+      noResponseYet:'Weli jawaab laguma helin.',
+      quizTitle:    'Kedis',
+      quizQuestionOf:'Su\'aal {curr} ee {total}',
+      checkAnswer:  'Hubi Jawaabta',
+      nextQuestion: 'Su\'aasha Xigta',
+      prevQuestion: 'Hore',
+      viewSummary:  'Eeg Natiijada',
+      retakeQuiz:   'Dib u bilow kediska',
+      quizCorrect:  '✓ Sax!',
+      quizIncorrect:'✕ Qalad',
+      correctAnswerWas:'Jawaabta saxda ah: Dooro',
+      quizExplanation:'Sharaxaad',
+      quizComplete: 'Kediskii waa dhammaaday!',
+      quizScore:    'Dhibcahaaga: {score} / {total} ({pct}%)'
+    },
+    ar: {
+      title:        'مساعد سافانا',
+      langLabel:    'اختر اللغة',
+      langBtn:      'AR',
+      inputPlaceholder: 'اكتب رسالتك (العربية، الإنجليزية...)',
+      send:         'إرسال',
+      voiceStart:   'بدء الإدخال الصوتي',
+      voiceStop:    'إيقاف الإدخال الصوتي',
+      escalate:     'طلب مساعدة بشرية',
+      closeLabel:   'إغلاق المساعد',
+      minimiseLabel:'تصغير / حجم مضغوط (Alt+S)',
+      restoreLabel: 'استعادة الحجم الطبيعي (Alt+S)',
+      thinking:     'جارٍ التفكير…',
+      voiceGuideOn: 'الإرشاد الصوتي مفعّل. انقر للتعطيل.',
+      voiceGuideOff:'الإرشاد الصوتي معطّل. انقر للتفعيل.',
+      voiceGuideActive: 'تم تفعيل الإرشاد الصوتي',
+      voiceGuideInactive: 'تم تعطيل الإرشاد الصوتي',
+      simpleModeOn: 'الوضع المبسط مفعّل. انقر للتعطيل.',
+      simpleModeOff:'الوضع المبسط معطّل. انقر للتفعيل.',
+      simpleModeActive: 'تم تفعيل الوضع المبسط. ستكون الشروحات بلغة واضحة وميسرة.',
+      simpleModeInactive: 'تم تعطيل الوضع المبسط.',
+      roleButton:   'زر',
+      roleLink:     'رابط',
+      roleTextEntry:'إدخال نص',
+      statePressed: 'مضغوط',
+      stateNotPressed: 'غير مضغوط',
+      stateExpanded:'موسع',
+      stateCollapsed:'مطوي',
+      stateDisabled:'معطل',
+      modalTitle:   'هل ترغب في مشاركة شاشتك مع مرشد بشري؟',
+      modalDesc:    'للحصول على مساعدة مخصصة، سيشاهد وكيل الدعم شاشتك. يمكنك اختيار ما تريد مشاركته، ويمكنك إيقاف المشاركة في أي وقت.',
+      modalCancel:  'إلغاء',
+      modalConfirm: 'مشاركة واتصال',
+      escalateAlert:'تم فتح مكتب المساعدة المباشرة. هل ترغب في مشاركة شاشتك؟',
+      welcome:      'تم فتح مساعد سافانا. اكتب رسالتك أو استخدم صوتك.',
+      suggestionText:'هل تود تغيير اللغة إلى العربية؟',
+      switchBtn:    'تغيير',
+      dismissBtn:   'إلغاء',
+      listen:       'استمع',
+      stopAudio:    'إيقاف',
+      audioLoading: 'جارٍ تحميل الصوت...',
+      recPrompt:    'جارٍ تسجيل السؤال... تفضل بالكلام الآن.',
+      recStop:      'إيقاف التسجيل',
+      recProcessing:'جارٍ تحويل الصوت إلى نص...',
+      recSuccess:   '✓ تم تحويل الصوت إلى نص! يمكنك تعديل النص أدناه قبل الإرسال.',
+      recReviewPrompt: 'تم تسجيل صوتك. اضغط استمع لسماع التسجيل، أو إعادة التسجيل، أو موافقة وإرسال.',
+      voiceListenPreview: 'استمع إلى تسجيلك',
+      voicePausePreview: 'إيقاف مؤقت',
+      voiceRerecord: 'إعادة التسجيل',
+      voiceApproveSend: 'موافقة وإرسال',
+      voiceReviewTitle: 'السؤال الصوتي جاهز',
+      voiceReviewInstructions: 'استمع إلى تسجيلك للتأكد منه ثم وافق على إرساله.',
+      recNoSpeech:  'لم يتم التقاط أي صوت. يرجى المحاولة مرة أخرى.',
+      recUnavailable:'خدمة تحويل الصوت غير متاحة حالياً. يمكنك كتابة سؤالك.',
+      ttsUnavailable:'التحويل الصوتي غير متاح حالياً لهذه اللغة. تم توفير الإجابة النصية أعلاه.',
+      micPermissionDenied:'تم رفض إذن الوصول إلى الميكروفون. يرجى منح الإذن في إعدادات المتصفح.',
+      pillSimple:   'اشرح ببساطة',
+      pillExample:  'أعطِ مثالاً',
+      pillQuiz:     'اختبرني',
+      pillSelection:'اشرح النص المحدد',
+      activeTopic:  'الموضوع',
+      speedLabel:   'سرعة الصوت',
+      noResponseYet:'لا يوجد رد بعد.',
+      quizTitle:    'اختبار',
+      quizQuestionOf:'السؤال {curr} من {total}',
+      checkAnswer:  'تحقق من الإجابة',
+      nextQuestion: 'السؤال التالي',
+      prevQuestion: 'السابق',
+      viewSummary:  'عرض النتيجة',
+      retakeQuiz:   'إعادة الاختبار',
+      quizCorrect:  '✓ صحيح!',
+      quizIncorrect:'✕ غير صحيح',
+      correctAnswerWas:'الإجابة الصحيحة: الخيار',
+      quizExplanation:'التوضيح',
+      quizComplete: 'اكتمل الاختبار!',
+      quizScore:    'درجتك: {score} من {total} ({pct}%)'
+    },
+    sw: {
+      title:        'Msaidizi wa Savanna',
+      langLabel:    'Chagua lugha',
+      langBtn:      'SW',
+      inputPlaceholder: 'Andika ujumbe (Kiswahili, Kiingereza...)',
+      send:         'Tuma',
+      voiceStart:   'Anza kuongea',
+      voiceStop:    'Sitisha sauti',
+      escalate:     'Pata usaidizi wa mtu',
+      closeLabel:   'Funga msaidizi',
+      minimiseLabel:'Fanya ndogo / Ukubwa mdogo (Alt+S)',
+      restoreLabel: 'Rejesha ukubwa wa kawaida (Alt+S)',
+      thinking:     'Inafikiria…',
+      voiceGuideOn: 'Mwongozo wa sauti umewashwa. Bofya ili kuzima.',
+      voiceGuideOff:'Mwongozo wa sauti umezimwa. Bofya ili kuwasha.',
+      voiceGuideActive: 'Mwongozo wa sauti umewashwa',
+      voiceGuideInactive: 'Mwongozo wa sauti umezimwa',
+      simpleModeOn: 'Hali rahisi imewashwa. Bofya ili kuzima.',
+      simpleModeOff:'Hali rahisi imezimwa. Bofya ili kuwasha.',
+      simpleModeActive: 'Hali rahisi imewashwa. Maelezo yatakuwa kwa lugha rahisi.',
+      simpleModeInactive: 'Hali rahisi imezimwa.',
+      roleButton:   'kitufe',
+      roleLink:     'kiungo',
+      roleTextEntry:'uandishi wa maandishi',
+      statePressed: 'imebonyezwa',
+      stateNotPressed: 'haijabonyezwa',
+      stateExpanded:'imepanuliwa',
+      stateCollapsed:'imekunjwa',
+      stateDisabled:'imezimwa',
+      modalTitle:   'Shiriki skrini yako na msaidizi wa kibinadamu?',
+      modalDesc:    'Ili kupata usaidizi maalum, msaidizi ataangalia skrini yako. Utachagua unachotaka kushiriki na unaweza kusitisha wakati wowote.',
+      modalCancel:  'Ghairi',
+      modalConfirm: 'Shiriki na Unganisha',
+      escalateAlert:'Dawati la usaidizi la moja kwa moja limefunguliwa. Shiriki skrini yako na msaidizi?',
+      welcome:      'Msaidizi wa Savanna amefunguliwa. Andika ujumbe wako au tumia sauti.',
+      suggestionText:'Je, ungependa kubadilisha lugha kuwa Kiswahili?',
+      switchBtn:    'Badilisha',
+      dismissBtn:   'Ondoa',
+      listen:       'Sikiliza',
+      stopAudio:    'Simamisha',
+      audioLoading: 'Inapakia sauti...',
+      recPrompt:    'Swali linarekodiwa... Tafadhali ongea sasa.',
+      recStop:      'Simamisha kurekodi',
+      recProcessing:'Inabadilisha sauti kuwa maandishi...',
+      recSuccess:   '✓ Sauti imebadilishwa kuwa maandishi! Unaweza kuhariri kabla ya kutuma.',
+      recReviewPrompt: 'Kurekodi kumekamilika. Bonyeza Sikiliza, Rekodi tena, au Idhinisha na Utume.',
+      voiceListenPreview: 'Sikiliza rekodi yako',
+      voicePausePreview: 'Simamisha',
+      voiceRerecord: 'Rekodi tena',
+      voiceApproveSend: 'Idhinisha & Tuma',
+      voiceReviewTitle: 'Swali la Sauti Liko Tayari',
+      voiceReviewInstructions: 'Sikiliza swali lako au uidhinishe na uitume.',
+      recNoSpeech:  'Hakuna sauti iliyogunduliwa. Tafadhali jaribu tena.',
+      recUnavailable:'Huduma ya kurekodi haipatikani kwa sasa. Unaweza kuandika swali lako.',
+      ttsUnavailable:'Usomaji wa sauti haupatikani kwa sasa kwa lugha hii. Jibu la maandishi limetolewa hapo juu.',
+      micPermissionDenied:'Idhini ya maikrofoni imekataliwa. Tafadhali ruhusu katika mipangilio ya kivinjari.',
+      pillSimple:   'Eleza kwa urahisi',
+      pillExample:  'Toa mfano',
+      pillQuiz:     'Nipime',
+      pillSelection:'Eleza kilichochaguliwa',
+      activeTopic:  'Mada',
+      speedLabel:   'Kasi ya sauti',
+      noResponseYet:'Bado hakuna jibu.',
+      quizTitle:    'Maswali',
+      quizQuestionOf:'Swali {curr} kati ya {total}',
+      checkAnswer:  'Kagua Jibu',
+      nextQuestion: 'Swali Linalofuata',
+      prevQuestion: 'Iliyopita',
+      viewSummary:  'Ona Matokeo',
+      retakeQuiz:   'Rudia Maswali',
+      quizCorrect:  '✓ Sahihi!',
+      quizIncorrect:'✕ Si sahihi',
+      correctAnswerWas:'Jibu sahihi: Chaguo',
+      quizExplanation:'Ufafanuzi',
+      quizComplete: 'Maswali Yamekamilika!',
+      quizScore:    'Alama zako: {score} kati ya {total} ({pct}%)'
+    },
+    fr: {
+      title:        'Assistant Savanna',
+      langLabel:    'Choisir la langue',
+      langBtn:      'FR',
+      inputPlaceholder: 'Écrivez un message (Français, Anglais...)',
+      send:         'Envoyer',
+      voiceStart:   'Démarrer la voix',
+      voiceStop:    'Arrêter la voix',
+      escalate:     'Obtenir de l\'aide humaine',
+      closeLabel:   'Fermer l\'assistant',
+      minimiseLabel:'Réduire / Taille compacte (Alt+S)',
+      restoreLabel: 'Rétablir la taille normale (Alt+S)',
+      thinking:     'Réflexion en cours…',
+      voiceGuideOn: 'Guidage vocal activé. Cliquez pour désactiver.',
+      voiceGuideOff:'Guidage vocal désactivé. Cliquez pour activer.',
+      voiceGuideActive: 'Guidage vocal activé',
+      voiceGuideInactive: 'Guidage vocal désactivé',
+      simpleModeOn: 'Mode simple activé. Cliquez pour désactiver.',
+      simpleModeOff:'Mode simple désactivé. Cliquez pour activer.',
+      simpleModeActive: 'Mode simple activé. Les explications utiliseront un vocabulaire simplifié.',
+      simpleModeInactive: 'Mode simple désactivé.',
+      roleButton:   'bouton',
+      roleLink:     'lien',
+      roleTextEntry:'champ de texte',
+      statePressed: 'enfoncé',
+      stateNotPressed: 'non enfoncé',
+      stateExpanded:'développé',
+      stateCollapsed:'réduit',
+      stateDisabled:'désactivé',
+      modalTitle:   'Partager votre écran avec un assistant humain ?',
+      modalDesc:    'Pour obtenir une aide personnalisée, un opérateur consultera votre écran. Vous choisissez ce que vous partagez et pouvez interrompre à tout moment.',
+      modalCancel:  'Annuler',
+      modalConfirm: 'Partager et se connecter',
+      escalateAlert:'Assistance en direct ouverte. Partager votre écran avec un opérateur ?',
+      welcome:      'Assistant Savanna ouvert. Écrivez votre message ou utilisez votre voix.',
+      suggestionText:'Souhaitez-vous passer au français ?',
+      switchBtn:    'Changer',
+      dismissBtn:   'Ignorer',
+      listen:       'Écouter',
+      stopAudio:    'Arrêter',
+      audioLoading: 'Chargement de l\'audio...',
+      recPrompt:    'Enregistrement de votre question... Parlez maintenant.',
+      recStop:      'Arrêter l\'enregistrement',
+      recProcessing:'Transcription de la voix en texte...',
+      recSuccess:   '✓ Audio transcrit ! Vous pouvez modifier le texte ci-dessous avant de l\'envoyer.',
+      recReviewPrompt: 'Enregistrement capturé. Appuyez sur Écouter, Réenregistrer, ou Approuver et envoyer.',
+      voiceListenPreview: 'Écouter l\'enregistrement',
+      voicePausePreview: 'Pause',
+      voiceRerecord: 'Réenregistrer',
+      voiceApproveSend: 'Approuver et envoyer',
+      voiceReviewTitle: 'Question vocale prête',
+      voiceReviewInstructions: 'Écoutez votre enregistrement pour vérifier sa clarté, ou approuvez-le pour l\'envoyer.',
+      recNoSpeech:  'Aucune voix détectée. Veuillez réessayer.',
+      recUnavailable:'Le service de transcription est actuellement indisponible. Vous pouvez taper votre question.',
+      ttsUnavailable:'La synthèse vocale n\'est pas disponible pour cette langue. La réponse textuelle est fournie ci-dessus.',
+      micPermissionDenied:'Accès au microphone refusé. Veuillez accorder la permission dans les paramètres du navigateur.',
+      pillSimple:   'Expliquer simplement',
+      pillExample:  'Donner un exemple',
+      pillQuiz:     'Me tester',
+      pillSelection:'Expliquer la sélection',
+      activeTopic:  'Sujet',
+      speedLabel:   'Vitesse de lecture',
+      noResponseYet:'Pas encore de réponse.',
+      quizTitle:    'Quiz',
+      quizQuestionOf:'Question {curr} sur {total}',
+      checkAnswer:  'Vérifier la réponse',
+      nextQuestion: 'Question suivante',
+      prevQuestion: 'Précédent',
+      viewSummary:  'Voir le résumé',
+      retakeQuiz:   'Refaire le quiz',
+      quizCorrect:  '✓ Correct !',
+      quizIncorrect:'✕ Incorrect',
+      correctAnswerWas:'Bonne réponse : Option',
+      quizExplanation:'Explication',
+      quizComplete: 'Quiz terminé !',
+      quizScore:    'Votre score : {score} / {total} ({pct}%)'
+    }
+  };
+
+  function getI18n() {
+    if (currentLanguage !== 'auto' && i18n[currentLanguage]) {
+      return i18n[currentLanguage];
+    }
+    return i18n.en;
+  }
+
+  /* ── Apply language & RTL handling ───────────────────────── */
+  function applyLanguage() {
+    const isRtl = (currentLanguage === 'ar');
+    const t = getI18n();
+
+    htmlEl.setAttribute('lang', (currentLanguage === 'auto') ? 'en' : currentLanguage);
+    htmlEl.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+
+    if (langSelect) langSelect.value = currentLanguage;
+
+    widgetTitle.textContent = t.title;
+
+    voiceGuideBtn.setAttribute('aria-label', voiceGuideEnabled ? t.voiceGuideOn : t.voiceGuideOff);
+    voiceGuideBtn.setAttribute('aria-pressed', voiceGuideEnabled ? 'true' : 'false');
+    voiceGuideBtn.style.opacity = voiceGuideEnabled ? '1' : '0.6';
+
+    simpleModeBtn.setAttribute('aria-label', simpleModeEnabled ? t.simpleModeOn : t.simpleModeOff);
+    simpleModeBtn.setAttribute('aria-pressed', simpleModeEnabled ? 'true' : 'false');
+    simpleModeBtn.style.background = simpleModeEnabled ? 'rgba(255,255,255,0.3)' : '';
+    simpleModeBtn.style.opacity = simpleModeEnabled ? '1' : '0.6';
+
+    if (inputLabel) {
+      inputLabel.style.display = 'none';
+      inputLabel.textContent = '';
+    }
+    chatInput.setAttribute('placeholder', t.inputPlaceholder);
+    chatInput.setAttribute('aria-label', t.inputPlaceholder);
+    chatInput.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+
+    sendBtnLabel.textContent  = t.send;
+    sendBtn.setAttribute('aria-label', t.send + ' message');
+    voiceBtn.setAttribute('aria-label', isListening ? t.voiceStop : t.voiceStart);
+    escalateLabel.textContent = t.escalate;
+    escalateBtn.setAttribute('aria-label', t.escalate + ' — escalate to a human agent');
+    closeBtn.setAttribute('aria-label',    t.closeLabel);
+    if (typeof updateSizeUI === 'function') {
+      updateSizeUI(currentWidgetSize);
+    } else {
+      minimizeBtn.setAttribute('aria-label', t.minimiseLabel);
+    }
+
+    if (modalTitle) modalTitle.textContent = t.modalTitle;
+    if (modalDesc) modalDesc.textContent = t.modalDesc;
+    if (modalCancel) modalCancel.textContent = t.modalCancel;
+    if (modalConfirm) modalConfirm.textContent = t.modalConfirm;
+
+    if (pillTextSimple) pillTextSimple.textContent = t.pillSimple || 'Explain simply';
+    if (pillTextExample) pillTextExample.textContent = t.pillExample || 'Give an example';
+    if (pillTextQuiz) pillTextQuiz.textContent = t.pillQuiz || 'Quiz me';
+    if (pillTextSelection) pillTextSelection.textContent = t.pillSelection || 'Explain highlighted';
+
+    if (pillSimple) pillSimple.setAttribute('aria-label', (t.pillSimple || 'Explain simply') + ' — ' + (t.title || 'Assistant'));
+    if (pillExample) pillExample.setAttribute('aria-label', (t.pillExample || 'Give an example') + ' — ' + (t.title || 'Assistant'));
+    if (pillQuiz) pillQuiz.setAttribute('aria-label', (t.pillQuiz || 'Quiz me') + ' — ' + (t.title || 'Assistant'));
+    if (selectionPill) selectionPill.setAttribute('aria-label', (t.pillSelection || 'Explain highlighted') + ' — ' + (t.title || 'Assistant'));
+    if (voiceReviewTitleText) voiceReviewTitleText.textContent = t.voiceReviewTitle || 'Voice Question Ready';
+    if (voiceReviewInstructions) voiceReviewInstructions.textContent = t.voiceReviewInstructions || 'Listen to your recording to make sure it is clear, or approve and send it to the assistant.';
+    if (voicePreviewLabel) voicePreviewLabel.textContent = t.voiceListenPreview || 'Listen to Recording';
+    if (voicePreviewBtn) voicePreviewBtn.setAttribute('aria-label', t.voiceListenPreview || 'Listen to your recording');
+    if (voiceRerecordLabel) voiceRerecordLabel.textContent = t.voiceRerecord || 'Re-record';
+    if (voiceRerecordBtn) voiceRerecordBtn.setAttribute('aria-label', t.voiceRerecord || 'Discard recording and record again');
+    if (voiceApproveLabel) voiceApproveLabel.textContent = t.voiceApproveSend || 'Approve & Send';
+    if (voiceApproveBtn) voiceApproveBtn.setAttribute('aria-label', t.voiceApproveSend || 'Approve recording and send question to assistant');
+    if (typeof updateContextUI === 'function') updateContextUI();
+
+    safeSet(localStorage, LANG_KEY, currentLanguage);
+    if (recognition) recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
+
+    try {
+      parent.postMessage({ type: 'savanna:lang_change', lang: currentLanguage }, '*');
+    } catch (_) {}
+  }
+
+  applyLanguage();
+
+  /* ── Accessible Regional Language Suggestion Banner ───────── */
+  const REGIONAL_SUGGESTIONS = {
+    'Africa/Khartoum': 'ar',
+    'Africa/Juba': 'ar',
+    'Africa/Mogadishu': 'so',
+    'Africa/Nairobi': 'sw',
+    'Africa/Asmara': 'ti',
+    'Africa/Djibouti': 'so',
+    'Africa/Cairo': 'ar'
+  };
+
+  const LANG_NAMES = {
+    'en': 'English',
+    'am': 'አማርኛ',
+    'om': 'Afaan Oromoo',
+    'ti': 'ትግርኛ',
+    'so': 'Soomaali',
+    'ar': 'العربية',
+    'sw': 'Kiswahili',
+    'fr': 'Français'
+  };
+
+  function checkLanguageSuggestion() {
+    if (!suggestionBanner) return;
+    if (safeGet(sessionStorage, SUGGESTION_DISMISSED_KEY)) return;
+    if (safeGet(localStorage, USER_CHOSEN_KEY) === 'true') return;
+
+    let candidate = null;
+
+    // 1. Check browser navigator languages
+    const browserLangs = navigator.languages || [navigator.language || ''];
+    for (const bl of browserLangs) {
+      const code = (bl || '').toLowerCase().split(/[-_]/)[0];
+      if (code && code !== 'en' && BCP47_MAP[code]) {
+        candidate = code;
+        break;
+      }
+    }
+
+    // 2. Coarse regional timezone hint
+    if (!candidate) {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        if (REGIONAL_SUGGESTIONS[tz]) {
+          candidate = REGIONAL_SUGGESTIONS[tz];
+        } else if (tz === 'Africa/Addis_Ababa' && currentLanguage === 'en') {
+          candidate = 'am';
+        }
+      } catch (_) {}
+    }
+
+    if (candidate && candidate !== currentLanguage && candidate !== 'en') {
+      const targetI18n = i18n[candidate] || i18n.en;
+      suggestionText.textContent = targetI18n.suggestionText || `Would you like to switch to ${LANG_NAMES[candidate]}?`;
+      suggestionAccept.textContent = targetI18n.switchBtn || 'Switch';
+      suggestionDismiss.textContent = targetI18n.dismissBtn || 'Dismiss';
+      suggestionBanner.removeAttribute('hidden');
+
+      suggestionAccept.onclick = function () {
+        currentLanguage = candidate;
+        safeSet(localStorage, USER_CHOSEN_KEY, 'true');
+        applyLanguage();
+        suggestionBanner.setAttribute('hidden', '');
+        speakFocus((LANG_NAMES[candidate] || candidate) + ' selected');
+      };
+
+      suggestionDismiss.onclick = function () {
+        suggestionBanner.setAttribute('hidden', '');
+        safeSet(sessionStorage, SUGGESTION_DISMISSED_KEY, 'true');
+      };
+    }
+  }
+
+  // Run suggestion check on load
+  setTimeout(checkLanguageSuggestion, 300);
+
+  /* ── Language Selector Listener ──────────────────────────── */
+  if (langSelect) {
+    langSelect.addEventListener('change', function () {
+      currentLanguage = langSelect.value;
+      safeSet(localStorage, USER_CHOSEN_KEY, 'true');
+      if (suggestionBanner) suggestionBanner.setAttribute('hidden', '');
+      applyLanguage();
+      const speakMap = {
+        'en': 'Language set to English',
+        'am': 'ቋንቋ ወደ አማርኛ ተቀይሯል',
+        'om': 'Afaan Oromootti jijjiirameera',
+        'ti': 'ቋንቋ ናብ ትግርኛ ተቐይሩ',
+        'so': 'Luuqadda waxaa loo beddelay Soomaali',
+        'ar': 'تم تغيير اللغة إلى العربية',
+        'sw': 'Lugha imebadilishwa kuwa Kiswahili',
+        'fr': 'Langue changée en français',
+        'auto': 'Auto-detection enabled'
+      };
+      speakFocus(speakMap[currentLanguage] || 'Language updated');
+    });
+  }
+
+  /* ── Voice guidance toggle ───────────────────────────────── */
+  voiceGuideBtn.addEventListener('click', function () {
+    voiceGuideEnabled = !voiceGuideEnabled;
+    safeSet(localStorage, VOICE_GUIDE_KEY, voiceGuideEnabled ? 'true' : 'false');
+    applyLanguage();
+    const t = getI18n();
+    speakFocus(voiceGuideEnabled ? t.voiceGuideActive : t.voiceGuideInactive);
+  });
+
+  /* ── Simple Mode (plain language) toggle ─────────────────── */
+  simpleModeBtn.addEventListener('click', function () {
+    simpleModeEnabled = !simpleModeEnabled;
+    safeSet(localStorage, SIMPLE_MODE_KEY, simpleModeEnabled ? 'true' : 'false');
+    applyLanguage();
+    const t = getI18n();
+    speakFocus(simpleModeEnabled ? t.simpleModeActive : t.simpleModeInactive);
+  });
+
+  /* ── Close / minimise & Size Preset Toggle ──────────────── */
+  closeBtn.addEventListener('click', function () {
+    parent.postMessage({ type: 'close' }, '*');
+  });
+
+  let currentWidgetSize = safeGet(localStorage, 'savanna_widget_size', 'standard');
+
+  function updateSizeUI(size) {
+    if (!['compact', 'standard', 'expanded'].includes(size)) {
+      size = 'standard';
+    }
+    currentWidgetSize = size;
+    safeSet(localStorage, 'savanna_widget_size', size);
+    const isCompact = size === 'compact';
+    document.body.classList.toggle('compact-mode', isCompact);
+
+    if (minimizeBtn) {
+      minimizeBtn.setAttribute('aria-pressed', isCompact ? 'true' : 'false');
+      const t = getI18n();
+      const label = isCompact ? (t.restoreLabel || 'Restore normal size (Alt+S)') : (t.minimiseLabel || 'Make small / Compact size (Alt+S)');
+      minimizeBtn.setAttribute('aria-label', label);
+      minimizeBtn.setAttribute('title', label);
+      minimizeBtn.innerHTML = isCompact
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+    }
+  }
+
+  function toggleWidgetSize() {
+    const nextSize = (currentWidgetSize === 'compact') ? 'standard' : 'compact';
+    updateSizeUI(nextSize);
+    parent.postMessage({ type: 'set_size', size: nextSize }, '*');
+    speakFocus(nextSize === 'compact'
+      ? (currentLanguage === 'am' ? 'የውይይት መስኮቱ ወደ ትንሽ መጠን ተቀይሯል።' : 'Chat window switched to compact small size.')
+      : (currentLanguage === 'am' ? 'የውይይት መስኮቱ ወደ መደበኛ መጠን ተመልሷል።' : 'Chat window restored to standard size.')
+    );
+  }
+
+  minimizeBtn.addEventListener('click', toggleWidgetSize);
+
+  // Apply initial size preference
+  updateSizeUI(currentWidgetSize);
+
+  // Alt + S Shortcut: Instantly toggles between Small Compact and Standard size from anywhere inside widget
+  window.addEventListener('keydown', function (e) {
+    if (e.altKey && (e.key === 's' || e.key === 'S' || e.code === 'KeyS') && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      toggleWidgetSize();
+    }
+  });
+
+  /* ── Zero-Dependency Web Audio Earcons (Auditory Cues) ──── */
+  let audioCtx = null;
+  function getAudioContext() {
+    if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(function () {});
+    }
+    return audioCtx;
+  }
+
+  function playEarcon(type) {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      if (type === 'open') {
+        // Ascending chime: C5 (523.25Hz) -> E5 (659.25Hz) -> G5 (783.99Hz)
+        [523.25, 659.25, 783.99].forEach(function (freq, i) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.045);
+          gain.gain.setValueAtTime(0.08, now + i * 0.045);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.045 + 0.11);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.045);
+          osc.stop(now + i * 0.045 + 0.11);
+        });
+      } else if (type === 'close') {
+        // Descending chime: G5 (783.99Hz) -> E5 (659.25Hz) -> C5 (523.25Hz)
+        [783.99, 659.25, 523.25].forEach(function (freq, i) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.045);
+          gain.gain.setValueAtTime(0.08, now + i * 0.045);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.045 + 0.11);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.045);
+          osc.stop(now + i * 0.045 + 0.11);
+        });
+      } else if (type === 'mic_start') {
+        // Crisp high beep: 880Hz (A5)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } else if (type === 'mic_stop') {
+        // Two-tone double settling: 880Hz -> 440Hz
+        [880, 440].forEach(function (freq, i) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.055);
+          gain.gain.setValueAtTime(0.1, now + i * 0.055);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.08);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.055);
+          osc.stop(now + i * 0.055 + 0.08);
+        });
+      } else if (type === 'answer_ready') {
+        // Harmonic bell ping: 523Hz + 1046Hz
+        [523.25, 1046.5].forEach(function (freq, i) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(i === 0 ? 0.12 : 0.06, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.32);
+        });
+      } else if (type === 'quiz_correct') {
+        // Joyful ascending arpeggio: C5 (523Hz) -> E5 (659Hz) -> G5 (784Hz) -> C6 (1046Hz)
+        [523.25, 659.25, 783.99, 1046.5].forEach(function (freq, i) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.05);
+          gain.gain.setValueAtTime(0.09, now + i * 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.18);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.05);
+          osc.stop(now + i * 0.05 + 0.18);
+        });
+      } else if (type === 'quiz_incorrect') {
+        // Soft double descending tone: 340Hz -> 260Hz
+        [340, 260].forEach(function (freq, i) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.07);
+          gain.gain.setValueAtTime(0.08, now + i * 0.07);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.12);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.07);
+          osc.stop(now + i * 0.07 + 0.12);
+        });
+      }
+    } catch (_) {}
+  }
+
+  /* ── Lesson Context & Pedagogical Starter Pills ─────────── */
+
+  const PROMPT_TEMPLATES = {
+    simple: {
+      en: 'Could you explain this concept in simple, beginner-friendly terms?',
+      am: 'እባክዎ ይህንን ጽንሰ-ሀሳብ በቀላል እና ግልጽ በሆነ አማርኛ ያስረዱኝ።',
+      om: 'Mee yaada kana haala salphaa fi ifa ta\'een naaf ibsaa?',
+      ti: 'በጃኹም ነዚ ጽንሰ-ሓሳብ ብቐሊልን ንጹርን መንገዲ ግለጹለይ።',
+      so: 'Fadlan fikradan si fudud oo qof kasta fahmi karo ii sharax?',
+      ar: 'هل يمكنك شرح هذا المفهوم بأسلوب مبسط وسهل الفهم؟',
+      sw: 'Tafadhali eleza dhana hii kwa maneno rahisi kueleweka?',
+      fr: 'Pourriez-vous expliquer ce concept en termes simples et accessibles ?'
+    },
+    example: {
+      en: 'Can you give a practical, real-world example (with Ethiopian context if relevant) for this concept?',
+      am: 'ለዚህ ጽንሰ-ሀሳብ ተጨባጭ እና ተግባራዊ ምሳሌ (ከተቻለ ከኢትዮጵያ ነባራዊ ሁኔታ ጋር) ይሰጡኛል?',
+      om: 'Yaada kanaaf fakkeenya qabatamaa fi hojiirra oolu (haala Itoophiyaa wajjin) naaf kennuu dandeessuu?',
+      ti: 'ንዚ ጽንሰ-ሓሳብ ጭቡጥን ግብራውን ኣብነት (ምስ ኩነታት ኢትዮጵያ ዝተኣሳሰረ) ክትህቡኒ ትኽእሉዶ?',
+      so: 'Miyaad i siin kartaa tusaale dhab ah oo la xiriira fikradan (haddii ay suurtagal tahay xaaladda Itoobiya)?',
+      ar: 'هل يمكنك إعطاء مثال عملي واقعي (في السياق الإثيوبي إن أمكن) لهذا المفهوم؟',
+      sw: 'Unaweza kutoa mfano halisi na wa vitendo kuhusu dhana hii?',
+      fr: 'Pouvez-vous donner un exemple concret et pratique (dans le contexte éthiopien si pertinent) pour ce concept ?'
+    },
+    quiz: {
+      en: 'Can you quiz me with 5 to 10 questions to test my understanding of this page?',
+      am: 'በዚህ ገጽ ላይ ያለኝን ግንዛቤ ለመፈተሽ ከ5 እስከ 10 ጥያቄዎች ያሉት ፈተና ያዘጋጁልኝ?',
+      om: 'Hubannoo ani fuula kana irratti qabu qoruuf gaaffilee 5 hanga 10 naaf qopheessuu dandeessuu?',
+      ti: 'ኣብዚ ገጽ ዘለኒ ርድኢት ንምፍታን ካብ 5 ክሳብ 10 ሕቶታት ዘለዎ ፈተና ኣዳልዉለይ?',
+      so: 'Miyaad ii diyaarin kartaa su\'aalo u dhexeeya 5 ilaa 10 si aad u tijaabiso fahamkayga boggan?',
+      ar: 'هل يمكنك إعداد اختبار من 5 إلى 10 أسئلة لاختبار فهمي لهذه الصفحة؟',
+      sw: 'Unaweza kuniandalia maswali 5 hadi 10 kupima uelewa wangu wa ukurasa huu?',
+      fr: 'Pouvez-vous me préparer un quiz de 5 à 10 questions pour tester ma compréhension de cette page ?'
+    },
+    selection: {
+      en: 'Please explain what this selected text from the lesson means: ',
+      am: 'እባክዎ ይህ ከትምህርቱ የተመረጠ ፅሑፍ ምን ማለት እንደሆነ ያብራሩልኝ፡ ',
+      om: 'Mee barreeffamni filatame kun maal akka ta\'e naaf ibsaa: ',
+      ti: 'በጃኹም እዚ ካብ ትምህርቲ ዝተመረጸ ጽሑፍ እንታይ ማለት ምዃኑ ግለጹለይ፡ ',
+      so: 'Fadlan ii sharax waxa uu ka dhigan yahay qoraalkan la doortay: ',
+      ar: 'يرجى شرح ما يعنيه هذا النص المحدد من الدرس: ',
+      sw: 'Tafadhali eleza maana ya kifungu hiki kilichochaguliwa kutoka kwenye somo: ',
+      fr: 'Veuillez expliquer ce que signifie ce texte sélectionné dans la leçon : '
+    }
+  };
+
+  function updateContextUI() {
+    if (!contextBadge || !contextTitle) return;
+    if (activePageContext && (activePageContext.active_heading || activePageContext.title)) {
+      const topic = activePageContext.active_heading || activePageContext.title;
+      const t = getI18n();
+      contextTitle.textContent = (t.activeTopic || 'Topic') + ': ' + topic;
+      contextBadge.removeAttribute('hidden');
+    } else {
+      contextBadge.setAttribute('hidden', '');
+    }
+    updateSelectionPill();
+  }
+
+  function updateSelectionPill() {
+    if (!selectionPill) return;
+    if (activePageContext && activePageContext.selected_text && activePageContext.selected_text.length >= 3) {
+      selectionPill.removeAttribute('hidden');
+    } else {
+      selectionPill.setAttribute('hidden', '');
+    }
+  }
+
+  function handlePillClick(promptId) {
+    playEarcon('mic_stop');
+    const lang = (currentLanguage === 'auto' || !PROMPT_TEMPLATES[promptId][currentLanguage]) ? 'en' : currentLanguage;
+    let text = PROMPT_TEMPLATES[promptId][lang] || PROMPT_TEMPLATES[promptId].en;
+    if (promptId === 'selection') {
+      const sel = (activePageContext && activePageContext.selected_text) ? activePageContext.selected_text : '';
+      if (!sel) return;
+      text = text + '"' + sel + '"';
+    }
+    chatInput.value = text;
+    chatInput.dispatchEvent(new Event('input'));
+    sendMessage();
+  }
+
+  if (pillSimple) pillSimple.addEventListener('click', function () { handlePillClick('simple'); });
+  if (pillExample) pillExample.addEventListener('click', function () { handlePillClick('example'); });
+  if (pillQuiz) pillQuiz.addEventListener('click', function () { handlePillClick('quiz'); });
+  if (selectionPill) selectionPill.addEventListener('click', function () { handlePillClick('selection'); });
+
+  /* ── Audio Playback Speed Controls (0.8x, 1.0x, 1.25x) ──── */
+  let currentPlaybackRate = parseFloat(safeGet(localStorage, 'savanna_playback_rate', '1.0'));
+  if (![0.8, 1.0, 1.25].includes(currentPlaybackRate)) currentPlaybackRate = 1.0;
+
+  function cyclePlaybackRate(btn) {
+    if (currentPlaybackRate === 1.0) currentPlaybackRate = 1.25;
+    else if (currentPlaybackRate === 1.25) currentPlaybackRate = 0.8;
+    else currentPlaybackRate = 1.0;
+
+    safeSet(localStorage, 'savanna_playback_rate', currentPlaybackRate.toString());
+    document.querySelectorAll('.btn-audio-speed').forEach(function (b) {
+      b.textContent = currentPlaybackRate + 'x';
+      b.setAttribute('aria-label', (getI18n().speedLabel || 'Playback speed') + ': ' + currentPlaybackRate + 'x. Click to change.');
+    });
+    if (activeMessageAudio) {
+      activeMessageAudio.playbackRate = currentPlaybackRate;
+    }
+    const t = getI18n();
+    speakFocus((t.speedLabel || 'Speed') + ' ' + currentPlaybackRate + 'x');
+  }
+
+  /* ── Keyboard Shortcuts: Replay & Voice ─────────────────── */
+  function listenToLastResponse() {
+    const listenButtons = Array.from(document.querySelectorAll('.btn-audio-speak'));
+    if (listenButtons.length > 0) {
+      const lastBtn = listenButtons[listenButtons.length - 1];
+      lastBtn.click();
+    } else {
+      const t = getI18n();
+      speakFocus(t.noResponseYet || 'No assistant response to play yet.');
+    }
+  }
+
+  function toggleVoiceHotkey() {
+    if (voiceBtn && !voiceBtn.disabled) {
+      voiceBtn.click();
+    }
+  }
+
+  /* ── Built-in Focus Reader & Message Audio Playback ─────── */
+  const messageAudioCache = new Map();
+  let activeMessageAudio = null;
+  let activeAudioButton = null;
+  let activeAudio = null;
+
+  function stopActiveAudio() {
+    if (activeMessageAudio) {
+      try {
+        activeMessageAudio.pause();
+        activeMessageAudio.currentTime = 0;
+      } catch (_) {}
+      activeMessageAudio = null;
+    }
+    if (activeAudioButton) {
+      activeAudioButton.classList.remove('playing');
+      const t = getI18n();
+      activeAudioButton.setAttribute('aria-label', (t.listen || 'Listen') + ' to response');
+      const icon = activeAudioButton.querySelector('.audio-btn-icon');
+      const label = activeAudioButton.querySelector('.audio-btn-label');
+      if (icon) icon.textContent = '🔊';
+      if (label) label.textContent = t.listen || 'Listen';
+      activeAudioButton = null;
+    }
+  }
+
+  async function toggleMessageAudio(btn, text, lang) {
+    if (!text) return;
+    const targetLang = lang || currentLanguage || 'en';
+    const t = getI18n();
+
+    // If currently playing this message, clicking stops it
+    if (activeAudioButton === btn && activeMessageAudio && !activeMessageAudio.paused) {
+      stopActiveAudio();
+      return;
+    }
+
+    // Stop any other active message audio
+    stopActiveAudio();
+
+    const icon = btn.querySelector('.audio-btn-icon');
+    const label = btn.querySelector('.audio-btn-label');
+    if (label) label.textContent = t.audioLoading || 'Loading...';
+    btn.setAttribute('aria-label', t.audioLoading || 'Loading audio...');
+
+    const cacheKey = targetLang + ':' + text;
+
+    try {
+      let audioUrl = messageAudioCache.get(cacheKey);
+      if (!audioUrl) {
+        const resp = await fetch(apiUrl + '/speech/synthesize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text, language: targetLang })
+        });
+
+        if (resp.status === 501) {
+          showError(t.ttsUnavailable || 'Voice synthesis not yet available for this language. Text response is provided above.');
+          if (label) label.textContent = t.listen || 'Listen';
+          btn.setAttribute('aria-label', (t.listen || 'Listen') + ' to response');
+          return;
+        }
+
+        if (!resp.ok) {
+          showError(t.recUnavailable || 'Voice synthesis currently unavailable.');
+          if (label) label.textContent = t.listen || 'Listen';
+          btn.setAttribute('aria-label', (t.listen || 'Listen') + ' to response');
+          return;
+        }
+
+        const blob = await resp.blob();
+        audioUrl = (window.URL && window.URL.createObjectURL) ? URL.createObjectURL(blob) : '';
+        messageAudioCache.set(cacheKey, audioUrl);
+      }
+
+      const audio = new Audio(audioUrl);
+      audio.playbackRate = currentPlaybackRate;
+      activeMessageAudio = audio;
+      activeAudioButton = btn;
+
+      btn.classList.add('playing');
+      btn.setAttribute('aria-label', (t.stopAudio || 'Stop') + ' reading response');
+      if (icon) icon.textContent = '⏹️';
+      if (label) label.textContent = t.stopAudio || 'Stop';
+
+      audio.onended = function () {
+        stopActiveAudio();
+      };
+      audio.onerror = function () {
+        stopActiveAudio();
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.error('[Savanna widget] Audio playback error:', err);
+      stopActiveAudio();
+      showError(t.recUnavailable || 'Voice playback error.');
+    }
+  }
+
+  const widgetAudioCache = new Map();
+  let activeSpeechAbort = null;
+  let focusDebounceTimer = null;
+
+  async function playSpeechAudio(text, lang) {
+    if (!text) return;
+    const targetLang = lang || currentLanguage || 'en';
+
+    // 1. Check if browser has a matching local voice (instant, 0ms)
+    if (window.speechSynthesis && window.speechSynthesis.getVoices) {
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        const prefix = targetLang.toLowerCase();
+        const hasVoice = voices.some(function (v) {
+          return v.lang && v.lang.toLowerCase().startsWith(prefix);
+        });
+        if (hasVoice) {
+          window.speechSynthesis.cancel();
+          const utt = new SpeechSynthesisUtterance(text);
+          utt.lang = BCP47_MAP[targetLang] || 'en-US';
+          utt.rate = 1.0;
+          window.speechSynthesis.speak(utt);
+          return;
+        }
+      } catch (_) {}
+    }
+
+    // 2. Client-side memory cache (Instant 0ms playback!)
+    const cacheKey = targetLang + ':' + text;
+    if (widgetAudioCache.has(cacheKey)) {
+      try {
+        if (activeAudio) {
+          activeAudio.pause();
+          activeAudio = null;
+        }
+        activeAudio = new Audio(widgetAudioCache.get(cacheKey));
+        activeAudio.play().catch(function () {});
+        return;
+      } catch (_) {}
+    }
+
+    // 3. Otherwise stream synthesized neural / fallback audio with abort capability
+    try {
+      if (activeSpeechAbort) {
+        activeSpeechAbort.abort();
+      }
+      activeSpeechAbort = new AbortController();
+
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio = null;
+      }
+
+      const resp = await fetch(apiUrl + '/speech/synthesize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, language: targetLang }),
+        signal: activeSpeechAbort.signal
+      });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const url = (window.URL && window.URL.createObjectURL) ? URL.createObjectURL(blob) : '';
+        widgetAudioCache.set(cacheKey, url);
+        if (url) {
+          activeAudio = new Audio(url);
+          activeAudio.onended = function () {
+            activeAudio = null;
+          };
+          activeAudio.play().catch(function () {});
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.debug('[Savanna widget] Speech notice:', err);
+      }
+    }
+  }
+
+  let focusSpeechTimer = null;
+  function speakFocus(text) {
+    if (!voiceGuideEnabled || !text) return;
+    if (focusSpeechTimer) clearTimeout(focusSpeechTimer);
+    focusSpeechTimer = setTimeout(function () {
+      playSpeechAudio(text, currentLanguage);
+    }, 400);
+  }
+
+  function getAccessibleDescription(el) {
+    if (!el || el === document.body || el === document.documentElement) return null;
+    const t = getI18n();
+
+    let label = el.getAttribute('aria-label') || '';
+    if (!label && el.getAttribute('aria-labelledby')) {
+      const ref = document.getElementById(el.getAttribute('aria-labelledby'));
+      if (ref) label = ref.textContent.trim();
+    }
+    if (!label && el.placeholder) label = el.placeholder;
+    if (!label && el.title) label = el.title;
+    if (!label && (el.tagName === 'BUTTON' || el.tagName === 'A')) {
+      label = el.textContent.trim();
+    }
+
+    let role = el.getAttribute('role');
+    if (!role) {
+      if (el.tagName === 'BUTTON') role = t.roleButton;
+      else if (el.tagName === 'A') role = t.roleLink;
+      else if (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && el.type === 'text')) {
+        role = t.roleTextEntry;
+      }
+    }
+
+    const states = [];
+    if (el.hasAttribute('aria-pressed')) {
+      const isPressed = el.getAttribute('aria-pressed') === 'true';
+      states.push(isPressed ? t.statePressed : t.stateNotPressed);
+    }
+    if (el.hasAttribute('aria-expanded')) {
+      const isExpanded = el.getAttribute('aria-expanded') === 'true';
+      states.push(isExpanded ? t.stateExpanded : t.stateCollapsed);
+    }
+    if (el.disabled) {
+      states.push(t.stateDisabled);
+    }
+
+    if (!label && !role) return null;
+    return [label, role, states.join(', ')].filter(Boolean).join(', ');
+  }
+
+  document.addEventListener('focusin', function (e) {
+    if (!voiceGuideEnabled) return;
+    const desc = getAccessibleDescription(e.target);
+    if (!desc) return;
+    if (focusDebounceTimer) clearTimeout(focusDebounceTimer);
+    focusDebounceTimer = setTimeout(function () {
+      speakFocus(desc);
+    }, 70);
+  });
+
+  /* ── Focus & message management (from parent) ───────────── */
+  window.addEventListener('message', function (e) {
+    if (!e.data || typeof e.data !== 'object') return;
+    const t = getI18n();
+    if (e.data.type === 'page_context' && e.data.context) {
+      activePageContext = e.data.context;
+      updateContextUI();
+      if (e.data.size) updateSizeUI(e.data.size);
+    } else if (e.data.type === 'size_changed' && e.data.size) {
+      updateSizeUI(e.data.size);
+    } else if (e.data.type === 'selection_change') {
+      if (activePageContext) {
+        activePageContext.selected_text = e.data.selected_text || '';
+      } else {
+        activePageContext = { selected_text: e.data.selected_text || '' };
+      }
+      updateSelectionPill();
+    } else if (e.data.type === 'focus') {
+      playEarcon('open');
+      chatInput.focus();
+      speakFocus(t.welcome);
+    } else if (e.data.type === 'open_escalate') {
+      openEscalModal();
+      speakFocus(t.escalateAlert);
+    } else if (e.data.type === 'set_lang' && e.data.lang) {
+      if (BCP47_MAP[e.data.lang] || e.data.lang === 'auto') {
+        currentLanguage = e.data.lang;
+        safeSet(localStorage, USER_CHOSEN_KEY, 'true');
+        if (suggestionBanner) suggestionBanner.setAttribute('hidden', '');
+        applyLanguage();
+      }
+    }
+  });
+
+  /* ── Keyboard Shortcuts (Muscle Memory & Accessibility) ── */
+  window.addEventListener('keydown', function (e) {
+    // Escape or Control halts active speech immediately
+    if (e.key === 'Control' || e.key === 'Escape') {
+      let stopped = false;
+      if (activeMessageAudio && !activeMessageAudio.paused) {
+        stopActiveAudio();
+        stopped = true;
+      }
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        stopped = true;
+      }
+      if (stopped && e.key === 'Control') return;
+    }
+
+    // Alt + V: Toggle Voice Input
+    if (e.altKey && (e.key === 'v' || e.key === 'V' || e.code === 'KeyV')) {
+      e.preventDefault();
+      toggleVoiceHotkey();
+      return;
+    }
+
+    // Alt + L: Listen / Replay Last Assistant Response
+    if (e.altKey && (e.key === 'l' || e.key === 'L' || e.code === 'KeyL')) {
+      e.preventDefault();
+      listenToLastResponse();
+      return;
+    }
+
+    // Alt + H: Escalate to Human Help Desk
+    if (e.altKey && (e.key === 'h' || e.key === 'H' || e.code === 'KeyH')) {
+      e.preventDefault();
+      openEscalModal();
+      speakFocus(getI18n().escalateAlert);
+      return;
+    }
+  });
+
+  /* ── Send button enable/disable ──────────────────────────── */
+  chatInput.addEventListener('input', function () {
+    const hasText = chatInput.value.trim().length > 0;
+    sendBtn.disabled = !hasText;
+    inputLabel.classList.toggle('hidden', hasText);
+    /* Auto-resize textarea */
+    chatInput.style.height = 'auto';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 128) + 'px';
+  });
+
+  /* Keyboard: Enter to send, Shift+Enter for newline, or Ctrl/Cmd+Enter */
+  chatInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) {
+        sendMessage();
+      }
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (!sendBtn.disabled) {
+        sendMessage();
+      }
+    }
+  });
+
+  sendBtn.addEventListener('click', sendMessage);
+
+  /* ── Render helpers ──────────────────────────────────────── */
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function getOptionPrefix(index, lang) {
+    if (lang === 'am' || lang === 'ti') {
+      const geezLetters = ['ሀ', 'ለ', 'ሐ', 'መ', 'ሠ', 'ረ', 'ሰ', 'ሸ'];
+      return geezLetters[index] || String.fromCharCode(65 + index);
+    }
+    if (lang === 'ar') {
+      const arabicLetters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
+      return arabicLetters[index] || String.fromCharCode(65 + index);
+    }
+    return String.fromCharCode(65 + index);
+  }
+
+  function renderPedagogicalMarkdown(rawText) {
+    if (!rawText) return '';
+
+    // 1. Extract and protect code blocks
+    const codeBlocks = [];
+    let text = rawText.replace(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g, function (_, lang, code) {
+      const idx = codeBlocks.length;
+      codeBlocks.push({ lang: lang || '', code: code.replace(/^\n+|\n+$/g, '') });
+      return '@@@CODE_BLOCK_' + idx + '@@@';
+    });
+
+    // 2. Extract and protect inline code spans
+    const inlineCodes = [];
+    text = text.replace(/`([^`\n]+)`/g, function (_, code) {
+      const idx = inlineCodes.length;
+      inlineCodes.push(code);
+      return '@@@INLINE_CODE_' + idx + '@@@';
+    });
+
+    // 3. XSS escape all standard markup
+    text = escapeHtml(text);
+
+    // 4. Headings
+    text = text.replace(/^####\s+(.+)$/gm, '<h5 class="chat-h5">$1</h5>');
+    text = text.replace(/^#{1,3}\s+(.+)$/gm, '<h4 class="chat-h4">$1</h4>');
+
+    // 5. Bold & Italic
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    text = text.replace(/(^|[^\*])\*([^\*\n]+)\*([^\*]|$)/g, '$1<em>$2</em>$3');
+
+    // 6. Ordered & Unordered Lists
+    const lines = text.split('\n');
+    const processedLines = [];
+    let inUl = false;
+    let inOl = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const ulMatch = line.match(/^[\s]*[\*\-•]\s+(.+)$/);
+      const olMatch = line.match(/^[\s]*(\d+)[\.\)]\s+(.+)$/);
+
+      if (ulMatch) {
+        if (inOl) { processedLines.push('</ol>'); inOl = false; }
+        if (!inUl) { processedLines.push('<ul class="chat-list chat-ul">'); inUl = true; }
+        processedLines.push('<li>' + ulMatch[1] + '</li>');
+      } else if (olMatch) {
+        if (inUl) { processedLines.push('</ul>'); inUl = false; }
+        if (!inOl) { processedLines.push('<ol class="chat-list chat-ol">'); inOl = true; }
+        processedLines.push('<li>' + olMatch[2] + '</li>');
+      } else {
+        if (inUl) { processedLines.push('</ul>'); inUl = false; }
+        if (inOl) { processedLines.push('</ol>'); inOl = false; }
+        processedLines.push(line);
+      }
+    }
+    if (inUl) processedLines.push('</ul>');
+    if (inOl) processedLines.push('</ol>');
+    text = processedLines.join('\n');
+
+    // 7. Paragraphs
+    const blocks = text.split(/\n{2,}/);
+    const formattedBlocks = blocks.map(function (block) {
+      const trimmed = block.trim();
+      if (!trimmed) return '';
+      if (trimmed.startsWith('<h') || trimmed.startsWith('<ul') || trimmed.startsWith('<ol') || trimmed.startsWith('@@@CODE_BLOCK_')) {
+        return trimmed;
+      }
+      return '<p class="chat-p">' + trimmed.replace(/\n/g, '<br>') + '</p>';
+    });
+    text = formattedBlocks.filter(Boolean).join('\n');
+
+    // 8. Restore inline code
+    text = text.replace(/@@@INLINE_CODE_(\d+)@@@/g, function (_, idx) {
+      const code = inlineCodes[parseInt(idx, 10)] || '';
+      return '<code class="chat-inline-code">' + escapeHtml(code) + '</code>';
+    });
+
+    // 9. Restore code blocks
+    text = text.replace(/@@@CODE_BLOCK_(\d+)@@@/g, function (_, idx) {
+      const item = codeBlocks[parseInt(idx, 10)] || { lang: '', code: '' };
+      const langAttr = item.lang ? ' class="language-' + escapeHtml(item.lang) + '"' : '';
+      return '<pre class="chat-code-block"><code' + langAttr + '>' + escapeHtml(item.code) + '</code></pre>';
+    });
+
+    return text;
+  }
+
+  function renderQuizComponent(quizData, parentBubble, lang) {
+    const t = getI18n();
+    const questions = (quizData && Array.isArray(quizData.questions)) ? quizData.questions : [];
+    if (questions.length === 0) return null;
+
+    const quizWrapper = document.createElement('div');
+    quizWrapper.className = 'interactive-quiz-container';
+    quizWrapper.setAttribute('role', 'region');
+    quizWrapper.setAttribute('aria-label', (quizData.title || t.quizTitle || 'Quiz') + ' — ' + (t.title || 'Savanna'));
+
+    let currentIndex = 0;
+    const userAnswers = new Array(questions.length).fill(null);
+    const checkedStates = new Array(questions.length).fill(false);
+    let totalScore = 0;
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'quiz-header';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'quiz-title';
+    titleEl.innerHTML = '<span aria-hidden="true">🎯 </span>' + escapeHtml(quizData.title || t.quizTitle || 'Quiz');
+
+    const counterBadge = document.createElement('span');
+    counterBadge.className = 'quiz-badge';
+    counterBadge.setAttribute('aria-live', 'polite');
+
+    header.appendChild(titleEl);
+    header.appendChild(counterBadge);
+    quizWrapper.appendChild(header);
+
+    // Progress bar
+    const progressBar = document.createElement('div');
+    progressBar.className = 'quiz-progress-bar';
+    progressBar.setAttribute('role', 'progressbar');
+    progressBar.setAttribute('aria-valuemin', '1');
+    progressBar.setAttribute('aria-valuemax', String(questions.length));
+    progressBar.setAttribute('aria-label', t.quizTitle || 'Quiz progress');
+
+    const progressFill = document.createElement('div');
+    progressFill.className = 'quiz-progress-fill';
+    progressBar.appendChild(progressFill);
+    quizWrapper.appendChild(progressBar);
+
+    // Question body
+    const cardBody = document.createElement('div');
+    cardBody.className = 'quiz-body';
+    quizWrapper.appendChild(cardBody);
+
+    function updateQuestionView() {
+      cardBody.innerHTML = '';
+
+      if (currentIndex >= questions.length) {
+        renderSummaryView();
+        return;
+      }
+
+      const q = questions[currentIndex];
+      const qNum = currentIndex + 1;
+      const totalQ = questions.length;
+
+      const pct = Math.round((qNum / totalQ) * 100);
+      progressFill.style.width = pct + '%';
+      progressBar.setAttribute('aria-valuenow', String(qNum));
+
+      const counterTemplate = t.quizQuestionOf || 'Question {curr} of {total}';
+      counterBadge.textContent = counterTemplate.replace('{curr}', qNum).replace('{total}', totalQ);
+
+      const fieldset = document.createElement('fieldset');
+      fieldset.className = 'quiz-fieldset';
+      fieldset.id = 'quiz-fs-' + currentIndex;
+
+      const legend = document.createElement('legend');
+      legend.className = 'quiz-question-text';
+      legend.id = 'quiz-legend-' + currentIndex;
+      legend.textContent = qNum + '. ' + (q.question || '');
+      fieldset.appendChild(legend);
+
+      const optionsGroup = document.createElement('div');
+      optionsGroup.className = 'quiz-options-group';
+      optionsGroup.setAttribute('role', 'radiogroup');
+      optionsGroup.setAttribute('aria-labelledby', 'quiz-legend-' + currentIndex);
+
+      const isChecked = checkedStates[currentIndex];
+      const selectedOption = userAnswers[currentIndex];
+      const correctIdx = typeof q.answer === 'number' ? q.answer : 0;
+
+      (q.options || []).forEach(function (optText, optIdx) {
+        const optionLabel = document.createElement('label');
+        optionLabel.className = 'quiz-option-item';
+        optionLabel.htmlFor = 'quiz-opt-' + currentIndex + '-' + optIdx;
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.className = 'quiz-radio';
+        radio.name = 'quiz-radio-' + currentIndex;
+        radio.id = 'quiz-opt-' + currentIndex + '-' + optIdx;
+        radio.value = String(optIdx);
+
+        if (selectedOption === optIdx) {
+          radio.checked = true;
+          optionLabel.classList.add('selected');
+        }
+
+        if (isChecked) {
+          radio.disabled = true;
+          if (optIdx === correctIdx) {
+            optionLabel.classList.add('is-correct');
+          } else if (selectedOption === optIdx) {
+            optionLabel.classList.add('is-incorrect');
+          }
+        } else {
+          radio.addEventListener('change', function () {
+            userAnswers[currentIndex] = optIdx;
+            optionsGroup.querySelectorAll('.quiz-option-item').forEach(function (lbl) {
+              lbl.classList.remove('selected');
+            });
+            optionLabel.classList.add('selected');
+            checkBtn.disabled = false;
+            checkBtn.removeAttribute('aria-disabled');
+          });
+        }
+
+        const badge = document.createElement('span');
+        badge.className = 'quiz-option-badge';
+        badge.textContent = getOptionPrefix(optIdx, currentLanguage);
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'quiz-option-label-text';
+        textSpan.textContent = optText;
+
+        optionLabel.appendChild(radio);
+        optionLabel.appendChild(badge);
+        optionLabel.appendChild(textSpan);
+        optionsGroup.appendChild(optionLabel);
+      });
+
+      fieldset.appendChild(optionsGroup);
+
+      // Feedback message
+      const feedbackBox = document.createElement('div');
+      feedbackBox.className = 'quiz-feedback';
+      feedbackBox.setAttribute('aria-live', 'polite');
+      feedbackBox.setAttribute('role', 'status');
+
+      if (isChecked) {
+        const isRight = (selectedOption === correctIdx);
+        feedbackBox.classList.add(isRight ? 'correct' : 'incorrect');
+        const prefix = isRight
+          ? (t.quizCorrect || '✓ Correct!')
+          : ((t.quizIncorrect || '✕ Not quite') + ' — ' + (t.correctAnswerWas || 'Correct answer: Option') + ' ' + getOptionPrefix(correctIdx, currentLanguage));
+        const expText = q.explanation ? ('\n\n' + (t.quizExplanation || 'Explanation') + ': ' + q.explanation) : '';
+        feedbackBox.textContent = prefix + expText;
+      } else {
+        feedbackBox.style.display = 'none';
+      }
+      fieldset.appendChild(feedbackBox);
+
+      // Actions
+      const actionsBar = document.createElement('div');
+      actionsBar.className = 'quiz-actions';
+
+      const prevBtn = document.createElement('button');
+      prevBtn.type = 'button';
+      prevBtn.className = 'btn-quiz-prev';
+      prevBtn.textContent = '← ' + (t.prevQuestion || 'Previous');
+      prevBtn.setAttribute('aria-label', (t.prevQuestion || 'Previous') + ' question');
+      prevBtn.disabled = (currentIndex === 0);
+      prevBtn.addEventListener('click', function () {
+        if (currentIndex > 0) {
+          currentIndex--;
+          updateQuestionView();
+        }
+      });
+
+      const checkBtn = document.createElement('button');
+      checkBtn.type = 'button';
+      checkBtn.className = 'btn-quiz-check';
+      checkBtn.textContent = t.checkAnswer || 'Check Answer';
+      checkBtn.setAttribute('aria-label', (t.checkAnswer || 'Check Answer') + ' for question ' + qNum);
+      checkBtn.disabled = (!isChecked && selectedOption === null);
+
+      const nextBtn = document.createElement('button');
+      nextBtn.type = 'button';
+      nextBtn.className = 'btn-quiz-next';
+      nextBtn.textContent = (currentIndex === questions.length - 1 ? (t.viewSummary || 'View Summary') : (t.nextQuestion || 'Next Question')) + ' →';
+      nextBtn.setAttribute('aria-label', (currentIndex === questions.length - 1 ? (t.viewSummary || 'View Summary') : (t.nextQuestion || 'Next Question')));
+
+      if (isChecked) {
+        checkBtn.style.display = 'none';
+        nextBtn.style.display = 'inline-flex';
+      } else {
+        checkBtn.style.display = 'inline-flex';
+        nextBtn.style.display = 'none';
+      }
+
+      checkBtn.addEventListener('click', function () {
+        if (userAnswers[currentIndex] === null) return;
+        checkedStates[currentIndex] = true;
+        const isRight = (userAnswers[currentIndex] === correctIdx);
+        if (isRight) totalScore++;
+
+        playEarcon(isRight ? 'quiz_correct' : 'quiz_incorrect');
+
+        const expText = q.explanation ? ('. ' + q.explanation) : '';
+        const announceText = isRight
+          ? ((t.quizCorrect || 'Correct!') + expText)
+          : ((t.quizIncorrect || 'Not quite.') + ' ' + (t.correctAnswerWas || 'Correct answer: Option') + ' ' + getOptionPrefix(correctIdx, currentLanguage) + expText);
+
+        speakFocus(announceText);
+        updateQuestionView();
+      });
+
+      nextBtn.addEventListener('click', function () {
+        currentIndex++;
+        updateQuestionView();
+        if (currentIndex < questions.length) {
+          const nextQ = questions[currentIndex];
+          speakFocus((t.quizQuestionOf || 'Question {curr} of {total}').replace('{curr}', currentIndex + 1).replace('{total}', questions.length) + ': ' + nextQ.question);
+        }
+      });
+
+      actionsBar.appendChild(prevBtn);
+      actionsBar.appendChild(checkBtn);
+      actionsBar.appendChild(nextBtn);
+      fieldset.appendChild(actionsBar);
+
+      cardBody.appendChild(fieldset);
+    }
+
+    function renderSummaryView() {
+      progressFill.style.width = '100%';
+      counterBadge.textContent = t.quizComplete || 'Quiz Complete!';
+
+      const summaryCard = document.createElement('div');
+      summaryCard.className = 'quiz-summary-card';
+      summaryCard.setAttribute('role', 'status');
+      summaryCard.setAttribute('aria-live', 'polite');
+
+      const totalQ = questions.length;
+      const pct = Math.round((totalScore / totalQ) * 100);
+
+      let messageDesc = '';
+      let emoji = '🌟';
+      if (pct >= 80) {
+        emoji = '🏆';
+        messageDesc = (currentLanguage === 'am')
+          ? 'ድንቅ ውጤት! ፅንሰ-ሀሳቡን በሚገባ ተረድተዋል።'
+          : 'Outstanding performance! You have mastered these concepts.';
+      } else if (pct >= 50) {
+        emoji = '👍';
+        messageDesc = (currentLanguage === 'am')
+          ? 'ጥሩ ጥረት! ያመለጧቸውን ጥያቄዎች ከልሰው እንደገና ይሞክሩ።'
+          : 'Good effort! Review the lesson points and try once more to reach 100%.';
+      } else {
+        emoji = '💪';
+        messageDesc = (currentLanguage === 'am')
+          ? 'በርቱ! የትምህርቱን ገጽ በድጋሚ አንብበው እንደገና ይፈተኑ።'
+          : 'Keep going! Review the lesson page and retake the quiz to strengthen your understanding.';
+      }
+
+      const scoreTemplate = t.quizScore || 'Your score: {score} / {total} ({pct}%)';
+      const scoreFormatted = scoreTemplate.replace('{score}', totalScore).replace('{total}', totalQ).replace('{pct}', pct);
+
+      summaryCard.innerHTML = `
+        <div class="quiz-summary-icon" aria-hidden="true">${emoji}</div>
+        <h4 class="quiz-summary-title">${escapeHtml(t.quizComplete || 'Quiz Complete!')}</h4>
+        <div class="quiz-summary-score">${escapeHtml(scoreFormatted)}</div>
+        <p class="quiz-summary-desc">${escapeHtml(messageDesc)}</p>
+        <div class="quiz-summary-actions">
+          <button type="button" class="btn-quiz-retake">${escapeHtml(t.retakeQuiz || 'Retake Quiz')}</button>
+        </div>
+      `;
+
+      const retakeBtn = summaryCard.querySelector('.btn-quiz-retake');
+      if (retakeBtn) {
+        retakeBtn.addEventListener('click', function () {
+          currentIndex = 0;
+          totalScore = 0;
+          userAnswers.fill(null);
+          checkedStates.fill(false);
+          playEarcon('mic_start');
+          updateQuestionView();
+        });
+      }
+
+      cardBody.appendChild(summaryCard);
+      speakFocus((t.quizComplete || 'Quiz Complete!') + ' ' + scoreFormatted + '. ' + messageDesc);
+    }
+
+    updateQuestionView();
+    return quizWrapper;
+  }
+
+  function extractQuizPayload(content) {
+    if (!content) return null;
+
+    let jsonCandidate = '';
+    let preamble = '';
+
+    // Strategy 1: Explicit [QUIZ] ... [/QUIZ] tags
+    const closedTagMatch = content.match(/\[QUIZ\]\s*([\s\S]*?)\s*\[\/QUIZ\]/i);
+    if (closedTagMatch) {
+      preamble = content.replace(/\[QUIZ\]\s*[\s\S]*?\s*\[\/QUIZ\]/i, '').trim();
+      jsonCandidate = closedTagMatch[1].trim();
+    } else {
+      // Strategy 2: [QUIZ] tag without closing [/QUIZ] (e.g. truncated or omitted tag)
+      const openTagMatch = content.match(/\[QUIZ\]\s*([\s\S]+)/i);
+      if (openTagMatch) {
+        preamble = content.slice(0, openTagMatch.index).trim();
+        jsonCandidate = openTagMatch[1].trim();
+      } else {
+        // Strategy 3: Markdown code fence containing "questions"
+        const codeBlockMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?"questions"[\s\S]*?\})\s*```/i);
+        if (codeBlockMatch) {
+          preamble = content.replace(/```(?:json)?\s*\{[\s\S]*?"questions"[\s\S]*?\}\s*```/i, '').trim();
+          jsonCandidate = codeBlockMatch[1].trim();
+        } else {
+          // Strategy 4: Raw JSON object starting with {"title" or {"questions"
+          const firstBrace = content.indexOf('{');
+          if (firstBrace !== -1 && (content.includes('"questions"') || content.includes("'questions'"))) {
+            preamble = content.slice(0, firstBrace).trim();
+            jsonCandidate = content.slice(firstBrace).trim();
+          }
+        }
+      }
+    }
+
+    if (!jsonCandidate) return null;
+
+    // Clean code fences and tags
+    jsonCandidate = jsonCandidate
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/g, '')
+      .replace(/\[\/QUIZ\]$/i, '')
+      .trim();
+
+    // Remove any trailing text after the outermost closing brace '}'
+    const lastBraceIdx = jsonCandidate.lastIndexOf('}');
+    if (lastBraceIdx !== -1) {
+      jsonCandidate = jsonCandidate.slice(0, lastBraceIdx + 1);
+    }
+
+    // Attempt 1: Native JSON.parse
+    let parsed = null;
+    try {
+      parsed = JSON.parse(jsonCandidate);
+    } catch (e1) {
+      // Attempt 2: Strip trailing commas before } or ]
+      const cleanedCommas = jsonCandidate.replace(/,\s*([\]}])/g, '$1');
+      try {
+        parsed = JSON.parse(cleanedCommas);
+      } catch (e2) {
+        // Attempt 3: If JSON was truncated, cut off at the last complete question and close array and object
+        const lastQuestionEnd = cleanedCommas.lastIndexOf('},');
+        const altQuestionEnd = cleanedCommas.lastIndexOf('}\n');
+        const cutPoint = Math.max(lastQuestionEnd !== -1 ? lastQuestionEnd + 1 : -1, altQuestionEnd !== -1 ? altQuestionEnd + 1 : -1);
+        if (cutPoint > 0) {
+          const truncatedCandidate = cleanedCommas.slice(0, cutPoint).replace(/,\s*$/, '') + '\n  ]\n}';
+          try {
+            parsed = JSON.parse(truncatedCandidate);
+          } catch (_) {}
+        }
+        // Attempt 4: Robust fallback question parser using regex
+        if (!parsed) {
+          parsed = fallbackRegexQuizParser(jsonCandidate);
+        }
+      }
+    }
+
+    if (parsed && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+      return {
+        preamble: preamble,
+        quiz: parsed
+      };
+    }
+
+    return null;
+  }
+
+  function fallbackRegexQuizParser(str) {
+    if (!str) return null;
+    let title = 'Quiz';
+    const titleMatch = str.match(/"title"\s*:\s*"([^"]+)"/);
+    if (titleMatch) title = titleMatch[1];
+
+    const questions = [];
+    const qRegex = /\{\s*"id"\s*:\s*(\d+)[\s\S]*?"question"\s*:\s*"([^"]+)"[\s\S]*?"options"\s*:\s*\[([\s\S]*?)\][\s\S]*?"answer"\s*:\s*(\d+)(?:[\s\S]*?"explanation"\s*:\s*"([^"]*)")?/g;
+    let m;
+    while ((m = qRegex.exec(str)) !== null) {
+      const rawOptions = m[3];
+      const opts = [];
+      const optRegex = /"([^"]+)"/g;
+      let om;
+      while ((om = optRegex.exec(rawOptions)) !== null) {
+        opts.push(om[1]);
+      }
+      if (opts.length >= 2) {
+        questions.push({
+          id: parseInt(m[1], 10),
+          question: m[2],
+          options: opts,
+          answer: parseInt(m[4], 10),
+          explanation: m[5] || ''
+        });
+      }
+    }
+    if (questions.length > 0) {
+      return { title: title, questions: questions };
+    }
+    return null;
+  }
+
+  function formatTime(date) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function appendMessage(role, content, citations, ethDate) {
+    const li = document.createElement('li');
+    li.className = 'message-item ' + role;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+
+    let spokenAudioText = content || '';
+
+    if (role === 'user') {
+      bubble.textContent = content;
+    } else {
+      const quizPayload = extractQuizPayload(content);
+
+      if (quizPayload && quizPayload.quiz) {
+        const introText = quizPayload.preamble;
+        if (introText) {
+          const introDiv = document.createElement('div');
+          introDiv.className = 'chat-intro-text';
+          introDiv.innerHTML = renderPedagogicalMarkdown(introText);
+          bubble.appendChild(introDiv);
+        }
+
+        const quizEl = renderQuizComponent(quizPayload.quiz, bubble, currentLanguage);
+        if (quizEl) {
+          bubble.appendChild(quizEl);
+        }
+        spokenAudioText = (introText ? introText + '. ' : '') + (quizPayload.quiz.title || 'Interactive quiz') + ' with ' + quizPayload.quiz.questions.length + ' questions.';
+      } else {
+        bubble.innerHTML = renderPedagogicalMarkdown(content);
+      }
+    }
+
+    // Dynamic language and script tagging for screen readers (WCAG 3.1.2)
+    if (/[\u1200-\u137F]/.test(content)) {
+      bubble.setAttribute('lang', (typeof currentLanguage !== 'undefined' && currentLanguage === 'ti') ? 'ti' : 'am');
+    } else if (/[\u0600-\u06FF]/.test(content)) {
+      bubble.setAttribute('dir', 'rtl');
+      bubble.setAttribute('lang', 'ar');
+      bubble.classList.add('rtl-msg');
+    } else if (typeof currentLanguage !== 'undefined' && currentLanguage && currentLanguage !== 'en') {
+      bubble.setAttribute('lang', currentLanguage);
+    } else {
+      bubble.setAttribute('lang', 'en');
+    }
+
+    const ts = document.createElement('time');
+    ts.className = 'message-timestamp sr-only-ts';
+    ts.setAttribute('datetime', new Date().toISOString());
+    const dateText = (role === 'user' ? 'You, ' : 'Assistant, ') + formatTime(new Date()) + (ethDate ? ' • ' + ethDate : '');
+    ts.textContent = dateText;
+
+    li.appendChild(bubble);
+    li.appendChild(ts);
+
+    if (role === 'assistant' && content) {
+      const audioControls = document.createElement('div');
+      audioControls.className = 'message-audio-controls';
+      const listenBtn = document.createElement('button');
+      listenBtn.type = 'button';
+      listenBtn.className = 'btn-audio-speak';
+      const t = getI18n();
+      listenBtn.setAttribute('aria-label', (t.listen || 'Listen') + ' to response (Alt+L)');
+      listenBtn.innerHTML = '<span class="audio-btn-icon" aria-hidden="true">🔊</span> <span class="audio-btn-label">' + (t.listen || 'Listen') + '</span>';
+
+      const speedBtn = document.createElement('button');
+      speedBtn.type = 'button';
+      speedBtn.className = 'btn-audio-speed';
+      speedBtn.setAttribute('aria-label', (t.speedLabel || 'Playback speed') + ': ' + currentPlaybackRate + 'x. Click to change.');
+      speedBtn.textContent = currentPlaybackRate + 'x';
+      speedBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        cyclePlaybackRate(speedBtn);
+      });
+
+      const cleanContent = spokenAudioText.replace(/\[\d+\]/g, '').trim();
+      const msgLang = currentLanguage;
+      listenBtn.addEventListener('click', function () {
+        toggleMessageAudio(listenBtn, cleanContent, msgLang);
+      });
+      audioControls.appendChild(listenBtn);
+      audioControls.appendChild(speedBtn);
+      li.appendChild(audioControls);
+    }
+
+    if (citations && citations.length > 0) {
+      const citeDiv = document.createElement('div');
+      citeDiv.className = 'citations';
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.textContent = 'Sources (' + citations.length + ')';
+      const citeUl = document.createElement('ul');
+      citations.forEach(function (c) {
+        const item = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = c.url || '#';
+        a.textContent = c.title || c.url || 'Source';
+        if (c.url) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+        item.appendChild(a);
+        citeUl.appendChild(item);
+      });
+      details.appendChild(summary);
+      details.appendChild(citeUl);
+      citeDiv.appendChild(details);
+      li.appendChild(citeDiv);
+    }
+
+    messageList.appendChild(li);
+    try { if (li.scrollIntoView) li.scrollIntoView({ behavior: 'smooth', block: 'end' }); } catch (_) {}
+    return li;
+  }
+
+  // Expose helpers for testing and extensibility
+  window.appendMessage = appendMessage;
+  window.renderPedagogicalMarkdown = renderPedagogicalMarkdown;
+  window.renderQuizComponent = renderQuizComponent;
+  window.extractQuizPayload = extractQuizPayload;
+
+  const THINKING_STATUSES = {
+    'en': ['Searching lesson materials...', 'Formulating response...'],
+    'am': ['የትምህርት መረጃዎችን በመፈለግ ላይ...', 'ምላሽ በማዘጋጀት ላይ...'],
+    'om': ['Qabiyyee koorsii barbaadaa jira...', 'Deebii qopheessaa jira...'],
+    'ti': ['ትምህርታዊ መረዳእታ ይድለ ኣሎ...', 'ምላሽ ይዳሎ ኣሎ...'],
+    'so': ['Xogta koorsada ayaa la baarayaa...', 'Jawaabta ayaa la diyaarinayaa...'],
+    'ar': ['جارٍ البحث في مواد الدورة...', 'جارٍ صياغة الرد...'],
+    'sw': ['Inatafuta kwenye maudhui ya kozi...', 'Inaandaa jibu...'],
+    'fr': ['Recherche dans les leçons...', 'Formulation de la réponse...']
+  };
+
+  let thinkingTimer = null;
+  function showThinking() {
+    removeThinking();
+    const lang = (currentLanguage && currentLanguage !== 'auto') ? currentLanguage : 'en';
+    const statuses = THINKING_STATUSES[lang] || THINKING_STATUSES.en;
+
+    const li = document.createElement('li');
+    li.id = 'thinking-indicator';
+    li.className = 'message-item assistant';
+    li.setAttribute('role', 'status');
+    li.setAttribute('aria-live', 'polite');
+    li.setAttribute('aria-label', getI18n().thinking || 'Assistant is thinking');
+
+    li.innerHTML = `
+      <div class="thinking-indicator" aria-hidden="true">
+        <div class="thinking-dots-wrapper">
+          <span class="thinking-dot"></span>
+          <span class="thinking-dot"></span>
+          <span class="thinking-dot"></span>
+        </div>
+        <span class="thinking-text">${statuses[0]}</span>
+      </div>`;
+
+    messageList.appendChild(li);
+    try { if (li.scrollIntoView) li.scrollIntoView({ behavior: 'smooth', block: 'end' }); } catch (_) {}
+
+    const textEl = li.querySelector('.thinking-text');
+    if (textEl && statuses[1]) {
+      thinkingTimer = setTimeout(function () {
+        if (textEl) {
+          textEl.style.opacity = '0';
+          setTimeout(function () {
+            textEl.textContent = statuses[1];
+            textEl.style.opacity = '1';
+          }, 150);
+        }
+      }, 900);
+    }
+    return li;
+  }
+
+  function removeThinking() {
+    if (thinkingTimer) {
+      clearTimeout(thinkingTimer);
+      thinkingTimer = null;
+    }
+    const el = document.getElementById('thinking-indicator');
+    if (el) el.remove();
+  }
+
+  function showError(msg) {
+    errorZone.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'error-alert';
+    div.textContent = msg;
+    errorZone.appendChild(div);
+    setTimeout(function () { errorZone.innerHTML = ''; }, 8000);
+  }
+
+  /* ── Send message ────────────────────────────────────────── */
+  async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    /* Reset input */
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+    sendBtn.disabled = true;
+    inputLabel.classList.remove('hidden');
+
+    /* Render user bubble */
+    appendMessage('user', text, null);
+
+    /* Dispatch event to parent host and custom element */
+    parent.postMessage({
+      type: 'db-assistant:question',
+      text: text,
+      question: text,
+      language: currentLanguage
+    }, '*');
+
+    /* Track in history */
+    history.push({ role: 'user', content: text });
+    if (history.length > 20) history.splice(0, history.length - 20);
+
+    /* Show loading */
+    messageList.setAttribute('aria-busy', 'true');
+    const thinkingEl = showThinking();
+
+    /* POST /chat */
+    try {
+      const res = await fetch(apiUrl + '/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message:      text,
+          language:     currentLanguage,
+          session_id:   sessionId,
+          history:      history.slice(-10),
+          simple_mode:  simpleModeEnabled,
+          page_context: activePageContext
+        })
+      });
+
+      removeThinking();
+      messageList.setAttribute('aria-busy', 'false');
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => 'Unknown error');
+        showError('Error ' + res.status + ': ' + errText);
+        return;
+      }
+
+      const data = await res.json();
+      const reply = (data.text || data.response || data.message || data.answer || '').toString();
+      const cites = Array.isArray(data.citations) ? data.citations : [];
+      const ethDate = data.ethiopian_date || null;
+
+      appendMessage('assistant', reply, cites, ethDate);
+      history.push({ role: 'assistant', content: reply });
+
+      playEarcon('answer_ready');
+
+      // Voice Guide announcement and auto-playback for blind / voice learners
+      if (autoPlayResponseAudio && reply) {
+        autoPlayResponseAudio = false;
+        const lastMsg = messageList.lastElementChild;
+        const audioBtn = lastMsg ? lastMsg.querySelector('.btn-audio-speak') : null;
+        if (audioBtn) {
+          setTimeout(function () {
+            toggleMessageAudio(audioBtn, reply, currentLanguage);
+          }, 250);
+        } else {
+          playSpeechAudio(reply, currentLanguage);
+        }
+        speakFocus((currentLanguage === 'am' ? 'የአሲስታንት ምላሽ በመሰማት ላይ ነው።' : 'Assistant response received. Reading answer out loud.'));
+      } else if (voiceGuideEnabled && reply) {
+        // Screen reader announcement via live region without blocking network TTS
+        const announceZone = document.getElementById('ticket-zone') || messageList;
+        if (announceZone) {
+          announceZone.setAttribute('aria-label', (currentLanguage === 'am' ? 'የአሲስታንት ምላሽ ደርሷል።' : 'Assistant response received.'));
+        }
+      }
+
+      /* Note: TTS is on-demand via the "Listen" button on each message (never auto-played) */
+
+    } catch (err) {
+      removeThinking();
+      messageList.setAttribute('aria-busy', 'false');
+      showError('Could not reach the assistant. Please check your connection.');
+      console.error('[Savanna widget] fetch error:', err);
+    }
+  }
+
+  /* ── Voice input (Dual-Mode: Server STT / MediaRecorder + Web Speech API) ── */
+  let mediaRecorder = null;
+  let audioChunks = [];
+  const voiceStatusBanner = document.getElementById('voice-recording-status');
+
+  function setupVoice() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const hasMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+    if (!SR && !hasMedia) {
+      voiceBtn.setAttribute('aria-disabled', 'true');
+      voiceBtn.setAttribute('title', 'Voice input not supported in this browser');
+      voiceBtn.style.opacity = '0.4';
+      return;
+    }
+
+    function setRecordingState(recording) {
+      isListening = recording;
+      const t = getI18n();
+      voiceBtn.setAttribute('aria-pressed', recording ? 'true' : 'false');
+      voiceBtn.setAttribute('aria-label', recording ? (t.voiceStop || 'Stop voice input') : (t.voiceStart || 'Start voice input'));
+      voiceBtn.style.color = recording ? 'var(--c-error)' : '';
+    }
+
+    function stopVoiceRecording() {
+      playEarcon('mic_stop');
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        try { mediaRecorder.stop(); } catch (_) {}
+      } else if (recognition) {
+        try { recognition.stop(); } catch (_) {}
+      }
+      setRecordingState(false);
+    }
+
+    if (SR) {
+      try {
+        recognition = new SR();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
+
+        recognition.addEventListener('result', function (e) {
+          const transcript = e.results[0][0].transcript;
+          if (transcript) {
+            chatInput.value = (chatInput.value ? chatInput.value + ' ' : '') + transcript;
+            chatInput.dispatchEvent(new Event('input'));
+            chatInput.focus();
+            if (voiceStatusBanner) {
+              voiceStatusBanner.className = 'voice-status-banner success';
+              voiceStatusBanner.style.display = 'flex';
+              const t = getI18n();
+              voiceStatusBanner.textContent = t.recSuccess || '✓ Audio transcribed! You can edit text below before sending.';
+              speakFocus(t.recSuccess || 'Speech transcribed. Review your question in the text box and press Send.');
+              setTimeout(function () {
+                if (voiceStatusBanner.classList.contains('success')) voiceStatusBanner.style.display = 'none';
+              }, 4500);
+            }
+          }
+        });
+
+        recognition.addEventListener('end', function () {
+          setRecordingState(false);
+          if (voiceStatusBanner && voiceStatusBanner.classList.contains('recording')) {
+            voiceStatusBanner.style.display = 'none';
+          }
+        });
+
+        recognition.addEventListener('error', function (e) {
+          setRecordingState(false);
+          if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+          if (e.error === 'language-not-supported' && hasMedia) {
+            startMediaRecording();
+          } else if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+            const t = getI18n();
+            showError(t.micPermissionDenied || 'Microphone access denied. Please grant permission in browser settings.');
+          } else if (e.error === 'no-speech') {
+            const t = getI18n();
+            showError(t.recNoSpeech || 'No speech detected. Please try again.');
+          } else {
+            showError('Voice input error: ' + e.error);
+          }
+        });
+      } catch (_) {}
+    }
+
+    async function startMediaRecording() {
+      const t = getI18n();
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = function (e) {
+          if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = function () {
+          stream.getTracks().forEach(function (track) { track.stop(); });
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          if (audioBlob.size > 0) {
+            showVoiceReviewPanel(audioBlob);
+          } else {
+            if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+            showError(t.recNoSpeech || 'No speech detected. Please try again.');
+          }
+        };
+
+        mediaRecorder.start();
+        setRecordingState(true);
+        playEarcon('mic_start');
+
+        if (voiceStatusBanner) {
+          voiceStatusBanner.className = 'voice-status-banner recording';
+          voiceStatusBanner.style.display = 'flex';
+          voiceStatusBanner.innerHTML = '<span class="rec-pulse-dot" aria-hidden="true"></span> <span>' + (t.recPrompt || 'Recording question... Speak now.') + '</span> <button type="button" class="btn-rec-stop" id="btn-banner-rec-stop">' + (t.stopAudio || 'Stop') + '</button>';
+          const stopBtn = document.getElementById('btn-banner-rec-stop');
+          if (stopBtn) {
+            stopBtn.onclick = function (e) {
+              e.stopPropagation();
+              stopVoiceRecording();
+            };
+          }
+        }
+        speakFocus(t.recPrompt || 'Recording question... Speak now, then click Stop.');
+      } catch (err) {
+        setRecordingState(false);
+        if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          showError(t.micPermissionDenied || 'Microphone access denied. Please grant permission in browser settings.');
+        } else {
+          showError('Microphone error: ' + (err.message || err));
+        }
+      }
+    }
+
+    function showVoiceReviewPanel(blob) {
+      pendingAudioBlob = blob;
+      if (pendingAudioUrl) {
+        try { URL.revokeObjectURL(pendingAudioUrl); } catch (_) {}
+      }
+      try {
+        pendingAudioUrl = URL.createObjectURL(blob);
+        if (reviewAudio) {
+          try { reviewAudio.pause(); } catch (_) {}
+        }
+        reviewAudio = new Audio(pendingAudioUrl);
+
+        if (voiceReviewTime) {
+          voiceReviewTime.textContent = '';
+          reviewAudio.onloadedmetadata = function () {
+            const sec = Math.round(reviewAudio.duration || 0);
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            voiceReviewTime.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+          };
+        }
+
+        reviewAudio.onended = function () {
+          if (voicePreviewIcon) voicePreviewIcon.textContent = '▶️';
+          if (voicePreviewLabel) voicePreviewLabel.textContent = (getI18n().voiceListenPreview || 'Listen to recording');
+          if (voicePreviewBtn) {
+            voicePreviewBtn.classList.remove('playing');
+            voicePreviewBtn.setAttribute('aria-label', getI18n().voiceListenPreview || 'Listen to your recording');
+          }
+          speakFocus('Finished playing recording.');
+        };
+      } catch (err) {
+        console.warn('Audio review creation:', err);
+      }
+
+      if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+      if (voiceReviewPanel) {
+        voiceReviewPanel.style.display = 'flex';
+        const t = getI18n();
+        speakFocus(t.recReviewPrompt || 'Recording captured. Press Listen to hear your recording, Re-record to try again, or Approve and Send to ask the AI.');
+        if (voicePreviewBtn) {
+          setTimeout(function () { voicePreviewBtn.focus(); }, 150);
+        }
+      }
+    }
+
+    if (voicePreviewBtn) {
+      voicePreviewBtn.addEventListener('click', function () {
+        if (!reviewAudio) return;
+        const t = getI18n();
+        if (!reviewAudio.paused) {
+          reviewAudio.pause();
+          reviewAudio.currentTime = 0;
+          voicePreviewBtn.classList.remove('playing');
+          if (voicePreviewIcon) voicePreviewIcon.textContent = '▶️';
+          if (voicePreviewLabel) voicePreviewLabel.textContent = t.voiceListenPreview || 'Listen to recording';
+          voicePreviewBtn.setAttribute('aria-label', t.voiceListenPreview || 'Listen to your recording');
+        } else {
+          voicePreviewBtn.classList.add('playing');
+          if (voicePreviewIcon) voicePreviewIcon.textContent = '⏸️';
+          if (voicePreviewLabel) voicePreviewLabel.textContent = t.voicePausePreview || 'Pause';
+          voicePreviewBtn.setAttribute('aria-label', t.voicePausePreview || 'Pause recording playback');
+          reviewAudio.play().catch(function () {});
+        }
+      });
+    }
+
+    if (voiceRerecordBtn) {
+      voiceRerecordBtn.addEventListener('click', function () {
+        if (reviewAudio) {
+          try { reviewAudio.pause(); } catch (_) {}
+        }
+        if (voiceReviewPanel) voiceReviewPanel.style.display = 'none';
+        pendingAudioBlob = null;
+        startMediaRecording();
+      });
+    }
+
+    if (voiceApproveBtn) {
+      voiceApproveBtn.addEventListener('click', async function () {
+        if (reviewAudio) {
+          try { reviewAudio.pause(); } catch (_) {}
+        }
+        if (voiceReviewPanel) voiceReviewPanel.style.display = 'none';
+        if (!pendingAudioBlob) return;
+
+        const blobToSend = pendingAudioBlob;
+        pendingAudioBlob = null;
+        autoPlayResponseAudio = true; // Auto-listen to the AI's response!
+        await uploadAndTranscribe(blobToSend, true);
+      });
+    }
+
+    async function uploadAndTranscribe(blob, autoSend) {
+      const t = getI18n();
+      try {
+        if (voiceStatusBanner) {
+          voiceStatusBanner.className = 'voice-status-banner processing';
+          voiceStatusBanner.style.display = 'flex';
+          voiceStatusBanner.innerHTML = '<span class="thinking-dot" style="margin-right:6px"></span> <span>' + (t.recProcessing || 'Transcribing speech...') + '</span>';
+        }
+        speakFocus(t.recProcessing || 'Transcribing speech...');
+
+        const formData = new FormData();
+        formData.append('file', blob, 'recording.webm');
+        formData.append('language', currentLanguage);
+
+        const resp = await fetch(apiUrl + '/speech/transcribe', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.text && data.text.trim()) {
+            chatInput.value = data.text.trim();
+            chatInput.dispatchEvent(new Event('input'));
+
+            if (voiceStatusBanner) {
+              voiceStatusBanner.className = 'voice-status-banner success';
+              voiceStatusBanner.style.display = 'flex';
+              voiceStatusBanner.textContent = t.recSuccess || '✓ Audio transcribed!';
+              setTimeout(function () {
+                if (voiceStatusBanner.classList.contains('success')) voiceStatusBanner.style.display = 'none';
+              }, 4000);
+            }
+
+            if (autoSend) {
+              await sendMessage();
+            } else {
+              chatInput.focus();
+            }
+          } else {
+            if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+            showError(t.recNoSpeech || 'No speech detected. Please try again.');
+          }
+        } else if (resp.status === 501) {
+          if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+          showError('Speech transcription not implemented for this language.');
+        } else {
+          if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+          showError(t.recUnavailable || 'Transcription service currently unavailable. You can type your question.');
+        }
+      } catch (err) {
+        if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+        showError(t.recUnavailable || 'Transcription error: ' + (err.message || err));
+      }
+    }
+
+    voiceBtn.addEventListener('click', function () {
+      if (isListening) {
+        stopVoiceRecording();
+      } else {
+        const serverPreferredLanguages = ['am', 'om', 'ti', 'so'];
+        if (serverPreferredLanguages.indexOf(currentLanguage) !== -1 && hasMedia) {
+          startMediaRecording();
+        } else if (hasMedia) {
+          startMediaRecording();
+        } else if (recognition) {
+          try {
+            recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
+            recognition.start();
+            setRecordingState(true);
+            const t = getI18n();
+            if (voiceStatusBanner) {
+              voiceStatusBanner.className = 'voice-status-banner recording';
+              voiceStatusBanner.style.display = 'flex';
+              voiceStatusBanner.innerHTML = '<span class="rec-pulse-dot" aria-hidden="true"></span> <span>' + (t.recPrompt || 'Recording question... Speak now.') + '</span> <button type="button" class="btn-rec-stop" id="btn-banner-rec-stop">' + (t.stopAudio || 'Stop') + '</button>';
+              const stopBtn = document.getElementById('btn-banner-rec-stop');
+              if (stopBtn) {
+                stopBtn.onclick = function (e) {
+                  e.stopPropagation();
+                  stopVoiceRecording();
+                };
+              }
+            }
+          } catch (_) {
+            if (hasMedia) startMediaRecording();
+          }
+        }
+      }
+    });
+  }
+
+  setupVoice();
+
+  /* ── Escalation flow ─────────────────────────────────────── */
+  let mediaStream = null;
+
+  function openEscalModal() {
+    escalModal.removeAttribute('hidden');
+    modalConfirm.focus();
+    /* Trap focus in modal */
+    escalModal.addEventListener('keydown', trapFocus);
+  }
+
+  function closeEscalModal() {
+    escalModal.setAttribute('hidden', '');
+    escalModal.removeEventListener('keydown', trapFocus);
+    escalateBtn.focus();
+  }
+
+  function trapFocus(e) {
+    if (e.key !== 'Tab') return;
+    const focusable = escalModal.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
+    const first = focusable[0];
+    const last  = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+    }
+  }
+
+  escalateBtn.addEventListener('click', openEscalModal);
+  modalCancel.addEventListener('click', closeEscalModal);
+
+  modalConfirm.addEventListener('click', async function () {
+    closeEscalModal();
+    let hasStream = false;
+
+    // Step 1: Request screen share if supported (Chrome on Android does not support getDisplayMedia)
+    if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+      try {
+        mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        hasStream = true;
+      } catch (mediaErr) {
+        // Fall back gracefully to contextual assistance (Android / mobile support)
+        console.warn('[Savanna escalation] Screen share skipped or unsupported on this device:', mediaErr.message);
+      }
+    }
+
+    // Step 2: Build rich learner context packet
+    const learnerContext = {
+      parent_url: document.referrer || window.location.href,
+      user_agent: navigator.userAgent,
+      is_mobile: /Android|iPhone|iPad/i.test(navigator.userAgent),
+      language: currentLanguage,
+      has_screen_share: hasStream
+    };
+
+    try {
+      /* Step 3: POST /escalate */
+      const res = await fetch(apiUrl + '/escalate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          reason:     'User requested human assistance' + (hasStream ? ' (with screen share)' : ' (context-assisted)'),
+          language:   currentLanguage,
+          learner_context: learnerContext
+        })
+      });
+
+      if (!res.ok) throw new Error('Escalation API error ' + res.status);
+      const data = await res.json();
+      const ticketId = data.ticket_id || data.id || 'N/A';
+
+      /* Show confirmation */
+      ticketZone.innerHTML = '';
+      const conf = document.createElement('div');
+      conf.className = 'ticket-confirm';
+      conf.setAttribute('role', 'status');
+      conf.textContent = '✓ Connected — Ticket #' + ticketId + '. An agent will join shortly.';
+      ticketZone.appendChild(conf);
+
+      // Notify parent host and custom element
+      parent.postMessage({
+        type: 'db-assistant:escalated',
+        ticketId: ticketId,
+        conversation: history
+      }, '*');
+
+    } catch (err) {
+      if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+      showError('Could not escalate: ' + err.message);
+    }
+  });
+
+  /* Close modal on backdrop click */
+  escalModal.addEventListener('click', function (e) {
+    if (e.target === escalModal) closeEscalModal();
+  });
+
+  /* ── Strict Focus Trap Inside Widget Shell ────────────────── */
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    if (!escalModal.hidden) return; // escalModal has its own modal focus trap
+
+    const focusable = Array.from(document.querySelectorAll(
+      'button:not([disabled]):not([hidden]):not([style*="display:none"]):not([style*="display: none"]), ' +
+      'select:not([disabled]), textarea:not([disabled]), input:not([disabled]), ' +
+      'a[href], [tabindex]:not([tabindex="-1"])'
+    )).filter(function (el) {
+      return el.offsetParent !== null && !el.closest('[hidden]');
+    });
+
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last  = focusable[focusable.length - 1];
+
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+
+  /* ── Escape key closes widget ────────────────────────────── */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      if (!escalModal.hidden) { closeEscalModal(); return; }
+      playEarcon('close');
+      parent.postMessage({ type: 'close' }, '*');
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
