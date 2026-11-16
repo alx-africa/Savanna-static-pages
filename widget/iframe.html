@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
   <title>Savanna Learning Assistant</title>
-  <link rel="stylesheet" href="style.css?v=2.8.2" />
+  <link rel="stylesheet" href="style.css?v=2.8.3" />
   <style>
     /* Iframe-specific overrides — full-height shell */
     html, body { height: 100%; overflow: hidden; }
@@ -423,7 +423,8 @@
       voiceStop:    'Stop voice input',
       escalate:     'Get human help',
       closeLabel:   'Close assistant',
-      minimiseLabel:'Minimise assistant',
+      minimiseLabel:'Make small / Compact size (Alt+S)',
+      restoreLabel: 'Restore normal size (Alt+S)',
       thinking:     'Thinking…',
       voiceGuideOn: 'Voice guidance enabled. Click to disable.',
       voiceGuideOff:'Voice guidance disabled. Click to enable.',
@@ -499,7 +500,8 @@
       voiceStop:    'የድምፅ ግቤት አቁም',
       escalate:     'የሰው እርዳታ ያግኙ',
       closeLabel:   'ረዳትን ዝጋ',
-      minimiseLabel:'ረዳቱን አሳንስ',
+      minimiseLabel:'መጠኑን አሳንስ / ትንሽ አድርግ (Alt+S)',
+      restoreLabel: 'ወደ መደበኛ መጠን መልስ (Alt+S)',
       thinking:     'እያሰብኩ…',
       voiceGuideOn: 'የድምፅ መመሪያ ነቅቷል። ለማጥፋት ይጫኑ።',
       voiceGuideOff:'የድምፅ መመሪያ ጠፍቷል። ለማብራት ይጫኑ።',
@@ -575,7 +577,8 @@
       voiceStop:    'Sagalee dhaabi',
       escalate:     'Gargaarsa namaa argadhaa',
       closeLabel:   'Gargaaraa cufi',
-      minimiseLabel:'Gargaaraa xiqqeessi',
+      minimiseLabel:'Xiqqeessi / Guddina xiqqaa (Alt+S)',
+      restoreLabel: 'Gara guddina duraatti deebisi (Alt+S)',
       thinking:     'Yaadaa jira…',
       voiceGuideOn: 'Qajeelchi sagalee banaadha. Cufuuf cuqaasaa.',
       voiceGuideOff:'Qajeelchi sagalee cufaadha. Banuuf cuqaasaa.',
@@ -651,7 +654,8 @@
       voiceStop:    'ናይ ድምጺ ምእታው ኣቋርጽ',
       escalate:     'ናይ ሰብ ሓገዝ ርኸቡ',
       closeLabel:   'ሓጋዚ ዕጸዉ',
-      minimiseLabel:'ሓጋዚ ኣንእስ',
+      minimiseLabel:'ኣንእስ / ንኡስ መጠን (Alt+S)',
+      restoreLabel: 'ናብ ንቡር መጠን ምለስ (Alt+S)',
       thinking:     'ይሓስብ ኣሎ…',
       voiceGuideOn: 'ናይ ድምጺ መምርሒ በርሀ። ንምዕጻው ጠውቑ።',
       voiceGuideOff:'ናይ ድምጺ መምርሒ ጠፍአ። ንምብራህ ጠውቑ።',
@@ -727,7 +731,8 @@
       voiceStop:    'Jooji codka',
       escalate:     'Hel caawimaad qof ah',
       closeLabel:   'Xir kaaliyaha',
-      minimiseLabel:'Yaree kaaliyaha',
+      minimiseLabel:'Yaree / Cabbir yar (Alt+S)',
+      restoreLabel: 'Ku celi cabbirka caadiga ah (Alt+S)',
       thinking:     'Fikiraya…',
       voiceGuideOn: 'Tilmaamaha codka waa shidan yahay. Guji si aad u damiso.',
       voiceGuideOff:'Tilmaamaha codka waa dansan yahay. Guji si aad u shido.',
@@ -803,7 +808,8 @@
       voiceStop:    'إيقاف الإدخال الصوتي',
       escalate:     'طلب مساعدة بشرية',
       closeLabel:   'إغلاق المساعد',
-      minimiseLabel:'تصغير المساعد',
+      minimiseLabel:'تصغير / حجم مضغوط (Alt+S)',
+      restoreLabel: 'استعادة الحجم الطبيعي (Alt+S)',
       thinking:     'جارٍ التفكير…',
       voiceGuideOn: 'الإرشاد الصوتي مفعّل. انقر للتعطيل.',
       voiceGuideOff:'الإرشاد الصوتي معطّل. انقر للتفعيل.',
@@ -879,7 +885,8 @@
       voiceStop:    'Sitisha sauti',
       escalate:     'Pata usaidizi wa mtu',
       closeLabel:   'Funga msaidizi',
-      minimiseLabel:'Punguza msaidizi',
+      minimiseLabel:'Fanya ndogo / Ukubwa mdogo (Alt+S)',
+      restoreLabel: 'Rejesha ukubwa wa kawaida (Alt+S)',
       thinking:     'Inafikiria…',
       voiceGuideOn: 'Mwongozo wa sauti umewashwa. Bofya ili kuzima.',
       voiceGuideOff:'Mwongozo wa sauti umezimwa. Bofya ili kuwasha.',
@@ -955,7 +962,8 @@
       voiceStop:    'Arrêter la voix',
       escalate:     'Obtenir de l\'aide humaine',
       closeLabel:   'Fermer l\'assistant',
-      minimiseLabel:'Réduire l\'assistant',
+      minimiseLabel:'Réduire / Taille compacte (Alt+S)',
+      restoreLabel: 'Rétablir la taille normale (Alt+S)',
       thinking:     'Réflexion en cours…',
       voiceGuideOn: 'Guidage vocal activé. Cliquez pour désactiver.',
       voiceGuideOff:'Guidage vocal désactivé. Cliquez pour activer.',
@@ -1065,7 +1073,11 @@
     escalateLabel.textContent = t.escalate;
     escalateBtn.setAttribute('aria-label', t.escalate + ' — escalate to a human agent');
     closeBtn.setAttribute('aria-label',    t.closeLabel);
-    minimizeBtn.setAttribute('aria-label', t.minimiseLabel);
+    if (typeof updateSizeUI === 'function') {
+      updateSizeUI(currentWidgetSize);
+    } else {
+      minimizeBtn.setAttribute('aria-label', t.minimiseLabel);
+    }
 
     if (modalTitle) modalTitle.textContent = t.modalTitle;
     if (modalDesc) modalDesc.textContent = t.modalDesc;
@@ -1217,12 +1229,55 @@
     speakFocus(simpleModeEnabled ? t.simpleModeActive : t.simpleModeInactive);
   });
 
-  /* ── Close / minimise ────────────────────────────────────── */
+  /* ── Close / minimise & Size Preset Toggle ──────────────── */
   closeBtn.addEventListener('click', function () {
     parent.postMessage({ type: 'close' }, '*');
   });
-  minimizeBtn.addEventListener('click', function () {
-    parent.postMessage({ type: 'close' }, '*');
+
+  let currentWidgetSize = safeGet(localStorage, 'savanna_widget_size', 'standard');
+
+  function updateSizeUI(size) {
+    if (!['compact', 'standard', 'expanded'].includes(size)) {
+      size = 'standard';
+    }
+    currentWidgetSize = size;
+    safeSet(localStorage, 'savanna_widget_size', size);
+    const isCompact = size === 'compact';
+    document.body.classList.toggle('compact-mode', isCompact);
+
+    if (minimizeBtn) {
+      minimizeBtn.setAttribute('aria-pressed', isCompact ? 'true' : 'false');
+      const t = getI18n();
+      const label = isCompact ? (t.restoreLabel || 'Restore normal size (Alt+S)') : (t.minimiseLabel || 'Make small / Compact size (Alt+S)');
+      minimizeBtn.setAttribute('aria-label', label);
+      minimizeBtn.setAttribute('title', label);
+      minimizeBtn.innerHTML = isCompact
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+    }
+  }
+
+  function toggleWidgetSize() {
+    const nextSize = (currentWidgetSize === 'compact') ? 'standard' : 'compact';
+    updateSizeUI(nextSize);
+    parent.postMessage({ type: 'set_size', size: nextSize }, '*');
+    speakFocus(nextSize === 'compact'
+      ? (currentLanguage === 'am' ? 'የውይይት መስኮቱ ወደ ትንሽ መጠን ተቀይሯል።' : 'Chat window switched to compact small size.')
+      : (currentLanguage === 'am' ? 'የውይይት መስኮቱ ወደ መደበኛ መጠን ተመልሷል።' : 'Chat window restored to standard size.')
+    );
+  }
+
+  minimizeBtn.addEventListener('click', toggleWidgetSize);
+
+  // Apply initial size preference
+  updateSizeUI(currentWidgetSize);
+
+  // Alt + S Shortcut: Instantly toggles between Small Compact and Standard size from anywhere inside widget
+  window.addEventListener('keydown', function (e) {
+    if (e.altKey && (e.key === 's' || e.key === 'S' || e.code === 'KeyS') && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      toggleWidgetSize();
+    }
   });
 
   /* ── Zero-Dependency Web Audio Earcons (Auditory Cues) ──── */
@@ -1714,6 +1769,9 @@
     if (e.data.type === 'page_context' && e.data.context) {
       activePageContext = e.data.context;
       updateContextUI();
+      if (e.data.size) updateSizeUI(e.data.size);
+    } else if (e.data.type === 'size_changed' && e.data.size) {
+      updateSizeUI(e.data.size);
     } else if (e.data.type === 'selection_change') {
       if (activePageContext) {
         activePageContext.selected_text = e.data.selected_text || '';
@@ -2143,10 +2201,6 @@
       fieldset.appendChild(actionsBar);
 
       cardBody.appendChild(fieldset);
-
-      try {
-        parent.postMessage({ type: 'resize', height: document.documentElement.scrollHeight }, '*');
-      } catch (_) {}
     }
 
     function renderSummaryView() {
@@ -2207,10 +2261,6 @@
 
       cardBody.appendChild(summaryCard);
       speakFocus((t.quizComplete || 'Quiz Complete!') + ' ' + scoreFormatted + '. ' + messageDesc);
-
-      try {
-        parent.postMessage({ type: 'resize', height: document.documentElement.scrollHeight }, '*');
-      } catch (_) {}
     }
 
     updateQuestionView();
@@ -2614,10 +2664,6 @@
       }
 
       /* Note: TTS is on-demand via the "Listen" button on each message (never auto-played) */
-
-      /* Notify parent of content height change */
-      const totalH = document.documentElement.scrollHeight;
-      parent.postMessage({ type: 'resize', height: totalH }, '*');
 
     } catch (err) {
       removeThinking();

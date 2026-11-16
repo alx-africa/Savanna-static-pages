@@ -9,37 +9,28 @@
 
   /* ── 0. Load Pluggable Adaptive Accessibility Engine ─────────────────── */
   const scriptEl = document.currentScript ||
-    Array.from(document.querySelectorAll('script[src*="widget.js"]')).pop();
-
-  (function loadA11yEngine() {
-    if (window.__SAVANNA_A11Y_ENGINE__ || document.querySelector('script[src*="a11y-engine.js"]')) return;
-    const a11yScript = document.createElement('script');
-    let a11ySrc = '/widget/a11y-engine.js?v=2.2.0';
-    if (scriptEl && scriptEl.src) {
-      try {
-        const u = new URL(scriptEl.src);
-        a11ySrc = u.origin + '/widget/a11y-engine.js?v=2.2.0';
-      } catch (_) {}
-    }
-    a11yScript.src = a11ySrc;
-    a11yScript.async = true;
-    document.head.appendChild(a11yScript);
-  })();
+    (function () {
+      const scripts = document.querySelectorAll('script[src*="widget.js"]');
+      return scripts.length ? scripts[scripts.length - 1] : null;
+    })();
 
   /* ── 1. Resolve API base URL & initial language ───────────────────────── */
   let apiUrl = (scriptEl && scriptEl.dataset.apiUrl)
     ? scriptEl.dataset.apiUrl.replace(/\/$/, '')
     : '';
 
-  // Smart resolution: if apiUrl contains localhost but page is loaded on a remote host (e.g. Cloud Run),
-  // fallback to window.location.origin to avoid mixed-content and unreachable ports
-  if (apiUrl.includes('localhost') && typeof window !== 'undefined' && window.location) {
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      apiUrl = window.location.origin;
-    }
+  // Smart resolution: If apiUrl not explicitly set, auto-detect the origin of the widget.js script itself!
+  // This enables the widget to work out-of-the-box on ANY arbitrary third-party website with ZERO configuration.
+  if (!apiUrl && scriptEl && scriptEl.src) {
+    try {
+      const scriptUrl = new URL(scriptEl.src, window.location.href);
+      if (scriptUrl.origin && scriptUrl.origin !== 'null' && !scriptUrl.protocol.startsWith('file')) {
+        apiUrl = scriptUrl.origin;
+      }
+    } catch (_) {}
   }
 
-  // If apiUrl was empty or omitted, default to current origin (or http://localhost:8000 when static dev server is on port 8080)
+  // Fallback if running locally or if script origin is not HTTP/HTTPS
   if (!apiUrl && typeof window !== 'undefined' && window.location) {
     apiUrl = (window.location.port === '8080') ? 'http://localhost:8000' : window.location.origin;
   }
@@ -47,80 +38,158 @@
   window.SavannaConfig = window.SavannaConfig || {};
   window.SavannaConfig.apiUrl = apiUrl;
 
+  (function loadA11yEngine() {
+    if (window.__SAVANNA_A11Y_ENGINE__ || document.querySelector('script[src*="a11y-engine.js"]')) return;
+    const a11yScript = document.createElement('script');
+    let a11ySrc = (apiUrl ? apiUrl : '') + '/widget/a11y-engine.js?v=2.2.0';
+    if (!apiUrl && scriptEl && scriptEl.src) {
+      try {
+        const u = new URL(scriptEl.src, window.location.href);
+        a11ySrc = u.origin + '/widget/a11y-engine.js?v=2.2.0';
+      } catch (_) {}
+    }
+    a11yScript.src = a11ySrc;
+    a11yScript.async = true;
+    (document.head || document.documentElement).appendChild(a11yScript);
+  })();
+
   const initialLang = (scriptEl && scriptEl.dataset.lang) ? scriptEl.dataset.lang : '';
 
-  /* ── 2. Inject persistent CSS ─────────────────────────────────────────── */
+  /* ── 2. Inject persistent CSS (Isolated & Host-Resistant) ──────────────── */
   const CSS = `
     :root {
       --savanna-primary: #005fcc;
       --savanna-bg: #ffffff;
-      --savanna-shadow: 0 4px 24px rgba(0,0,0,.18);
+      --savanna-shadow: 0 8px 32px rgba(0,0,0,.22);
     }
     #savanna-trigger {
-      all: unset;
-      position: fixed;
-      inset-block-end: 1.5rem;
-      inset-inline-end: 1.5rem;
-      z-index: 2147483646;
-      width: 3.5rem;
-      height: 3.5rem;
-      border-radius: 50%;
-      background: var(--savanna-primary);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: var(--savanna-shadow);
-      transition: transform .2s ease, box-shadow .2s ease;
+      all: unset !important;
+      box-sizing: border-box !important;
+      position: fixed !important;
+      inset-block-end: 1.5rem !important;
+      inset-inline-end: 1.5rem !important;
+      z-index: 2147483647 !important;
+      width: 3.5rem !important;
+      height: 3.5rem !important;
+      min-width: 3.5rem !important;
+      min-height: 3.5rem !important;
+      max-width: 3.5rem !important;
+      max-height: 3.5rem !important;
+      border-radius: 50% !important;
+      background: var(--savanna-primary, #005fcc) !important;
+      color: #ffffff !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,.22) !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      line-height: 1 !important;
+      user-select: none !important;
+      touch-action: none;
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease !important;
+      -webkit-tap-highlight-color: transparent !important;
+    }
+    #savanna-trigger svg {
+      display: block !important;
+      width: 28px !important;
+      height: 28px !important;
+      stroke: #ffffff !important;
+      fill: none !important;
+      pointer-events: none !important;
+      margin: auto !important;
     }
     @media (prefers-reduced-motion: reduce) {
-      #savanna-trigger { transition: none; }
+      #savanna-trigger { transition: none !important; }
     }
-    #savanna-trigger:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(0,0,0,.24); }
+    #savanna-trigger:hover {
+      transform: scale(1.08) !important;
+      box-shadow: 0 8px 30px rgba(0,0,0,.30) !important;
+    }
     #savanna-trigger:focus-visible {
-      outline: 3px solid #005fcc;
-      outline-offset: 3px;
-      box-shadow: 0 0 0 5px rgba(0,95,204,.35);
+      outline: 3px solid #005fcc !important;
+      outline-offset: 3px !important;
+      box-shadow: 0 0 0 5px rgba(0,95,204,.35) !important;
     }
-    #savanna-trigger[aria-expanded="true"] { background: #003d85; }
+    #savanna-trigger[aria-expanded="true"] { background: #003d85 !important; }
+
+    /* ── Responsive & Ergonomic Chat Tab Container ───────────────────────── */
     #savanna-iframe-container {
-      position: fixed;
-      inset-block-end: 6rem;
-      inset-inline-end: 1.5rem;
-      z-index: 2147483645;
-      width: min(400px, calc(100vw - 2rem));
-      height: min(600px, calc(100vh - 8rem));
-      border-radius: 1rem;
-      box-shadow: var(--savanna-shadow);
-      overflow: hidden;
+      position: fixed !important;
+      inset-block-end: 5.5rem !important;
+      inset-inline-end: 1.5rem !important;
+      z-index: 2147483647 !important;
+      width: min(380px, calc(100vw - 2rem)) !important;
+      height: min(540px, calc(100vh - 6.5rem)) !important;
+      max-width: calc(100vw - 1rem) !important;
+      max-height: calc(100vh - 5rem) !important;
+      min-width: 290px !important;
+      min-height: 380px !important;
+      border-radius: 1rem !important;
+      box-shadow: var(--savanna-shadow) !important;
+      overflow: hidden !important;
       display: none;
-      background: var(--savanna-bg);
+      background: var(--savanna-bg) !important;
+      box-sizing: border-box !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 1px solid rgba(0,0,0,0.12) !important;
+      transition: width 0.22s ease, height 0.22s ease, transform 0.22s ease !important;
     }
-    #savanna-iframe-container.savanna-open { display: block; }
+    #savanna-iframe-container.savanna-open { display: block !important; }
+
+    /* Size preset: Compact / Small Chat Tab for PCs & Laptops */
+    #savanna-iframe-container.savanna-compact {
+      width: min(330px, calc(100vw - 1.5rem)) !important;
+      height: min(430px, calc(100vh - 5.5rem)) !important;
+      min-height: 340px !important;
+    }
+
+    /* Size preset: Expanded / Large View for Desktop Widescreen */
+    #savanna-iframe-container.savanna-expanded {
+      width: min(520px, calc(100vw - 2rem)) !important;
+      height: min(680px, calc(100vh - 6.5rem)) !important;
+    }
+
     #savanna-iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      border-radius: 1rem;
+      width: 100% !important;
+      height: 100% !important;
+      border: none !important;
+      border-radius: 1rem !important;
+      display: block !important;
     }
     @media (forced-colors: active) {
-      #savanna-trigger { background: ButtonText; color: ButtonFace; }
-      #savanna-iframe-container { border: 2px solid ButtonText; }
+      #savanna-trigger { background: ButtonText !important; color: ButtonFace !important; }
+      #savanna-iframe-container { border: 2px solid ButtonText !important; }
     }
-    @media (max-width: 480px) {
+    /* Small PC screens (e.g. 1366x768 laptops) */
+    @media (max-height: 720px) and (min-width: 481px) {
       #savanna-iframe-container {
-        inset-inline-end: 0;
-        inset-block-end: 5rem;
-        width: 100vw;
-        height: calc(100vh - 5.5rem);
-        border-radius: 1rem 1rem 0 0;
+        inset-block-end: 4.8rem !important;
+        height: min(480px, calc(100vh - 5.5rem)) !important;
+      }
+      #savanna-iframe-container.savanna-compact {
+        height: min(390px, calc(100vh - 5.2rem)) !important;
+      }
+    }
+    /* Mobile screens */
+    @media (max-width: 480px) {
+      #savanna-iframe-container,
+      #savanna-iframe-container.savanna-compact,
+      #savanna-iframe-container.savanna-expanded {
+        inset-inline-end: 0 !important;
+        inset-block-end: 4.5rem !important;
+        width: 100vw !important;
+        height: calc(100vh - 5rem) !important;
+        border-radius: 1rem 1rem 0 0 !important;
       }
     }
   `;
   const style = document.createElement('style');
   style.textContent = CSS;
-  document.head.appendChild(style);
+  (document.head || document.documentElement).appendChild(style);
 
   /* ── 3. Build trigger button ──────────────────────────────────────────── */
   const trigger = document.createElement('button');
@@ -146,6 +215,14 @@
   container.id = 'savanna-iframe-container';
   container.setAttribute('aria-label', 'Savanna Learning Assistant panel');
 
+  // Apply saved size preset (compact / standard / expanded)
+  let currentSize = safeStorageGet('savanna_widget_size', 'standard');
+  if (currentSize === 'compact') {
+    container.classList.add('savanna-compact');
+  } else if (currentSize === 'expanded') {
+    container.classList.add('savanna-expanded');
+  }
+
   const iframe = document.createElement('iframe');
   iframe.id = 'savanna-iframe';
   let iframeSrc = apiUrl + '/widget/iframe.html?api=' + encodeURIComponent(apiUrl);
@@ -155,16 +232,32 @@
   if (initialLang) {
     iframeSrc += '&lang=' + encodeURIComponent(initialLang);
   }
-  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.8.2';
+  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.8.3';
   iframe.src = iframeSrc;
   iframe.title = 'Savanna Learning Assistant';
   iframe.setAttribute('allow', 'microphone; display-capture');
   iframe.setAttribute('loading', 'lazy');
-  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals');
   container.appendChild(iframe);
 
-  document.body.appendChild(trigger);
-  document.body.appendChild(container);
+  /* Safe mounting: Guaranteed to work even if script is placed in <head> on arbitrary websites */
+  function mountSavannaWidget() {
+    if (window.__SAVANNA_WIDGET_MOUNTED__) return;
+    if (!document.body) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mountSavannaWidget);
+      } else {
+        setTimeout(mountSavannaWidget, 50);
+      }
+      return;
+    }
+    window.__SAVANNA_WIDGET_MOUNTED__ = true;
+    document.body.appendChild(trigger);
+    document.body.appendChild(container);
+    restoreTriggerPosition();
+  }
+
+  mountSavannaWidget();
 
   /* ── 5. Pedagogical Host Context Extractor ──────────────────────────────── */
   function extractPageContext() {
@@ -221,6 +314,101 @@
     };
   }
 
+  /* ── 3.1 Draggable / Repositionable Floating Trigger ───────────────────── */
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let hasMoved = false;
+  let btnStartX = 0;
+  let btnStartY = 0;
+
+  function restoreTriggerPosition() {
+    try {
+      const saved = safeStorageGet('savanna_trigger_pos');
+      if (saved) {
+        const pos = JSON.parse(saved);
+        if (typeof pos.bottom === 'number' && typeof pos.right === 'number') {
+          const b = Math.min(Math.max(16, pos.bottom), window.innerHeight - 70);
+          const r = Math.min(Math.max(16, pos.right), window.innerWidth - 70);
+          trigger.style.bottom = b + 'px';
+          trigger.style.right = r + 'px';
+          trigger.style.top = 'auto';
+          trigger.style.left = 'auto';
+        }
+      }
+    } catch (_) {}
+  }
+
+  function onPointerDown(e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    isDragging = true;
+    hasMoved = false;
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    dragStartX = clientX;
+    dragStartY = clientY;
+    const rect = trigger.getBoundingClientRect();
+    btnStartX = rect.left;
+    btnStartY = rect.top;
+  }
+
+  function onPointerMove(e) {
+    if (!isDragging) return;
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    const dx = clientX - dragStartX;
+    const dy = clientY - dragStartY;
+    if (Math.hypot(dx, dy) > 6) {
+      hasMoved = true;
+      const newLeft = Math.min(Math.max(10, btnStartX + dx), window.innerWidth - 66);
+      const newTop = Math.min(Math.max(10, btnStartY + dy), window.innerHeight - 66);
+      trigger.style.left = newLeft + 'px';
+      trigger.style.top = newTop + 'px';
+      trigger.style.right = 'auto';
+      trigger.style.bottom = 'auto';
+    }
+  }
+
+  function onPointerUp() {
+    if (!isDragging) return;
+    isDragging = false;
+    if (hasMoved) {
+      try {
+        const rect = trigger.getBoundingClientRect();
+        safeStorageSet('savanna_trigger_pos', JSON.stringify({
+          right: window.innerWidth - rect.right,
+          bottom: window.innerHeight - rect.bottom
+        }));
+      } catch (_) {}
+    }
+  }
+
+  trigger.addEventListener('mousedown', onPointerDown);
+  window.addEventListener('mousemove', onPointerMove);
+  window.addEventListener('mouseup', onPointerUp);
+
+  trigger.addEventListener('touchstart', onPointerDown, { passive: true });
+  window.addEventListener('touchmove', onPointerMove, { passive: true });
+  window.addEventListener('touchend', onPointerUp);
+
+  /* ── 4.1 Widget Size Preset Management ─────────────────────────────────── */
+  function applyWidgetSize(size) {
+    if (!['compact', 'standard', 'expanded'].includes(size)) {
+      size = (currentSize === 'compact') ? 'standard' : 'compact';
+    }
+    currentSize = size;
+    safeStorageSet('savanna_widget_size', size);
+    container.classList.remove('savanna-compact', 'savanna-expanded');
+    if (size === 'compact') {
+      container.classList.add('savanna-compact');
+    } else if (size === 'expanded') {
+      container.classList.add('savanna-expanded');
+    }
+    try {
+      iframe.contentWindow && iframe.contentWindow.postMessage({ type: 'size_changed', size: size }, '*');
+    } catch (_) {}
+  }
+
   /* ── 6. Open / close logic ─────────────────────────────────────────────── */
   let isOpen = false;
 
@@ -233,7 +421,8 @@
     const context = extractPageContext();
     iframe.contentWindow && iframe.contentWindow.postMessage({
       type: 'page_context',
-      context: context
+      context: context,
+      size: currentSize
     }, '*');
 
     /* Focus into iframe via postMessage */
@@ -252,7 +441,15 @@
     isOpen ? closeWidget() : openWidget();
   }
 
-  trigger.addEventListener('click', toggleWidget);
+  trigger.addEventListener('click', function (e) {
+    if (hasMoved) {
+      hasMoved = false;
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    toggleWidget();
+  });
   trigger.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -284,8 +481,11 @@
   /* ── 7. postMessage listener (from iframe) ─────────────────────────────── */
   window.addEventListener('message', function (event) {
     /* Accept messages from same origin or the configured API origin */
-    const allowedOrigin = new URL(apiUrl).origin;
-    if (event.origin !== window.location.origin && event.origin !== allowedOrigin) return;
+    let allowedOrigin = '';
+    try {
+      allowedOrigin = new URL(apiUrl, window.location.href).origin;
+    } catch (_) {}
+    if (event.origin !== window.location.origin && event.origin !== allowedOrigin && allowedOrigin) return;
     if (!event.data || typeof event.data !== 'object') return;
 
     if (event.data.type === 'close') {
@@ -293,12 +493,11 @@
     } else if (event.data.type === 'request_context') {
       iframe.contentWindow && iframe.contentWindow.postMessage({
         type: 'page_context',
-        context: extractPageContext()
+        context: extractPageContext(),
+        size: currentSize
       }, '*');
-    } else if (event.data.type === 'resize' && typeof event.data.height === 'number') {
-      const maxH = window.innerHeight - 128;
-      const clampedH = Math.min(Math.max(event.data.height, 200), maxH);
-      container.style.height = clampedH + 'px';
+    } else if (event.data.type === 'set_size' || event.data.type === 'savanna:set_size') {
+      applyWidgetSize(event.data.size);
     } else if (event.data.type === 'savanna:lang_change' && event.data.lang) {
       safeStorageSet('savanna_lang', event.data.lang);
       window.dispatchEvent(new CustomEvent('savanna:language_changed', { detail: { lang: event.data.lang } }));
@@ -618,13 +817,14 @@
           window.SavannaConfig = window.SavannaConfig || {};
           window.SavannaConfig.apiUrl = cleanApi;
         }
-        if (content) {
+        if (content && (typeof fetch === 'function' || (typeof window !== 'undefined' && typeof window.fetch === 'function'))) {
+          const fetchFn = typeof fetch === 'function' ? fetch : window.fetch;
           const targetApi = (window.SavannaConfig && window.SavannaConfig.apiUrl) || apiUrl;
-          fetch(content)
+          fetchFn(content)
             .then(res => res.json())
             .then(data => {
               const lessons = Array.isArray(data) ? data : (data.lessons || [data]);
-              fetch(targetApi + '/api/v1/content', {
+              fetchFn(targetApi + '/api/v1/content', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ lessons: lessons })
