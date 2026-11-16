@@ -56,7 +56,7 @@ async function runTests() {
   const { document } = window;
 
   // Wait for scripts to initialize
-  await new Promise(r => setTimeout(r, 500));
+  await new Promise(r => setTimeout(r, 900));
 
   // 1. Starter Prompt Pills existence
   const pillsBar = document.querySelector('.prompt-pills-bar');
@@ -127,8 +127,129 @@ async function runTests() {
     assert('Clicking speed button cycles playback rate', speedButtons[0].textContent !== initialSpeed);
   }
 
-  // 7. Axe-Core Accessibility Audit on Enhanced Widget
-  console.log('\nRunning axe-core audit on updated iframe...');
+  // 7. Rich Pedagogical Markdown Typography
+  console.log('\nTesting rich pedagogical markdown typography...');
+  const testMarkdown = `### Key Lesson Concepts
+**Accessibility** is essential for *all* learners.
+* High contrast visuals
+* Full keyboard navigation
+* Screen reader announcements
+
+\`aria-live="polite"\` notifies assistive technology smoothly.
+
+\`\`\`javascript
+const answer = true;
+\`\`\``;
+
+  // Append markdown message
+  const mdLi = window.appendMessage('assistant', testMarkdown, []);
+  const mdBubble = mdLi.querySelector('.message-bubble');
+
+  assert('Assistant bubble renders semantic <h4> heading', !!mdBubble.querySelector('h4.chat-h4'));
+  assert('Assistant bubble renders <strong> bold tag', !!mdBubble.querySelector('strong'));
+  assert('Assistant bubble renders <em> italic tag', !!mdBubble.querySelector('em'));
+  assert('Assistant bubble renders semantic <ul> with <li> items', !!mdBubble.querySelector('ul.chat-list li'));
+  assert('Assistant bubble renders <code class="chat-inline-code">', !!mdBubble.querySelector('code.chat-inline-code'));
+  assert('Assistant bubble renders <pre class="chat-code-block">', !!mdBubble.querySelector('pre.chat-code-block'));
+  assert('Raw markdown ### is not rendered as literal text', !mdBubble.textContent.includes('###'));
+  assert('Raw markdown ** is not rendered as literal text', !mdBubble.textContent.includes('**'));
+
+  // 8. Interactive 5-to-10 Question Quiz UI/UX
+  console.log('\nTesting interactive accessible Quiz Mode...');
+  const sampleQuizPayload = `Here is a 5-question practice quiz based on this page:
+
+[QUIZ]
+{
+  "title": "Quiz: Web Accessibility Essentials",
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is the primary role of ARIA live regions?",
+      "options": ["To play background music", "To announce dynamic content updates to screen reader users", "To resize the browser window", "To encrypt user passwords"],
+      "answer": 1,
+      "explanation": "ARIA live regions inform assistive technologies of dynamic content changes without interrupting the user's workflow."
+    },
+    {
+      "id": 2,
+      "question": "What is the minimum WCAG 2.2 AA contrast ratio for standard body text?",
+      "options": ["4.5:1", "3:1", "1.5:1", "10:1"],
+      "answer": 0,
+      "explanation": "WCAG 2.2 Level AA requires a minimum contrast ratio of 4.5:1 for standard text."
+    },
+    {
+      "id": 3,
+      "question": "Which keyboard key typically moves focus between interactive elements?",
+      "options": ["Shift", "Tab", "Escape", "Spacebar only"],
+      "answer": 1,
+      "explanation": "The Tab key moves forward through focusable interactive elements, and Shift+Tab moves backward."
+    },
+    {
+      "id": 4,
+      "question": "Why should images have descriptive 'alt' text?",
+      "options": ["To make images load faster", "To convey image meaning to blind learners using screen readers", "To hide images from search engines", "To prevent image downloads"],
+      "answer": 1,
+      "explanation": "Alt text provides a text alternative for users who cannot see the image."
+    },
+    {
+      "id": 5,
+      "question": "What HTML element provides native semantic grouping for quiz questions?",
+      "options": ["<fieldset> with <legend>", "<div> with <span>", "<table> with <tr>", "<section> with <aside>"],
+      "answer": 0,
+      "explanation": "A <fieldset> paired with a <legend> semantically groups form controls and labels the entire question for screen readers."
+    }
+  ]
+}
+[/QUIZ]`;
+
+  const quizLi = window.appendMessage('assistant', sampleQuizPayload, []);
+  const quizContainer = quizLi.querySelector('.interactive-quiz-container');
+
+  assert('Interactive quiz container is rendered in assistant bubble', !!quizContainer);
+  assert('Quiz title is displayed', quizContainer.querySelector('.quiz-title').textContent.includes('Web Accessibility Essentials'));
+
+  const progressBar = quizContainer.querySelector('.quiz-progress-bar');
+  assert('Quiz progress bar has role="progressbar"', progressBar && progressBar.getAttribute('role') === 'progressbar');
+  assert('Progress bar valuemax is 5', progressBar && progressBar.getAttribute('aria-valuemax') === '5');
+
+  const fieldset = quizContainer.querySelector('.quiz-fieldset');
+  const legend = quizContainer.querySelector('.quiz-question-text');
+  assert('Semantic <fieldset> container exists', !!fieldset);
+  assert('Semantic <legend> with question prompt exists', !!legend && legend.textContent.includes('ARIA live regions'));
+
+  const options = quizContainer.querySelectorAll('.quiz-option-item');
+  assert('Exactly 4 options are rendered for Question 1', options.length === 4);
+
+  const checkBtn = quizContainer.querySelector('.btn-quiz-check');
+  assert('Check Answer button exists and is initially disabled', !!checkBtn && checkBtn.disabled);
+
+  // Select Option 1 (the correct answer: index 1)
+  const radio1 = quizContainer.querySelector('#quiz-opt-0-1');
+  assert('Option radio button exists', !!radio1);
+  radio1.checked = true;
+  radio1.dispatchEvent(new window.Event('change'));
+
+  assert('Check Answer button is enabled after selecting an option', !checkBtn.disabled);
+
+  // Submit answer
+  checkBtn.click();
+
+  const feedback = quizContainer.querySelector('.quiz-feedback');
+  assert('Feedback status box is visible with role="status"', !!feedback && feedback.getAttribute('role') === 'status');
+  assert('Feedback box has aria-live="polite"', feedback && feedback.getAttribute('aria-live') === 'polite');
+  const isCorrectAnnounced = feedback && (feedback.textContent.includes('Correct!') || feedback.textContent.includes('ትክክል!'));
+  const hasExplanation = feedback && feedback.textContent.includes('ARIA live regions inform');
+  assert('Feedback confirms correct answer and provides pedagogical explanation', isCorrectAnnounced && hasExplanation);
+
+  const nextBtn = quizContainer.querySelector('.btn-quiz-next');
+  assert('Next Question button is now displayed', !!nextBtn && nextBtn.style.display !== 'none');
+
+  // Advance to Question 2
+  nextBtn.click();
+  const q2Legend = quizContainer.querySelector('.quiz-question-text');
+  assert('Question 2 is now active in legend', !!q2Legend && q2Legend.textContent.includes('WCAG 2.2 AA contrast ratio'));
+
+  // 9. Axe-Core Accessibility Audit on Enhanced Widget with Quiz & Markdown
+  console.log('\nRunning axe-core audit on updated iframe with Quiz & Markdown...');
   const axeResults = await axe.run(document.documentElement, {
     runOnly: {
       type: 'tag',

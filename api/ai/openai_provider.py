@@ -42,7 +42,30 @@ def get_system_prompt(language: str, simple_mode: bool = False) -> str:
         f"2. Always preserve technical acronyms, course codes, software tools, metrics, percentages (e.g. '70%'), proper institution/organization names, and URLs in their standard professional notation (e.g. 'Virtual Assistant', 'VA', 'Pull Request', 'Git', 'GitHub', 'HTML', 'CSS', 'JavaScript', 'Python', 'CRM', 'QA Review', etc.).\n"
         f"3. When explaining a technical concept in {lang_name}, provide the natural pedagogical explanation in {lang_name} "
         f"while retaining the standard industry term in English (e.g. 'Gabaasa qorannoo (QA Review)' in Oromo or "
-        f"'የጥራት ማረጋገጫ ግምገማ (QA Review)' in Amharic)."
+        f"'የጥራት ማረጋገጫ ግምገማ (QA Review)' in Amharic).\n\n"
+        f"INTERACTIVE QUIZ GENERATION RULES:\n"
+        f"When the learner asks for a quiz, test, practice questions, or to test their understanding (e.g. 'quiz me', 'quiz', 'test', 'ፈትነኝ', 'ጥያቄ አዘጋጅልኝ', 'ፈተና', 'gaaffilee qopheessi', 'quiz me on this page'):\n"
+        f"1. Generate between 5 and 10 multiple-choice questions grounded directly in the active lesson content on their screen or provided curriculum.\n"
+        f"2. Each question must test a meaningful concept, definition, tool, rule, or practical skill from the lesson.\n"
+        f"3. Provide exactly 4 distinct, plausible answer choices for each question, with exactly ONE correct answer.\n"
+        f"4. Provide a supportive, pedagogical explanation in {lang_name} explaining WHY the correct option is right.\n"
+        f"5. You MUST output the quiz inside a valid JSON block enclosed strictly within [QUIZ] and [/QUIZ] tags so the interactive UI can render it. Schema:\n"
+        f"[QUIZ]\n"
+        f"{{\n"
+        f'  "title": "Quiz: <Lesson / Topic Title>",\n'
+        f'  "questions": [\n'
+        f"    {{\n"
+        f'      "id": 1,\n'
+        f'      "question": "Question text in {lang_name}?",\n'
+        f'      "options": ["Choice A", "Choice B", "Choice C", "Choice D"],\n'
+        f'      "answer": 0,\n'
+        f'      "explanation": "Clear pedagogical explanation in {lang_name}."\n'
+        f"    }}\n"
+        f"  ]\n"
+        f"}}\n"
+        f"[/QUIZ]\n"
+        f"Provide between 5 and 10 questions in the questions array. "
+        f"You may precede the [QUIZ] block with a brief 1-line encouraging greeting in {lang_name}."
     )
     if simple_mode:
         prompt += (

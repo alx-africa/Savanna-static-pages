@@ -5,6 +5,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING
 
 from ai.provider import AIProvider
@@ -46,6 +47,101 @@ _FALLBACK_TEXTS: dict[str, str] = {
     "ar": "ليس لدي معلومات محددة حول ذلك في وضع عدم الاتصال. يرجى المحاولة مرة أخرى عند الاتصال بالإنترنت.",
     "sw": "Sina maelezo mahususi kuhusu hilo katika hali ya nje ya mtandao. Tafadhali jaribu tena ukiwa umeunganishwa.",
     "fr": "Je n'ai pas d'informations spécifiques à ce sujet en mode hors ligne. Veuillez réessayer lorsque vous serez connecté à Internet.",
+}
+
+_QUIZ_KEYWORDS = re.compile(r"\b(quiz|test|exam|practice|ጥያቄ|ፈተና|ፈትነኝ|qormaata|ሕቶ|kedis|su'aalo|اختبار)\b", re.IGNORECASE)
+
+_OFFLINE_QUIZZES: dict[str, str] = {
+    "en": (
+        "Here is an interactive 5-question quiz to test your understanding of this topic:\n\n"
+        "[QUIZ]\n"
+        "{\n"
+        '  "title": "Quiz: Lesson Mastery Check",\n'
+        '  "questions": [\n'
+        "    {\n"
+        '      "id": 1,\n'
+        '      "question": "What is the primary role of a Virtual Assistant (VA)?",\n'
+        '      "options": ["Manufacturing physical hardware", "Providing remote administrative and business support", "Managing local warehouse shipping", "Designing building architecture"],\n'
+        '      "answer": 1,\n'
+        '      "explanation": "Virtual Assistants provide professional remote administrative, technical, and creative support to businesses and clients worldwide."\n'
+        "    },\n"
+        "    {\n"
+        '      "id": 2,\n'
+        '      "question": "Which skill is most critical for success as a remote contractor?",\n'
+        '      "options": ["Independent time management and clear communication", "Operating industrial machinery", "Physical paper filing in an archive", "Daily physical commute to an office"],\n'
+        '      "answer": 0,\n'
+        '      "explanation": "Remote professionals must independently schedule tasks and communicate proactively with clients across time zones."\n'
+        "    },\n"
+        "    {\n"
+        '      "id": 3,\n'
+        '      "question": "Which tool suite is central for managing remote tasks, calendars, and documentation?",\n'
+        '      "options": ["Paper notebook only", "Google Workspace (Calendar, Docs, Sheets) and Trello / Asana", "Automobile repair handbook", "Photographic darkroom chemistry"],\n'
+        '      "answer": 1,\n'
+        '      "explanation": "Cloud platforms like Google Workspace and Trello enable seamless real-time coordination across distributed teams."\n'
+        "    },\n"
+        "    {\n"
+        '      "id": 4,\n'
+        '      "question": "How should confidential client data and credentials be managed?",\n'
+        '      "options": ["Shared publicly on social media channels", "Protected with strict confidentiality, encrypted storage, and strong passwords", "Written on communal office whiteboards", "Saved on unprotected public internet cafe terminals"],\n'
+        '      "answer": 1,\n'
+        '      "explanation": "Data confidentiality and secure credential handling are fundamental ethical requirements in remote work."\n'
+        "    },\n"
+        "    {\n"
+        '      "id": 5,\n'
+        '      "question": "Why is proactive asynchronous communication essential when working across different timezones?",\n'
+        '      "options": ["It guarantees clients are always awake simultaneously", "It establishes clear expectations and prevents workflow bottlenecks", "It eliminates the need for written task tracking", "It removes the requirement for internet connectivity"],\n'
+        '      "answer": 1,\n'
+        '      "explanation": "Proactive documentation and asynchronous updates ensure tasks proceed smoothly even when team members are in different time zones."\n'
+        "    }\n"
+        "  ]\n"
+        "}\n"
+        "[/QUIZ]"
+    ),
+    "am": (
+        "ስለዚህ ርዕስ ያለዎትን ግንዛቤ ለመፈተሽ 5 ጥያቄዎች ያሉት ፈተና እነሆ፡\n\n"
+        "[QUIZ]\n"
+        "{\n"
+        '  "title": "ፈተና፡ የትምህርት ክለሳ",\n'
+        '  "questions": [\n'
+        "    {\n"
+        '      "id": 1,\n'
+        '      "question": "የቨርቹዋል ረዳት (Virtual Assistant) ዋነኛ የስራ ድርሻ ምንድን ነው?",\n'
+        '      "options": ["የፋብሪካ ምርቶችን ማምረት", "የርቀት የአስተዳደር እና የንግድ ድጋፍ አገልግሎት መስጠት", "የወረቀት ሰነዶችን በአካል ማከፋፈል", "የህንፃ ዲዛይን መስራት"],\n'
+        '      "answer": 1,\n'
+        '      "explanation": "ቨርቹዋል ረዳቶች ለደንበኞች በቴክኖሎጂ አማካኝነት የርቀት አስተዳደራዊ እና ሙያዊ ድጋፍ ይሰጣሉ።"\n'
+        "    },\n"
+        "    {\n"
+        '      "id": 2,\n'
+        '      "question": "በርቀት ስራ (Remote work) ውጤታማ ለመሆን የትኛው ክህሎት እጅግ አስፈላጊ ነው?",\n'
+        '      "options": ["ራሱን የቻለ የጊዜ አጠቃቀም እና ቀጣይነት ያለው ግንኙነት", "የከባድ ማሽነሪ ኦፕሬሽን", "በየቀኑ ወደ ቢሮ መመላለስ", "የወረቀት መዛግብት ማዘጋጀት"],\n'
+        '      "answer": 0,\n'
+        '      "explanation": "የርቀት ሰራተኞች ጊዜያቸውን በራሳቸው ማስተዳደር እና ከደንበኞች ጋር ቀጣይነት ያለው ግልጽ ግንኙነት መፍጠር አለባቸው።"\n'
+        "    },\n"
+        "    {\n"
+        '      "id": 3,\n'
+        '      "question": "የቀን መቁጠሪያ እና ተግባራትን ለማቀናጀት በስፋት ጥቅም ላይ የሚውለው መተግበሪያ የቱ ነው?",\n'
+        '      "options": ["የእጅ ደብተር ብቻ", "Google Workspace (Calendar, Docs, Sheets) እና Trello", "የመኪና መጠገኛ መመሪያ", "የካሜራ ፊልም ማጠቢያ"],\n'
+        '      "answer": 1,\n'
+        '      "explanation": "የደመና መተግበሪያዎች የርቀት ስራዎችን በቀላሉ ለማስተባበር እና ለመከታተል ወሳኝ ናቸው።"\n'
+        "    },\n"
+        "    {\n"
+        '      "id": 4,\n'
+        '      "question": "የደንበኛ ሚስጥራዊ መረጃዎችን እንዴት መጠበቅ ይገባል?",\n'
+        '      "options": ["በማህበራዊ ሚዲያ ላይ በማጋራት", "ምስጢራዊነትን በጥብቅ በመጠበቅ እና ጠንካራ የይለፍ ቃሎችን በመጠቀም", "በግልጽ ቦታ ላይ በማስቀመጥ", "ጥበቃ በሌለው የህዝብ ኮምፒውተር ላይ በመተው"],\n'
+        '      "answer": 1,\n'
+        '      "explanation": "የደንበኛ መረጃዎችን በሚስጥር መጠበቅ የሙያው ዋነኛ የስነ-ምግባር መርህ ነው።"\n'
+        "    },\n"
+        "    {\n"
+        '      "id": 5,\n'
+        '      "question": "በተለያዩ የሰዓት ቀጠናዎች (Timezones) ውስጥ ለሚሰሩ ቡድኖች ግልጽ ግንኙነት ለምን ይጠቅማል?",\n'
+        '      "options": ["ሁሉንም ሰው ሁልጊዜ በመስመር ላይ እንዲቆይ ለማድረግ", "የስራ ግቦችን በግልጽ ለመረዳት እና ስህተቶችን ለመከላከል", "የጽሁፍ መረጃዎችን ሙሉ በሙሉ ለማስቀረት", "የኢንተርኔት አገልግሎትን ላለመጠቀም"],\n'
+        '      "answer": 1,\n'
+        '      "explanation": "ግልጽ እና ወቅታዊ ግንኙነት የስራ ሂደቱ ሳይስተጓጎል በተገቢው መንገድ እንዲከናወን ያደርጋል።"\n'
+        "    }\n"
+        "  ]\n"
+        "}\n"
+        "[/QUIZ]"
+    ),
 }
 
 _FAQ_SEARCH_PATHS = [
@@ -140,6 +236,12 @@ class OfflineProvider(AIProvider):
     ) -> tuple[str, list[Citation]]:
         note = _OFFLINE_NOTES.get(language, _OFFLINE_NOTES["en"])
         mode_prefix = _MODE_PREFIXES.get(language, _MODE_PREFIXES["en"]) if simple_mode else ""
+
+        # Check if user requested an interactive quiz
+        if _QUIZ_KEYWORDS.search(message):
+            quiz_content = _OFFLINE_QUIZZES.get(language, _OFFLINE_QUIZZES["en"])
+            text = f"{mode_prefix}{note}\n\n{quiz_content}"
+            return text, []
 
         # If RAG context is provided, return the top chunk directly
         if context_chunks:

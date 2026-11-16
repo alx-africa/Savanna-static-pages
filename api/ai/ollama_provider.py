@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import httpx
 
+from ai.openai_provider import _LANGUAGE_NAMES, get_system_prompt
 from ai.provider import AIProvider
 from models import ChatMessage, Citation
 
@@ -14,42 +15,6 @@ if TYPE_CHECKING:
     from config import Settings
 
 logger = logging.getLogger(__name__)
-
-_LANGUAGE_NAMES: dict[str, str] = {
-    "en": "English",
-    "am": "Amharic (አማርኛ)",
-    "om": "Afaan Oromo (Afaan Oromoo)",
-    "ti": "Tigrinya (ትግርኛ)",
-    "so": "Somali (Soomaali)",
-    "ar": "Arabic (العربية)",
-    "sw": "Kiswahili (Swahili)",
-    "fr": "French (Français)",
-}
-
-def get_system_prompt(language: str, simple_mode: bool = False) -> str:
-    lang_name = _LANGUAGE_NAMES.get(language, "English")
-    prompt = (
-        f"You are a helpful multilingual learning assistant for Savanna, an online learning platform "
-        f"serving Ethiopian and regional refugee learners (including Eritrean, Sudanese, Somali, and Congolese learners). "
-        f"You MUST respond fluently and naturally in {lang_name}. "
-        f"Answer ONLY from the provided course content. "
-        f"If the answer is not in the provided content, state clearly in {lang_name} that the course material does not mention it. "
-        f"Always cite your sources using [source_id] notation corresponding to the course chunks provided. "
-        f"Do not make up information.\n\n"
-        f"CRITICAL TERMINOLOGY & ENTITY PRESERVATION RULES:\n"
-        f"1. Do NOT translate technical acronyms, tool names, coding terms, or proper nouns into literal words.\n"
-        f"2. Always preserve technical acronyms, course codes, software tools, metrics, percentages (e.g. '70%'), proper institution/organization names, and URLs in their standard professional notation (e.g. 'Virtual Assistant', 'VA', 'Pull Request', 'Git', 'GitHub', 'HTML', 'CSS', 'JavaScript', 'Python', 'CRM', 'QA Review', etc.).\n"
-        f"3. When explaining a technical concept in {lang_name}, provide the natural pedagogical explanation in {lang_name} "
-        f"while retaining the standard industry term in English (e.g. 'Gabaasa qorannoo (QA Review)' in Oromo or "
-        f"'የጥራት ማረጋገጫ ግምገማ (QA Review)' in Amharic)."
-    )
-    if simple_mode:
-        prompt += (
-            f"\n\n[SIMPLE MODE ACTIVATED] Use very plain, simple words in {lang_name}. "
-            f"Keep sentences short (under 12 words). Avoid convoluted sentence structures so non-native speakers "
-            f"and low-literacy learners can easily understand."
-        )
-    return prompt
 
 _CITATION_RE = re.compile(r"\[([^\]]+)\]")
 
