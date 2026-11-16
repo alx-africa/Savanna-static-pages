@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -108,15 +109,33 @@ def create_app() -> FastAPI:
             ai_provider=settings.ai_provider,
         )
 
+    def _find_dir(dir_name: str) -> str | None:
+        file_dir = Path(__file__).resolve().parent
+        for cand in [
+            Path("/app") / dir_name,
+            file_dir.parent / dir_name,
+            Path.cwd() / dir_name,
+            Path.cwd().parent / dir_name,
+            file_dir / dir_name,
+        ]:
+            try:
+                if cand.is_dir() and any(cand.iterdir()):
+                    return str(cand.resolve())
+            except Exception:
+                pass
+        return None
+
     @app.get("/content.json", tags=["Level 1 Contract"], summary="Sample course content JSON")
     async def get_sample_content():
         import json
+        file_dir = Path(__file__).resolve().parent
         for candidate in [
-            os.path.join(base_dir, "content.json"),
-            os.path.join(base_dir, "..", "content.json"),
-            "/app/content.json",
+            Path("/app/content.json"),
+            file_dir / "content.json",
+            file_dir.parent / "content.json",
+            Path.cwd() / "content.json",
         ]:
-            if os.path.isfile(candidate):
+            if candidate.is_file():
                 try:
                     with open(candidate, "r", encoding="utf-8") as f:
                         return json.load(f)
@@ -133,45 +152,22 @@ def create_app() -> FastAPI:
             ]
         }
 
-    # ── Widget script (Level 1 drop-in) ───────────────────────────────────────
-    import os
+    # ── Widget script and static pages (Level 1 drop-in) ─────────────────────
     from fastapi.staticfiles import StaticFiles
-    base_dir = os.path.dirname(__file__)
-    widget_dir = os.path.join(base_dir, "widget")
-    if not os.path.isdir(widget_dir):
-        widget_dir = os.path.join(base_dir, "..", "widget")
-    if os.path.isdir(widget_dir):
-        app.mount("/widget", StaticFiles(directory=widget_dir, html=True), name="widget")
-
-    operator_dir = os.path.join(base_dir, "operator")
-    if not os.path.isdir(operator_dir):
-        operator_dir = os.path.join(base_dir, "..", "operator")
-    if os.path.isdir(operator_dir):
-        app.mount("/operator", StaticFiles(directory=operator_dir, html=True), name="operator")
-
-    teacher_dir = os.path.join(base_dir, "teacher")
-    if not os.path.isdir(teacher_dir):
-        teacher_dir = os.path.join(base_dir, "..", "teacher")
-    if os.path.isdir(teacher_dir):
-        app.mount("/teacher-ui", StaticFiles(directory=teacher_dir, html=True), name="teacher-ui")
-
-    pages_dir = os.path.join(base_dir, "pages")
-    if not os.path.isdir(pages_dir):
-        pages_dir = os.path.join(base_dir, "..", "pages")
-    if os.path.isdir(pages_dir):
-        app.mount("/pages", StaticFiles(directory=pages_dir, html=True), name="pages")
-
-    assets_dir = os.path.join(base_dir, "assets")
-    if not os.path.isdir(assets_dir):
-        assets_dir = os.path.join(base_dir, "..", "assets")
-    if os.path.isdir(assets_dir):
-        app.mount("/assets", StaticFiles(directory=assets_dir, html=True), name="assets")
-
-    demo_dir = os.path.join(base_dir, "demo")
-    if not os.path.isdir(demo_dir):
-        demo_dir = os.path.join(base_dir, "..", "demo")
-    if os.path.isdir(demo_dir):
-        app.mount("/demo", StaticFiles(directory=demo_dir, html=True), name="demo")
+    for prefix, name in [
+        ("/widget", "widget"),
+        ("/operator", "operator"),
+        ("/teacher-ui", "teacher"),
+        ("/pages", "pages"),
+        ("/assets", "assets"),
+        ("/demo", "demo"),
+    ]:
+        d = _find_dir(name)
+        if d:
+            logger.info("Mounting static %s from %s", prefix, d)
+            app.mount(prefix, StaticFiles(directory=d, html=True), name=name)
+        else:
+            logger.warning("Static directory '%s' not found for prefix %s", name, prefix)
 
     return app
 
