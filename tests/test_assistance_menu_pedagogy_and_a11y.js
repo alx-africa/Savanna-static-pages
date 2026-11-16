@@ -248,6 +248,17 @@ const answer = true;
   const q2Legend = quizContainer.querySelector('.quiz-question-text');
   assert('Question 2 is now active in legend', !!q2Legend && q2Legend.textContent.includes('WCAG 2.2 AA contrast ratio'));
 
+  // 8B. Resilience: Fenced and Truncated JSON without [QUIZ] tags render interactive UI
+  console.log('\nTesting resilient JSON extraction (fenced & unclosed tags)...');
+  const fencedPayload = 'Practice questions below:\n```json\n{\n  "title": "Fenced Format Quiz",\n  "questions": [\n    {\n      "id": 1,\n      "question": "What is semantic HTML?",\n      "options": ["Meaningful tags", "Style only", "Database engine", "Network cable"],\n      "answer": 0,\n      "explanation": "Semantic tags convey structural meaning."\n    }\n  ]\n}\n```';
+  const fencedLi = window.appendMessage('assistant', fencedPayload, []);
+  assert('Fenced JSON without [QUIZ] tags successfully renders interactive quiz card', !!fencedLi.querySelector('.interactive-quiz-container'));
+  assert('Raw JSON is not displayed in bubble', !fencedLi.querySelector('.message-bubble').textContent.includes('"questions": ['));
+
+  const unclosedPayload = '[QUIZ]\n{\n  "title": "Unclosed Quiz",\n  "questions": [\n    {\n      "id": 1,\n      "question": "Does keyboard focus matter?",\n      "options": ["Yes", "No", "Maybe", "Never"],\n      "answer": 0,\n      "explanation": "Keyboard focus is vital for non-mouse users."\n    }\n  ]\n}';
+  const unclosedLi = window.appendMessage('assistant', unclosedPayload, []);
+  assert('Unclosed [QUIZ] tag without [/QUIZ] successfully renders interactive quiz card', !!unclosedLi.querySelector('.interactive-quiz-container'));
+
   // 9. Axe-Core Accessibility Audit on Enhanced Widget with Quiz & Markdown
   console.log('\nRunning axe-core audit on updated iframe with Quiz & Markdown...');
   const axeResults = await axe.run(document.documentElement, {

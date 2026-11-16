@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
   <title>Savanna Learning Assistant</title>
-  <link rel="stylesheet" href="style.css?v=2.5.0" />
+  <link rel="stylesheet" href="style.css?v=2.6.0" />
   <style>
     /* Iframe-specific overrides — full-height shell */
     html, body { height: 100%; overflow: hidden; }
@@ -2106,6 +2106,125 @@
     return quizWrapper;
   }
 
+  function extractQuizPayload(content) {
+    if (!content) return null;
+
+    let jsonCandidate = '';
+    let preamble = '';
+
+    // Strategy 1: Explicit [QUIZ] ... [/QUIZ] tags
+    const closedTagMatch = content.match(/\[QUIZ\]\s*([\s\S]*?)\s*\[\/QUIZ\]/i);
+    if (closedTagMatch) {
+      preamble = content.replace(/\[QUIZ\]\s*[\s\S]*?\s*\[\/QUIZ\]/i, '').trim();
+      jsonCandidate = closedTagMatch[1].trim();
+    } else {
+      // Strategy 2: [QUIZ] tag without closing [/QUIZ] (e.g. truncated or omitted tag)
+      const openTagMatch = content.match(/\[QUIZ\]\s*([\s\S]+)/i);
+      if (openTagMatch) {
+        preamble = content.slice(0, openTagMatch.index).trim();
+        jsonCandidate = openTagMatch[1].trim();
+      } else {
+        // Strategy 3: Markdown code fence containing "questions"
+        const codeBlockMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?"questions"[\s\S]*?\})\s*```/i);
+        if (codeBlockMatch) {
+          preamble = content.replace(/```(?:json)?\s*\{[\s\S]*?"questions"[\s\S]*?\}\s*```/i, '').trim();
+          jsonCandidate = codeBlockMatch[1].trim();
+        } else {
+          // Strategy 4: Raw JSON object starting with {"title" or {"questions"
+          const firstBrace = content.indexOf('{');
+          if (firstBrace !== -1 && (content.includes('"questions"') || content.includes("'questions'"))) {
+            preamble = content.slice(0, firstBrace).trim();
+            jsonCandidate = content.slice(firstBrace).trim();
+          }
+        }
+      }
+    }
+
+    if (!jsonCandidate) return null;
+
+    // Clean code fences and tags
+    jsonCandidate = jsonCandidate
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/g, '')
+      .replace(/\[\/QUIZ\]$/i, '')
+      .trim();
+
+    // Remove any trailing text after the outermost closing brace '}'
+    const lastBraceIdx = jsonCandidate.lastIndexOf('}');
+    if (lastBraceIdx !== -1) {
+      jsonCandidate = jsonCandidate.slice(0, lastBraceIdx + 1);
+    }
+
+    // Attempt 1: Native JSON.parse
+    let parsed = null;
+    try {
+      parsed = JSON.parse(jsonCandidate);
+    } catch (e1) {
+      // Attempt 2: Strip trailing commas before } or ]
+      const cleanedCommas = jsonCandidate.replace(/,\s*([\]}])/g, '$1');
+      try {
+        parsed = JSON.parse(cleanedCommas);
+      } catch (e2) {
+        // Attempt 3: If JSON was truncated, cut off at the last complete question and close array and object
+        const lastQuestionEnd = cleanedCommas.lastIndexOf('},');
+        const altQuestionEnd = cleanedCommas.lastIndexOf('}\n');
+        const cutPoint = Math.max(lastQuestionEnd !== -1 ? lastQuestionEnd + 1 : -1, altQuestionEnd !== -1 ? altQuestionEnd + 1 : -1);
+        if (cutPoint > 0) {
+          const truncatedCandidate = cleanedCommas.slice(0, cutPoint).replace(/,\s*$/, '') + '\n  ]\n}';
+          try {
+            parsed = JSON.parse(truncatedCandidate);
+          } catch (_) {}
+        }
+        // Attempt 4: Robust fallback question parser using regex
+        if (!parsed) {
+          parsed = fallbackRegexQuizParser(jsonCandidate);
+        }
+      }
+    }
+
+    if (parsed && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+      return {
+        preamble: preamble,
+        quiz: parsed
+      };
+    }
+
+    return null;
+  }
+
+  function fallbackRegexQuizParser(str) {
+    if (!str) return null;
+    let title = 'Quiz';
+    const titleMatch = str.match(/"title"\s*:\s*"([^"]+)"/);
+    if (titleMatch) title = titleMatch[1];
+
+    const questions = [];
+    const qRegex = /\{\s*"id"\s*:\s*(\d+)[\s\S]*?"question"\s*:\s*"([^"]+)"[\s\S]*?"options"\s*:\s*\[([\s\S]*?)\][\s\S]*?"answer"\s*:\s*(\d+)(?:[\s\S]*?"explanation"\s*:\s*"([^"]*)")?/g;
+    let m;
+    while ((m = qRegex.exec(str)) !== null) {
+      const rawOptions = m[3];
+      const opts = [];
+      const optRegex = /"([^"]+)"/g;
+      let om;
+      while ((om = optRegex.exec(rawOptions)) !== null) {
+        opts.push(om[1]);
+      }
+      if (opts.length >= 2) {
+        questions.push({
+          id: parseInt(m[1], 10),
+          question: m[2],
+          options: opts,
+          answer: parseInt(m[4], 10),
+          explanation: m[5] || ''
+        });
+      }
+    }
+    if (questions.length > 0) {
+      return { title: title, questions: questions };
+    }
+    return null;
+  }
+
   function formatTime(date) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
@@ -2122,11 +2241,10 @@
     if (role === 'user') {
       bubble.textContent = content;
     } else {
-      const quizRegex = /\[QUIZ\]\s*([\s\S]*?)\s*\[\/QUIZ\]/i;
-      const quizMatch = content ? content.match(quizRegex) : null;
+      const quizPayload = extractQuizPayload(content);
 
-      if (quizMatch) {
-        const introText = content.replace(quizRegex, '').trim();
+      if (quizPayload && quizPayload.quiz) {
+        const introText = quizPayload.preamble;
         if (introText) {
           const introDiv = document.createElement('div');
           introDiv.className = 'chat-intro-text';
@@ -2134,24 +2252,11 @@
           bubble.appendChild(introDiv);
         }
 
-        let parsedQuiz = null;
-        try {
-          let cleanJson = quizMatch[1].trim();
-          cleanJson = cleanJson.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
-          parsedQuiz = JSON.parse(cleanJson);
-        } catch (jsonErr) {
-          console.warn('[Savanna widget] Quiz JSON parse error:', jsonErr);
+        const quizEl = renderQuizComponent(quizPayload.quiz, bubble, currentLanguage);
+        if (quizEl) {
+          bubble.appendChild(quizEl);
         }
-
-        if (parsedQuiz && Array.isArray(parsedQuiz.questions) && parsedQuiz.questions.length > 0) {
-          const quizEl = renderQuizComponent(parsedQuiz, bubble, currentLanguage);
-          if (quizEl) {
-            bubble.appendChild(quizEl);
-          }
-          spokenAudioText = (introText ? introText + '. ' : '') + (parsedQuiz.title || 'Interactive quiz') + ' with ' + parsedQuiz.questions.length + ' questions.';
-        } else {
-          bubble.innerHTML = renderPedagogicalMarkdown(content);
-        }
+        spokenAudioText = (introText ? introText + '. ' : '') + (quizPayload.quiz.title || 'Interactive quiz') + ' with ' + quizPayload.quiz.questions.length + ' questions.';
       } else {
         bubble.innerHTML = renderPedagogicalMarkdown(content);
       }
@@ -2240,6 +2345,7 @@
   window.appendMessage = appendMessage;
   window.renderPedagogicalMarkdown = renderPedagogicalMarkdown;
   window.renderQuizComponent = renderQuizComponent;
+  window.extractQuizPayload = extractQuizPayload;
 
   function showThinking() {
     const li = document.createElement('li');

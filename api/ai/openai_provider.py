@@ -64,6 +64,10 @@ def get_system_prompt(language: str, simple_mode: bool = False) -> str:
         f"  ]\n"
         f"}}\n"
         f"[/QUIZ]\n"
+        f"CRITICAL FORMATTING INSTRUCTIONS FOR QUIZ:\n"
+        f"- Output the JSON directly between [QUIZ] and [/QUIZ] tags. Do NOT wrap the JSON inside markdown code fences (like ```json).\n"
+        f"- Keep each question and explanation concise so all questions fit completely.\n"
+        f"- Always ensure the JSON is 100% valid with double quotes and close the [/QUIZ] tag properly.\n"
         f"Provide between 5 and 10 questions in the questions array. "
         f"You may precede the [QUIZ] block with a brief 1-line encouraging greeting in {lang_name}."
     )
@@ -172,7 +176,7 @@ class OpenAIProvider(AIProvider):
                 model=self._settings.openai_model,
                 messages=messages,  # type: ignore[arg-type]
                 temperature=0.2,
-                max_tokens=1024,
+                max_tokens=3500,
             )
             text = response.choices[0].message.content or ""
             citations = _extract_citations(text, context_chunks)

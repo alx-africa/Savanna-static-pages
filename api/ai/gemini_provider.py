@@ -25,7 +25,7 @@ class GeminiProvider(AIProvider):
         self.settings = settings
         self.api_key = settings.gemini_api_key.strip()
         self.model = settings.gemini_model or "gemini-3.5-flash"
-        self.timeout = 25.0
+        self.timeout = 40.0
 
     @property
     def name(self) -> str:
@@ -72,8 +72,8 @@ class GeminiProvider(AIProvider):
             },
             "contents": contents,
             "generationConfig": {
-                "temperature": 0.4,
-                "maxOutputTokens": 1024,
+                "temperature": 0.3,
+                "maxOutputTokens": 3500,
             }
         }
 
