@@ -237,7 +237,7 @@
   if (initialLang) {
     iframeSrc += '&lang=' + encodeURIComponent(initialLang);
   }
-  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.8.3';
+  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.8.4';
   iframe.src = iframeSrc;
   iframe.title = 'Savanna Learning Assistant';
   iframe.setAttribute('allow', 'microphone; display-capture');
