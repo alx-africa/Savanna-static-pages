@@ -54,6 +54,8 @@ _DEFAULT_EDGE_VOICES: dict[str, str] = {
     "fr": "fr-FR-DeniseNeural",
 }
 
+ENGLISH_VOICE = "en-US-JennyNeural"
+
 
 def _normalize_speech_punctuation(text: str, lang: str) -> str:
     """
@@ -104,6 +106,13 @@ def _prepare_natural_speech_utterance(text: str, lang: str, default_voice: str) 
         return "", default_voice
 
     if lang != "am":
+        # For non-Amharic sessions, if pure Latin/English, route to English voice
+        if lang in ("ar", "ti"):
+            has_arabic = bool(re.search(r"[\u0600-\u06FF]", clean_text))
+            has_ethiopic = bool(re.search(r"[\u1200-\u137F]", clean_text))
+            has_latin = bool(re.search(r"[a-zA-Z]", clean_text))
+            if has_latin and not has_arabic and not has_ethiopic:
+                return clean_text, ENGLISH_VOICE
         return clean_text, default_voice
 
     has_ethiopic = bool(re.search(r"[\u1200-\u137F]", clean_text))
@@ -111,15 +120,98 @@ def _prepare_natural_speech_utterance(text: str, lang: str, default_voice: str) 
 
     # Case 1: Pure Latin / English utterance -> speak with native English voice
     if has_latin and not has_ethiopic:
-        return clean_text, "en-US-JennyNeural"
+        return clean_text, ENGLISH_VOICE
 
     # Case 2: Ethiopic text -> normalize punctuation pauses and speak with Amharic voice
     clean_text = _normalize_speech_punctuation(clean_text, lang)
     return clean_text, default_voice
 
 
+def _segment_bilingual_utterance(text: str, lang: str, default_voice: str) -> list[tuple[str, str]]:
+    """
+    Intelligent code-switching and bilingual routing for Edge-TTS:
+    If a word or phrase is English (acronym, abbreviation, scientific name, tech term,
+    or pure English sentence), route that specific segment to English native neural voice
+    (en-US-JennyNeural), while narrating the native language portions with their authentic voice.
+    """
+    clean_text = text.strip()
+    if not clean_text:
+        return []
+
+    if lang == "en":
+        return [(clean_text, default_voice)]
+
+    has_ethiopic = bool(re.search(r"[\u1200-\u137F]", clean_text))
+    has_arabic = bool(re.search(r"[\u0600-\u06FF]", clean_text))
+    has_latin = bool(re.search(r"[a-zA-Z]", clean_text))
+
+    # Case 1: Pure Latin / English utterance in non-Latin script languages (am, ti, ar)
+    if lang in ("am", "ti") and has_latin and not has_ethiopic:
+        return [(clean_text, ENGLISH_VOICE)]
+    if lang == "ar" and has_latin and not has_arabic:
+        return [(clean_text, ENGLISH_VOICE)]
+
+    # Case 2: Pattern for English tokens and phrases
+    if lang in ("am", "ti", "ar"):
+        # In Ethiopic or Arabic script, any sequence of Latin words/symbols is English
+        en_pattern = re.compile(r"([A-Za-z0-9_#+.-]+(?:\s+[A-Za-z0-9_#+.-]+)*)")
+    else:
+        # In Latin-script languages (om, so, sw, fr):
+        # Match uppercase acronyms (e.g. NASA, WHO, API, REST, SQL, AWS, AI, CPU, RAM, HTML, CSS),
+        # dotted abbreviations, versions (COVID-19, IPv4, OAuth2), technical terms, and scientific names
+        en_pattern = re.compile(
+            r"("
+            r"(?<![A-Za-z0-9])(?:COVID-19|IPv4|IPv6|OAuth2|W3C|WCAG|Web3)(?![A-Za-z0-9])"
+            r"|\b[A-Z]{2,6}\b"
+            r"|\b(?:[A-Z]\.){2,}\b"
+            r"|(?i:\b(?:Machine\s+Learning|Artificial\s+Intelligence|Data\s+Science|Software\s+Engineer(?:ing)?|Full-?Stack|Cloud\s+Computing|Computer\s+Science|Virtual\s+Assistant|Deep\s+Learning|Cyber\s+Security|Front-?end|Back-?end|REST\s+API|Homo\s+sapiens|Panthera\s+leo|Escherichia\s+coli|Canis\s+lupus)\b)"
+            r")"
+        )
+
+    segments: list[tuple[str, str]] = []
+    last_idx = 0
+    for m in en_pattern.finditer(clean_text):
+        start, end = m.span()
+        matched = m.group(1).strip()
+        if not re.search(r"[a-zA-Z]", matched):
+            continue
+        # Avoid treating common native short words as English in Latin-script languages
+        if lang in ("so", "sw", "om", "fr") and matched.lower() in (
+            "iyo", "ama", "ee", "ku", "waa", "waxaa", "na", "ya", "wa", "kwa", "ni", "cha", "et", "ou", "de", "la", "le", "un", "une"
+        ):
+            continue
+
+        if start > last_idx:
+            prefix = clean_text[last_idx:start]
+            if prefix.strip():
+                clean_prefix = _normalize_speech_punctuation(prefix.strip(), lang) if lang in ("am", "ti") else prefix.strip()
+                segments.append((clean_prefix, default_voice))
+
+        segments.append((matched, ENGLISH_VOICE))
+        last_idx = end
+
+    if last_idx < len(clean_text):
+        suffix = clean_text[last_idx:]
+        if suffix.strip():
+            clean_suffix = _normalize_speech_punctuation(suffix.strip(), lang) if lang in ("am", "ti") else suffix.strip()
+            segments.append((clean_suffix, default_voice))
+
+    if not segments:
+        norm_text = _normalize_speech_punctuation(clean_text, lang) if lang in ("am", "ti") else clean_text
+        return [(norm_text, default_voice)]
+
+    # Merge adjacent segments with identical voice for efficient streaming
+    merged: list[tuple[str, str]] = []
+    for s_text, s_voice in segments:
+        if merged and merged[-1][1] == s_voice:
+            merged[-1] = (merged[-1][0] + " " + s_text, s_voice)
+        else:
+            merged.append((s_text, s_voice))
+    return merged
+
+
 class EdgeTTSProvider(BaseTTSProvider):
-    """Neural voice synthesis via Microsoft Edge-TTS."""
+    """Neural voice synthesis via Microsoft Edge-TTS with bilingual English code-switching."""
 
     def __init__(self):
         # 25.0s timeout ensures long curriculum paragraphs and detailed multimodal
@@ -154,15 +246,28 @@ class EdgeTTSProvider(BaseTTSProvider):
             )
 
         default_voice = voice or _DEFAULT_EDGE_VOICES[lang]
-        synth_text, active_voice = _prepare_natural_speech_utterance(text, lang, default_voice)
-        if not synth_text:
+        segments = _segment_bilingual_utterance(text, lang, default_voice)
+        if not segments:
             raise ValueError("Cannot synthesize empty text.")
 
         try:
-            audio_buffer = await asyncio.wait_for(
-                self._stream_segment(synth_text, active_voice),
-                timeout=self.timeout
-            )
+            # Case A: Single voice utterance (Pure native or pure English)
+            if len(segments) == 1:
+                seg_text, active_voice = segments[0]
+                audio_buffer = await asyncio.wait_for(
+                    self._stream_segment(seg_text, active_voice),
+                    timeout=self.timeout
+                )
+            else:
+                # Case B: Mixed code-switching utterance (Concurrent synthesis of native and English segments)
+                tasks = [
+                    asyncio.wait_for(self._stream_segment(s_text, s_voice), timeout=self.timeout)
+                    for s_text, s_voice in segments
+                ]
+                buffers = await asyncio.gather(*tasks)
+                audio_buffer = b"".join(buffers)
+                active_voice = f"{default_voice}+{ENGLISH_VOICE}"
+
             if not audio_buffer:
                 raise RuntimeError("Edge-TTS produced no audio frames.")
 

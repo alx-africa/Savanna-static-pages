@@ -487,8 +487,9 @@ async def batch_translate(req: BatchTranslateRequest) -> BatchTranslateResponse:
         if translated_count > 0:
             _save_persistent_cache()
 
-        # Build normalized lookup map from new_translations for flexible key matching
+        # Build normalized and lowercase lookup maps from new_translations for resilient key matching
         normalized_new = {_normalize_text(k): v for k, v in new_translations.items()}
+        lower_new = {_normalize_text(k).lower(): v for k, v in new_translations.items()}
 
         # Fill results
         for s in req.strings:
@@ -496,12 +497,15 @@ async def batch_translate(req: BatchTranslateRequest) -> BatchTranslateResponse:
             if s not in results:
                 ck = _get_cache_key(target, cleaned)
                 norm_s = _normalize_text(cleaned)
+                lower_s = norm_s.lower()
                 if ck in TRANSLATION_CACHE:
                     results[s] = TRANSLATION_CACHE[ck]
                 elif norm_s in normalized_new:
                     results[s] = normalized_new[norm_s]
                 elif cleaned in new_translations:
                     results[s] = new_translations[cleaned]
+                elif lower_s in lower_new:
+                    results[s] = lower_new[lower_s]
                 else:
                     results[s] = s
 

@@ -637,7 +637,7 @@
       dynamicTransCache[lang] = {};
     }
     for (const [k, v] of Object.entries(map || {})) {
-      if (k && v) {
+      if (k && v && typeof v === 'string' && v.trim() && v.trim().toLowerCase() !== k.trim().toLowerCase()) {
         dynamicTransCache[lang][k] = v;
         dynamicTransCache[lang][normalizeText(k)] = v;
       }
@@ -647,6 +647,35 @@
         localStorage.setItem(DYN_TRANS_PREFIX + lang, JSON.stringify(dynamicTransCache[lang]));
       }
     } catch (_) {}
+  }
+
+  function substituteElementText(el, translatedText) {
+    if (!el || !translatedText || translatedText === el.textContent) return;
+    if (!el.dataset.sa11yOrigText) {
+      el.dataset.sa11yOrigText = (el.innerText || el.textContent || '').trim();
+    }
+    const hasComplexChildren = el.querySelector('button, input, select, textarea, canvas, svg, iframe');
+    if (!hasComplexChildren) {
+      el.textContent = translatedText;
+    } else {
+      const firstTextNode = Array.from(el.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.nodeValue.trim());
+      if (firstTextNode) {
+        firstTextNode.nodeValue = translatedText;
+      }
+    }
+  }
+
+  function isPureEnglishText(text, lang) {
+    if (!text || typeof text !== 'string') return false;
+    const clean = text.trim();
+    if (!/[a-zA-Z]/.test(clean)) return false;
+    // For Ethiopic script languages (am, ti), if no Ethiopic glyphs, it is pure English
+    if ((lang === 'am' || lang === 'ti') && !/[\u1200-\u137F]/.test(clean)) return true;
+    // For Arabic script languages, if no Arabic glyphs, it is pure English
+    if (lang === 'ar' && !/[\u0600-\u06FF]/.test(clean)) return true;
+    // Check for common uppercase acronyms, tech terms, or scientific names
+    if (/^([A-Z]{2,6}|(?:[A-Z]\.){2,}|COVID-19|REST API|AWS|HTML|CSS|SQL|API|AI|UI\/UX|Machine Learning|Software Engineering|Data Science)$/i.test(clean)) return true;
+    return false;
   }
 
   function getEffectiveApiUrl() {
@@ -740,7 +769,6 @@
     if (!attemptedBatchStrings[lang]) attemptedBatchStrings[lang] = new Set();
     stringsToTranslate.forEach(s => {
       pendingBatchStrings[lang].delete(s);
-      attemptedBatchStrings[lang].add(s);
     });
 
     if (stringsToTranslate.length === 0) return;
@@ -769,6 +797,12 @@
           const data = await resp.json();
           if (data && data.translations && typeof data.translations === 'object') {
             setDynamicTransBatch(lang, data.translations);
+            // Mark only genuinely translated strings in attemptedBatchStrings
+            for (const [origStr, transStr] of Object.entries(data.translations)) {
+              if (transStr && typeof transStr === 'string' && transStr.trim() && transStr.trim().toLowerCase() !== origStr.trim().toLowerCase()) {
+                attemptedBatchStrings[lang].add(origStr);
+              }
+            }
             if (currentLang === lang) {
               translateHostPage(lang);
               if (typeof window !== 'undefined') {
@@ -796,7 +830,7 @@
       if (pendingBatchStrings[lang] && pendingBatchStrings[lang].size > 0 && currentLang === lang) {
         setTimeout(() => {
           dispatchBatchTranslation(lang);
-        }, 500);
+        }, 80);
       } else if (!dispatchedInBatch && currentLang === lang && (!pendingBatchStrings[lang] || pendingBatchStrings[lang].size === 0)) {
         if (typeof window !== 'undefined') {
           const Evt = window.CustomEvent || (typeof CustomEvent !== 'undefined' ? CustomEvent : null);
@@ -1010,6 +1044,15 @@
       return scoreB - scoreA;
     });
 
+    if (lang === 'en') {
+      document.querySelectorAll('[data-sa11y-orig-text]').forEach(el => {
+        if (el.dataset.sa11yOrigText) {
+          el.textContent = el.dataset.sa11yOrigText;
+          delete el.dataset.sa11yOrigText;
+        }
+      });
+    }
+
     for (const node of textNodes) {
       if (!originalTextMap.has(node)) {
         originalTextMap.set(node, node.nodeValue);
@@ -1092,20 +1135,6 @@
           node.nodeValue = leadingWs + patterns[lang] + trailingWs;
           continue;
         }
-      }
-
-      // Substring phrase replacement
-      let replacedText = orig;
-      let didReplace = false;
-      for (const [key, map] of Object.entries(DOM_TRANSLATIONS)) {
-        if (key.length >= 4 && map[lang] && replacedText.includes(key)) {
-          replacedText = replacedText.split(key).join(map[lang]);
-          didReplace = true;
-        }
-      }
-      if (didReplace) {
-        node.nodeValue = replacedText;
-        continue;
       }
 
       // Not found in static dictionary or cache: Queue for dynamic batch translation
@@ -2593,14 +2622,16 @@
 
   async function speakVisualDescription(text) {
     if (!text) return;
-    const cleanText = normalizeSpeechPunctuation(text, currentLang);
-    const bcp47 = BCP47_A11Y[currentLang] || 'en-US';
+    const isEn = (currentLang === 'en') || isPureEnglishText(text, currentLang);
+    const speechLang = isEn ? 'en' : currentLang;
+    const cleanText = normalizeSpeechPunctuation(text, speechLang);
+    const bcp47 = isEn ? 'en-US' : (BCP47_A11Y[speechLang] || 'en-US');
 
     // 1. Try native browser voice if available for this language
     if ('speechSynthesis' in window && window.speechSynthesis.getVoices) {
       try {
         const voices = window.speechSynthesis.getVoices();
-        const prefix = currentLang.toLowerCase();
+        const prefix = speechLang.toLowerCase();
         const hasVoice = voices.some(v => v.lang && v.lang.toLowerCase().startsWith(prefix));
         if (hasVoice) {
           if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
@@ -2628,14 +2659,14 @@
       }
       activeA11yAbort = new AbortController();
 
-      const cacheKey = currentLang + ':' + cleanText;
+      const cacheKey = speechLang + ':' + cleanText;
       let audioUrl = a11yAudioCache.get(cacheKey);
       if (!audioUrl) {
         const apiUrl = getEffectiveApiUrl();
         const resp = await fetch(apiUrl + '/speech/synthesize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: cleanText, language: currentLang }),
+          body: JSON.stringify({ text: cleanText, language: speechLang }),
           signal: activeA11yAbort.signal
         });
         if (resp.ok) {
@@ -2964,11 +2995,22 @@
     }
 
     // If user selected a non-English language but the paragraph is in English,
-    // dynamically translate and speak in their authentic chosen language!
+    // dynamically translate, substitute into the DOM visually, and speak in their chosen language!
     if (currentLang !== 'en' && /[a-zA-Z]/.test(rawText)) {
       const transKey = `trans_${currentLang}`;
       if (node.dataset[transKey]) {
-        const fullText = `${prefix}${node.dataset[transKey]}`;
+        const trans = node.dataset[transKey];
+        substituteElementText(node, trans);
+        const fullText = `${prefix}${trans}`;
+        announce(fullText);
+        speakVisualDescription(fullText);
+        return;
+      }
+      const cachedTrans = getDynamicTrans(currentLang, rawText);
+      if (cachedTrans) {
+        node.dataset[transKey] = cachedTrans;
+        substituteElementText(node, cachedTrans);
+        const fullText = `${prefix}${cachedTrans}`;
         announce(fullText);
         speakVisualDescription(fullText);
         return;
@@ -2983,7 +3025,11 @@
         .then(r => r.json())
         .then(d => {
           const trans = (d.translations && d.translations[rawText]) || rawText;
-          node.dataset[transKey] = trans;
+          if (trans && trans !== rawText) {
+            node.dataset[transKey] = trans;
+            setDynamicTransBatch(currentLang, { [rawText]: trans });
+            substituteElementText(node, trans);
+          }
           if (document.activeElement === node || node.classList.contains('sa11y-text-focused')) {
             const fullText = `${prefix}${trans}`;
             announce(fullText);

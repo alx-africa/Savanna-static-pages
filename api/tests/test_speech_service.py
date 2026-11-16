@@ -157,6 +157,43 @@ class TestEdgeTTSProvider(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(voice, "am-ET-MekdesNeural")
         self.assertEqual(synth_text, "የ AI እና API ኮርስ")
 
+    def test_segment_bilingual_utterance(self):
+        from speech.edgetts_provider import _segment_bilingual_utterance, ENGLISH_VOICE
+
+        # 1. Pure English text in Amharic session
+        segs = _segment_bilingual_utterance("Cloud Computing Architecture", "am", "am-ET-MekdesNeural")
+        self.assertEqual(len(segs), 1)
+        self.assertEqual(segs[0], ("Cloud Computing Architecture", ENGLISH_VOICE))
+
+        # 2. Amharic with acronyms and scientific name
+        am_text = "በ NASA የተዘጋጀ የ Panthera leo ጥናት እና REST API ነው።"
+        segs = _segment_bilingual_utterance(am_text, "am", "am-ET-MekdesNeural")
+        # Should have alternating native and English segments
+        voices = [v for _, v in segs]
+        self.assertIn(ENGLISH_VOICE, voices)
+        self.assertIn("am-ET-MekdesNeural", voices)
+        # Check specific English tokens routed to ENGLISH_VOICE
+        en_tokens = [t for t, v in segs if v == ENGLISH_VOICE]
+        self.assertTrue(any("NASA" in t for t in en_tokens))
+        self.assertTrue(any("REST API" in t for t in en_tokens))
+
+        # 3. Arabic with technical acronym
+        ar_text = "هذا هو REST API لـ Python و AWS Cloud"
+        segs = _segment_bilingual_utterance(ar_text, "ar", "ar-SA-ZariyahNeural")
+        ar_en_tokens = [t for t, v in segs if v == ENGLISH_VOICE]
+        self.assertTrue(any("REST API" in t for t in ar_en_tokens))
+        self.assertTrue(any("Python" in t for t in ar_en_tokens))
+        self.assertTrue(any("AWS Cloud" in t for t in ar_en_tokens))
+
+        # 4. Somali with uppercase acronym
+        so_text = "Hayada WHO iyo xarunta NASA ee baaray COVID-19"
+        segs = _segment_bilingual_utterance(so_text, "so", "so-SO-UbaxNeural")
+        so_en_tokens = [t for t, v in segs if v == ENGLISH_VOICE]
+        self.assertTrue(any("WHO" in t for t in so_en_tokens))
+        self.assertTrue(any("NASA" in t for t in so_en_tokens))
+        self.assertTrue(any("COVID-19" in t for t in so_en_tokens))
+
+
 
 class TestSpeechServiceCoordinator(unittest.IsolatedAsyncioTestCase):
     """Test provider resolution, caching, and secret sanitization in SpeechService."""

@@ -1257,11 +1257,25 @@
     }
   }
 
+  function srAnnounce(msg) {
+    let ann = document.getElementById('savanna-live-announcer');
+    if (!ann) {
+      ann = document.createElement('div');
+      ann.id = 'savanna-live-announcer';
+      ann.setAttribute('role', 'status');
+      ann.setAttribute('aria-live', 'polite');
+      ann.setAttribute('aria-atomic', 'true');
+      ann.style.cssText = 'position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;';
+      document.body.appendChild(ann);
+    }
+    ann.textContent = msg;
+  }
+
   function toggleWidgetSize() {
     const nextSize = (currentWidgetSize === 'compact') ? 'standard' : 'compact';
     updateSizeUI(nextSize);
     parent.postMessage({ type: 'set_size', size: nextSize }, '*');
-    speakFocus(nextSize === 'compact'
+    srAnnounce(nextSize === 'compact'
       ? (currentLanguage === 'am' ? 'የውይይት መስኮቱ ወደ ትንሽ መጠን ተቀይሯል።' : 'Chat window switched to compact small size.')
       : (currentLanguage === 'am' ? 'የውይይት መስኮቱ ወደ መደበኛ መጠን ተመልሷል።' : 'Chat window restored to standard size.')
     );
@@ -1630,7 +1644,15 @@
 
   async function playSpeechAudio(text, lang) {
     if (!text) return;
-    const targetLang = lang || currentLanguage || 'en';
+    let targetLang = lang || currentLanguage || 'en';
+    if (targetLang !== 'en') {
+      const hasEthiopic = /[\u1200-\u137F]/.test(text);
+      const hasArabic = /[\u0600-\u06FF]/.test(text);
+      const hasLatin = /[a-zA-Z]/.test(text);
+      if (hasLatin && !hasEthiopic && !hasArabic) {
+        targetLang = 'en';
+      }
+    }
 
     // 1. Check if browser has a matching local voice (instant, 0ms)
     if (window.speechSynthesis && window.speechSynthesis.getVoices) {

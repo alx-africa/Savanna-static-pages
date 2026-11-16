@@ -136,7 +136,12 @@
       margin: 0 !important;
       padding: 0 !important;
       border: 1px solid rgba(0,0,0,0.12) !important;
-      transition: width 0.22s ease, height 0.22s ease, transform 0.22s ease !important;
+      transform-origin: bottom right !important;
+      will-change: transform, opacity !important;
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease !important;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #savanna-iframe-container { transition: none !important; }
     }
     #savanna-iframe-container.savanna-open { display: block !important; }
 
@@ -581,7 +586,15 @@
 
   async function speakHost(text) {
     if (!isVoiceGuideEnabled() || !text) return;
-    const currentLang = safeStorageGet('savanna_lang', 'en');
+    let currentLang = safeStorageGet('savanna_lang', 'en');
+    if (currentLang !== 'en') {
+      const hasEthiopic = /[\u1200-\u137F]/.test(text);
+      const hasArabic = /[\u0600-\u06FF]/.test(text);
+      const hasLatin = /[a-zA-Z]/.test(text);
+      if (hasLatin && !hasEthiopic && !hasArabic) {
+        currentLang = 'en';
+      }
+    }
     const bcp47 = BCP47_HOST[currentLang] || 'en-US';
 
     // 1. Check if browser has a matching local voice for this language (0ms native Web Speech)
