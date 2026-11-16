@@ -155,7 +155,7 @@
   if (initialLang) {
     iframeSrc += '&lang=' + encodeURIComponent(initialLang);
   }
-  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.7.3';
+  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.8.0';
   iframe.src = iframeSrc;
   iframe.title = 'Savanna Learning Assistant';
   iframe.setAttribute('allow', 'microphone; display-capture');
@@ -361,8 +361,22 @@
     'fr': 'fr-FR'
   };
 
+  function safeStorageGet(key, fallback = null) {
+    try {
+      const val = window.localStorage ? window.localStorage.getItem(key) : null;
+      return (val !== null && val !== undefined) ? val : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+  function safeStorageSet(key, val) {
+    try {
+      if (window.localStorage) window.localStorage.setItem(key, val);
+    } catch (_) {}
+  }
+
   function isVoiceGuideEnabled() {
-    return localStorage.getItem(VOICE_GUIDE_KEY) !== 'false';
+    return safeStorageGet(VOICE_GUIDE_KEY) !== 'false';
   }
 
   let activeHostAudio = null;
@@ -372,7 +386,7 @@
 
   async function speakHost(text) {
     if (!isVoiceGuideEnabled() || !text) return;
-    const currentLang = localStorage.getItem('savanna_lang') || 'en';
+    const currentLang = safeStorageGet('savanna_lang', 'en');
     const bcp47 = BCP47_HOST[currentLang] || 'en-US';
 
     // 1. Check if browser has a matching local voice for this language (0ms native Web Speech)
@@ -460,7 +474,7 @@
     if (!el || el === document.body || el === document.documentElement) return null;
     if (el.dataset && (el.dataset.sa11yBound || el.dataset.sa11yTextBound)) return null;
 
-    const curLang = localStorage.getItem('savanna_lang') || 'en';
+    const curLang = safeStorageGet('savanna_lang', 'en');
     const r = I18N_ROLES[curLang] || I18N_ROLES.en;
 
     let label = el.getAttribute('aria-label') || '';
@@ -500,7 +514,7 @@
 
   // Speak trigger button specifically when focused
   trigger.addEventListener('focus', function () {
-    const curLang = localStorage.getItem('savanna_lang') || 'en';
+    const curLang = safeStorageGet('savanna_lang', 'en');
     const triggerDescs = {
       'en': isOpen ? 'Close learning assistant, button, expanded' : 'Open learning assistant, button, collapsed',
       'am': isOpen ? 'ረዳትን ዝጋ፣ አዝራር፣ ተከፍቷል' : 'ረዳትን ክፈት፣ አዝራር፣ ተዘግቷል',
@@ -538,7 +552,7 @@
 
   // Prewarm host page interactive cues in background for zero-latency Tab speech
   function prewarmHostNavigation() {
-    const curLang = localStorage.getItem('savanna_lang') || 'en';
+    const curLang = safeStorageGet('savanna_lang', 'en');
     if (curLang === 'en') return;
     const elements = document.querySelectorAll('a, button, input, [role="button"], [tabindex="0"]');
     const seen = new Set();
@@ -629,7 +643,7 @@
         const content = this.getAttribute('content');
 
         if (lang) {
-          localStorage.setItem('savanna_lang', lang);
+          safeStorageSet('savanna_lang', lang);
           if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage({ type: 'set_lang', lang: lang }, '*');
           }

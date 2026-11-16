@@ -295,16 +295,32 @@
   const apiUrl    = rawApi || (typeof window !== 'undefined' && window.location ? window.location.origin : '/api');
   const paramLang = params.get('lang');
 
+  /* ── Safe Web Storage Wrapper (prevents sandboxed iframe security crashes) ── */
+  function safeGet(storage, key, fallback = null) {
+    try {
+      const val = storage ? storage.getItem(key) : null;
+      return (val !== null && val !== undefined) ? val : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+  function safeSet(storage, key, val) {
+    try {
+      if (storage) storage.setItem(key, val);
+    } catch (_) {}
+  }
+
   /* ── Session & history ───────────────────────────────────── */
   const SESSION_KEY = 'savanna_session_id';
   function uuidv4() {
     return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
       (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
   }
-  if (!sessionStorage.getItem(SESSION_KEY)) {
-    sessionStorage.setItem(SESSION_KEY, uuidv4());
+  let sessionId = safeGet(sessionStorage, SESSION_KEY);
+  if (!sessionId) {
+    sessionId = uuidv4();
+    safeSet(sessionStorage, SESSION_KEY, sessionId);
   }
-  const sessionId = sessionStorage.getItem(SESSION_KEY);
   const history   = []; // { role: 'user'|'assistant', content: string }
 
   /* ── Language state (8-Language Matrix + Auto-Detect) ────── */
@@ -326,7 +342,7 @@
     'auto': 'en-US'
   };
 
-  let currentLanguage = localStorage.getItem(LANG_KEY);
+  let currentLanguage = safeGet(localStorage, LANG_KEY);
   if (!currentLanguage) {
     if (paramLang && (paramLang === 'auto' || BCP47_MAP[paramLang])) {
       currentLanguage = paramLang;
@@ -334,9 +350,8 @@
       currentLanguage = 'auto';
     }
   }
-
-  let voiceGuideEnabled = localStorage.getItem(VOICE_GUIDE_KEY) !== 'false';
-  let simpleModeEnabled = localStorage.getItem(SIMPLE_MODE_KEY) === 'true';
+  let voiceGuideEnabled = safeGet(localStorage, VOICE_GUIDE_KEY) !== 'false';
+  let simpleModeEnabled = safeGet(localStorage, SIMPLE_MODE_KEY) === 'true';
   let isListening = false;
   let recognition = null;
   let activePageContext = null;
@@ -1076,7 +1091,7 @@
     if (voiceApproveBtn) voiceApproveBtn.setAttribute('aria-label', t.voiceApproveSend || 'Approve recording and send question to assistant');
     if (typeof updateContextUI === 'function') updateContextUI();
 
-    localStorage.setItem(LANG_KEY, currentLanguage);
+    safeSet(localStorage, LANG_KEY, currentLanguage);
     if (recognition) recognition.lang = BCP47_MAP[currentLanguage] || 'en-US';
 
     try {
@@ -1113,8 +1128,8 @@
 
   function checkLanguageSuggestion() {
     if (!suggestionBanner) return;
-    if (sessionStorage.getItem(SUGGESTION_DISMISSED_KEY)) return;
-    if (localStorage.getItem(USER_CHOSEN_KEY) === 'true') return;
+    if (safeGet(sessionStorage, SUGGESTION_DISMISSED_KEY)) return;
+    if (safeGet(localStorage, USER_CHOSEN_KEY) === 'true') return;
 
     let candidate = null;
 
@@ -1149,7 +1164,7 @@
 
       suggestionAccept.onclick = function () {
         currentLanguage = candidate;
-        localStorage.setItem(USER_CHOSEN_KEY, 'true');
+        safeSet(localStorage, USER_CHOSEN_KEY, 'true');
         applyLanguage();
         suggestionBanner.setAttribute('hidden', '');
         speakFocus((LANG_NAMES[candidate] || candidate) + ' selected');
@@ -1157,7 +1172,7 @@
 
       suggestionDismiss.onclick = function () {
         suggestionBanner.setAttribute('hidden', '');
-        sessionStorage.setItem(SUGGESTION_DISMISSED_KEY, 'true');
+        safeSet(sessionStorage, SUGGESTION_DISMISSED_KEY, 'true');
       };
     }
   }
@@ -1169,7 +1184,7 @@
   if (langSelect) {
     langSelect.addEventListener('change', function () {
       currentLanguage = langSelect.value;
-      localStorage.setItem(USER_CHOSEN_KEY, 'true');
+      safeSet(localStorage, USER_CHOSEN_KEY, 'true');
       if (suggestionBanner) suggestionBanner.setAttribute('hidden', '');
       applyLanguage();
       const speakMap = {
@@ -1190,7 +1205,7 @@
   /* ── Voice guidance toggle ───────────────────────────────── */
   voiceGuideBtn.addEventListener('click', function () {
     voiceGuideEnabled = !voiceGuideEnabled;
-    localStorage.setItem(VOICE_GUIDE_KEY, voiceGuideEnabled ? 'true' : 'false');
+    safeSet(localStorage, VOICE_GUIDE_KEY, voiceGuideEnabled ? 'true' : 'false');
     applyLanguage();
     const t = getI18n();
     speakFocus(voiceGuideEnabled ? t.voiceGuideActive : t.voiceGuideInactive);
@@ -1199,7 +1214,7 @@
   /* ── Simple Mode (plain language) toggle ─────────────────── */
   simpleModeBtn.addEventListener('click', function () {
     simpleModeEnabled = !simpleModeEnabled;
-    localStorage.setItem(SIMPLE_MODE_KEY, simpleModeEnabled ? 'true' : 'false');
+    safeSet(localStorage, SIMPLE_MODE_KEY, simpleModeEnabled ? 'true' : 'false');
     applyLanguage();
     const t = getI18n();
     speakFocus(simpleModeEnabled ? t.simpleModeActive : t.simpleModeInactive);
@@ -1419,7 +1434,7 @@
   if (selectionPill) selectionPill.addEventListener('click', function () { handlePillClick('selection'); });
 
   /* ── Audio Playback Speed Controls (0.8x, 1.0x, 1.25x) ──── */
-  let currentPlaybackRate = parseFloat(localStorage.getItem('savanna_playback_rate') || '1.0');
+  let currentPlaybackRate = parseFloat(safeGet(localStorage, 'savanna_playback_rate', '1.0'));
   if (![0.8, 1.0, 1.25].includes(currentPlaybackRate)) currentPlaybackRate = 1.0;
 
   function cyclePlaybackRate(btn) {
@@ -1427,7 +1442,7 @@
     else if (currentPlaybackRate === 1.25) currentPlaybackRate = 0.8;
     else currentPlaybackRate = 1.0;
 
-    localStorage.setItem('savanna_playback_rate', currentPlaybackRate.toString());
+    safeSet(localStorage, 'savanna_playback_rate', currentPlaybackRate.toString());
     document.querySelectorAll('.btn-audio-speed').forEach(function (b) {
       b.textContent = currentPlaybackRate + 'x';
       b.setAttribute('aria-label', (getI18n().speedLabel || 'Playback speed') + ': ' + currentPlaybackRate + 'x. Click to change.');
@@ -1741,7 +1756,7 @@
     } else if (e.data.type === 'set_lang' && e.data.lang) {
       if (BCP47_MAP[e.data.lang] || e.data.lang === 'auto') {
         currentLanguage = e.data.lang;
-        localStorage.setItem(USER_CHOSEN_KEY, 'true');
+        safeSet(localStorage, USER_CHOSEN_KEY, 'true');
         if (suggestionBanner) suggestionBanner.setAttribute('hidden', '');
         applyLanguage();
       }

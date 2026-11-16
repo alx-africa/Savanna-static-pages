@@ -113,17 +113,45 @@ class SpeechService:
     async def transcribe(
         self, audio_bytes: bytes, filename: str, language_hint: str = "auto"
     ) -> TranscribeResult:
-        """Transcribe speech audio using the active STT provider."""
+        """Transcribe speech audio using active STT provider with automatic Gemini fallback."""
+        if not self.stt_provider.is_configured():
+            raise RuntimeError("Speech transcription provider is not configured.")
+
+        primary_exc = None
+        res = None
         try:
-            return await self.stt_provider.transcribe(
+            res = await self.stt_provider.transcribe(
                 audio_bytes=audio_bytes,
                 filename=filename,
                 language_hint=language_hint,
             )
+            if res and res.text and res.text.strip():
+                return res
         except Exception as exc:
-            clean_err = sanitize_secrets(str(exc), self.settings.addis_api_key, self.settings.openai_api_key)
-            # Re-raise with sanitized message
+            primary_exc = exc
+            logger.warning("Primary STT provider failed: %s", exc)
+
+        # Automatic fallback to Gemini Multimodal STT if configured
+        if self.settings.gemini_api_key and not isinstance(self.stt_provider, GeminiSTTProvider):
+            try:
+                gemini_stt = GeminiSTTProvider(
+                    api_key=self.settings.gemini_api_key,
+                    model=self.settings.gemini_model or "gemini-3.5-flash-lite",
+                )
+                logger.info("Falling back to Gemini Multimodal STT.")
+                return await gemini_stt.transcribe(
+                    audio_bytes=audio_bytes,
+                    filename=filename,
+                    language_hint=language_hint,
+                )
+            except Exception as g_exc:
+                logger.warning("Gemini STT fallback failed: %s", g_exc)
+
+        if primary_exc is not None:
+            clean_err = sanitize_secrets(str(primary_exc), self.settings.addis_api_key, self.settings.openai_api_key)
             raise RuntimeError(clean_err) from None
+
+        return res if res is not None else TranscribeResult(text="", language=language_hint, confidence=0.0, duration_seconds=0.0, provider="none")
 
     async def synthesize(
         self, text: str, language: str, voice: Optional[str] = None

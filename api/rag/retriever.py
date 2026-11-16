@@ -245,17 +245,27 @@ def _build_bm25_corpus() -> dict[str, Any]:
 
     from rag.ingest import extract_semantic_sections
 
+    seen_bm25_ids: set[str] = set()
     # 1. Index course HTML pages from pages/
     if pages_dir.exists():
         for html_file in sorted(pages_dir.glob("*.html")):
             try:
                 raw_html = html_file.read_text(encoding="utf-8", errors="replace")
                 secs = extract_semantic_sections(raw_html, html_file.name, "course")
-                for sec in secs:
+                for s_idx, sec in enumerate(secs):
                     sec_chunks = _chunk(sec["text"])
                     anchor_id = sec.get("anchor", "")
                     for idx, c in enumerate(sec_chunks):
-                        cid = f"{html_file.stem}_{anchor_id or idx}" if idx == 0 and anchor_id else f"{html_file.stem}_{idx}"
+                        if idx == 0 and anchor_id:
+                            base_cid = f"{html_file.stem}_{anchor_id}"
+                        else:
+                            base_cid = f"{html_file.stem}_s{s_idx}_c{idx}"
+                        cid = base_cid
+                        cnt = 1
+                        while cid in seen_bm25_ids:
+                            cid = f"{base_cid}_{cnt}"
+                            cnt += 1
+                        seen_bm25_ids.add(cid)
                         chunks.append({
                             "id": cid,
                             "text": c,
@@ -395,7 +405,7 @@ def _retrieve_bm25_sync(
                 denom = tf + k1 * (1.0 - b + b * (doc_lens[i] / avgdl))
                 score += cur_idf * (tf * (k1 + 1.0)) / denom
 
-        if score > 0.5:
+        if score > 0.05:
             scores.append((score, i))
 
     scores.sort(key=lambda s: s[0], reverse=True)

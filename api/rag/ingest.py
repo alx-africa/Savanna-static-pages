@@ -258,11 +258,24 @@ def _ingest_sync(docs_path: Path, chroma_path: str, force: bool) -> None:
     embeddings: list[list[float]] = []
     metadatas: list[dict] = []
 
-    for doc in documents:
+    seen_ids: set[str] = set()
+    for doc_idx, doc in enumerate(documents):
         chunks = _chunk_text(doc["text"])
         for idx, chunk in enumerate(chunks):
             chunk_anchor = doc.get("anchor", "")
-            chunk_id = f"{Path(doc['source']).stem}_{chunk_anchor or idx}" if idx == 0 and chunk_anchor else _stable_id(doc["source"], idx)
+            doc_stem = Path(doc["source"]).stem
+            if chunk_anchor and idx == 0:
+                base_id = f"{doc_stem}_{chunk_anchor}"
+            else:
+                base_id = f"{doc_stem}_sec{doc_idx}_c{idx}"
+
+            chunk_id = base_id
+            counter = 1
+            while chunk_id in seen_ids:
+                chunk_id = f"{base_id}_{counter}"
+                counter += 1
+            seen_ids.add(chunk_id)
+
             ids.append(chunk_id)
             texts.append(chunk)
             metadatas.append({
