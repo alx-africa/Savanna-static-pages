@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Optional
 
 import redis.asyncio as aioredis
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
 from config import get_settings, get_docs_path
 from models import (
@@ -260,6 +260,43 @@ async def answer_job_question(job_id: str, body: ChatRequest) -> dict:
     }
 
 
+# ── Resume uploads ────────────────────────────────────────────────────────────
+
+@router.post("/upload-resume", summary="Upload candidate resume file (PDF, DOCX, TXT)")
+async def upload_resume(file: UploadFile = File(...)):
+    """Upload a candidate resume document and return an accessible URL."""
+    allowed_exts = {".pdf", ".docx", ".doc", ".txt"}
+    suffix = Path(file.filename or "resume.pdf").suffix.lower()
+    if suffix not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type '{suffix}'. Allowed: {', '.join(allowed_exts)}",
+        )
+
+    # Resolve resume storage dir across Docker and host
+    resume_dir = Path("./assets/resumes")
+    if not resume_dir.exists():
+        resume_dir = Path("/app/assets/resumes")
+    if not resume_dir.exists():
+        resume_dir = Path(__file__).parent.parent.parent / "assets" / "resumes"
+    resume_dir.mkdir(parents=True, exist_ok=True)
+
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File exceeds 10MB limit")
+
+    safe_name = f"{uuid.uuid4().hex[:8]}_{Path(file.filename or 'resume').name.replace(' ', '_')}"
+    target_path = resume_dir / safe_name
+    with open(target_path, "wb") as f:
+        f.write(content)
+
+    return {
+        "filename": safe_name,
+        "resume_url": f"/assets/resumes/{safe_name}",
+        "size_bytes": len(content),
+    }
+
+
 # ── Job alerts ────────────────────────────────────────────────────────────────
 
 alert_router = APIRouter()
@@ -271,10 +308,15 @@ async def subscribe_job_alert(body: JobAlertRequest) -> JobAlertResponse:
     """
     Store a job-alert subscription in Redis. The alert scheduler
     (api/jobs/alerts.py) picks up these subscriptions every 6 hours.
+    Sends immediate confirmation via Telegram or SMS if configured.
     """
+    import html
+
     sub_id = str(uuid.uuid4())
+    contact_val = body.contact or body.phone or body.telegram_chat_id or ""
     sub_data = {
         "subscription_id": sub_id,
+        "contact": contact_val,
         **body.model_dump(),
     }
 
@@ -287,6 +329,33 @@ async def subscribe_job_alert(body: JobAlertRequest) -> JobAlertResponse:
             logger.warning("Could not persist job alert subscription: %s", exc)
     else:
         logger.warning("Redis unavailable — job alert subscription %s not persisted", sub_id)
+
+    # 1. Instant Telegram confirmation
+    tg_id = body.telegram_chat_id or (contact_val if contact_val.isdigit() else None)
+    if body.channel in ("telegram", "both") and tg_id:
+        try:
+            from utils.notifications import send_telegram_direct
+            kw_str = ", ".join(body.keywords) if body.keywords else "All Roles"
+            await send_telegram_direct(
+                tg_id,
+                f"🔔 <b>Savanna Job Alerts Activated!</b>\n\n"
+                f"You will receive alerts here on Telegram for: <b>{html.escape(kw_str)}</b>\n"
+                f"Subscription ID: <code>{sub_id}</code>",
+                parse_mode="HTML",
+            )
+        except Exception as exc:
+            logger.warning("Could not send Telegram subscription confirmation: %s", exc)
+
+    # 2. Instant SMS confirmation
+    sms_phone = body.phone or (contact_val if not contact_val.isdigit() or len(contact_val) >= 9 else None)
+    if body.channel in ("sms", "both") and sms_phone:
+        try:
+            from channels.sms_handler import send_sms
+            kw_str = ", ".join(body.keywords) if body.keywords else "All"
+            sms_msg = f"Savanna: Job alerts activated for {kw_str} (Sub ID: {sub_id[:8]}). Text STOP to unsubscribe."
+            await send_sms(sms_phone, sms_msg[:160], settings)
+        except Exception as exc:
+            logger.warning("Could not send SMS subscription confirmation: %s", exc)
 
     channel_desc = {
         "telegram": "Telegram",
@@ -303,6 +372,18 @@ async def subscribe_job_alert(body: JobAlertRequest) -> JobAlertResponse:
     )
 
 
+@router.post("/alerts/trigger", summary="Trigger job alert check immediately (test/evaluation)")
+async def trigger_alerts():
+    """Immediately run the job alerts check and dispatch matching alerts."""
+    try:
+        from jobs.alerts import check_and_send_alerts
+        await check_and_send_alerts()
+        return {"status": "ok", "message": "Job alerts check executed successfully."}
+    except Exception as exc:
+        logger.error("Failed to trigger job alerts: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Alert execution failed: {str(exc)}")
+
+
 # ── Job applications ─────────────────────────────────────────────────────────
 
 @router.post(
@@ -315,7 +396,7 @@ async def apply_to_job(job_id: str, body: JobApplicationRequest) -> JobApplicati
     """
     Submit an application for a specific job listing.
     Supports no-barrier interview accommodation requests without medical proof.
-    Persists application in Redis and alerts operators.
+    Persists application in Redis and alerts operators and applicants.
     """
     raw_jobs = _load_jobs()
     job_raw = next((r for r in raw_jobs if r.get("id") == job_id), None)
@@ -325,6 +406,7 @@ async def apply_to_job(job_id: str, body: JobApplicationRequest) -> JobApplicati
     from datetime import datetime, timezone
     import secrets
     import string
+    import html
     from utils.privacy import mask_email, mask_name
 
     year = datetime.now(timezone.utc).year
@@ -342,6 +424,7 @@ async def apply_to_job(job_id: str, body: JobApplicationRequest) -> JobApplicati
             acc_req = AccommodationRequest(
                 name=body.applicant_name,
                 email=body.email,
+                phone=body.phone,
                 accommodation_type=body.accommodation_type,
                 notes=f"Attached to application for {job_raw.get('title')} ({job_id})",
                 language=body.language or "en",
@@ -357,6 +440,7 @@ async def apply_to_job(job_id: str, body: JobApplicationRequest) -> JobApplicati
         "company": job_raw.get("company"),
         "applicant_name": body.applicant_name,
         "email": body.email,
+        "phone": body.phone or "",
         "resume_url": body.resume_url,
         "cover_note": body.cover_note or "",
         "accommodation_type": body.accommodation_type,
@@ -381,6 +465,38 @@ async def apply_to_job(job_id: str, body: JobApplicationRequest) -> JobApplicati
         mask_email(body.email),
         accommodation_ref,
     )
+
+    # 1. Operator Telegram Alert for Application
+    try:
+        from utils.notifications import notify_operator_telegram
+        accom_text = html.escape(body.accommodation_type) if body.accommodation_type else "None requested"
+        if accommodation_ref:
+            accom_text += f" (Ref: <code>{accommodation_ref}</code>)"
+        op_text = (
+            f"📄 <b>New Job Application Received</b>\n"
+            f"<b>App ID:</b> <code>{html.escape(app_id)}</code>\n"
+            f"<b>Job:</b> {html.escape(job_raw.get('title', job_id))} @ {html.escape(job_raw.get('company', ''))}\n"
+            f"<b>Applicant:</b> {html.escape(body.applicant_name)}\n"
+            f"<b>Email:</b> {html.escape(body.email)}\n"
+            f"<b>Phone:</b> {html.escape(body.phone or 'N/A')}\n"
+            f"<b>Resume:</b> {html.escape(body.resume_url or 'N/A')}\n"
+            f"<b>Accommodation:</b> {accom_text}\n"
+            f"<b>Time:</b> {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"
+        )
+        await notify_operator_telegram(op_text, parse_mode="HTML")
+    except Exception as exc:
+        logger.warning("Could not send Telegram operator notification for application: %s", exc)
+
+    # 2. Applicant SMS Confirmation
+    if body.phone and body.phone.strip():
+        try:
+            from channels.sms_handler import send_sms
+            sms_text = f"Savanna: Application received for {job_raw.get('title', 'Role')[:30]} (ID: {app_id})."
+            if accommodation_ref:
+                sms_text += f" Accommodation confirmed: {accommodation_ref}."
+            await send_sms(body.phone.strip(), sms_text[:160], settings)
+        except Exception as exc:
+            logger.warning("Could not send SMS confirmation to applicant: %s", exc)
 
     msg = f"Your application for {job_raw.get('title')} has been received (ID: {app_id})."
     if accommodation_ref:

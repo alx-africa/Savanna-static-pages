@@ -33,17 +33,42 @@ async def _get_redis() -> aioredis.Redis | None:
 
 
 def load_jobs() -> list[dict[str, Any]]:
-    docs_path = Path(settings.docs_path)
-    jobs_file = docs_path / "jobs" / "jobs.json"
-    if not jobs_file.exists():
-        # Try relative fallback
+    import httpx
+
+    # 1. Try candidate file locations
+    candidates = [
+        Path(settings.docs_path) / "jobs" / "jobs.json",
+        Path("/app/docs/jobs/jobs.json"),
+        Path("./docs/jobs/jobs.json"),
+        Path(__file__).parent.parent / "docs" / "jobs" / "jobs.json",
+        Path(__file__).parent.parent.parent / "docs" / "jobs" / "jobs.json",
+    ]
+    try:
         from config import get_docs_path
-        jobs_file = get_docs_path() / "jobs" / "jobs.json"
-    if jobs_file.exists():
-        try:
-            return json.loads(jobs_file.read_text(encoding="utf-8"))
-        except Exception as exc:
-            logger.error("Failed to read jobs file: %s", exc)
+        candidates.insert(0, get_docs_path() / "jobs" / "jobs.json")
+    except Exception:
+        pass
+
+    for candidate in candidates:
+        if candidate.exists():
+            try:
+                jobs = json.loads(candidate.read_text(encoding="utf-8"))
+                if jobs:
+                    return jobs
+            except Exception as exc:
+                logger.error("Failed to read jobs file from %s: %s", candidate, exc)
+
+    # 2. Try fetching from internal API
+    try:
+        api_url = f"{settings.api_base_url}/jobs"
+        with httpx.Client(timeout=5.0) as client:
+            resp = client.get(api_url)
+            if resp.status_code == 200:
+                data = resp.json()
+                return data.get("jobs", [])
+    except Exception as exc:
+        logger.debug("Could not fetch jobs from API fallback: %s", exc)
+
     return []
 
 
@@ -80,30 +105,37 @@ async def send_telegram_alert(chat_id: str, job: dict[str, Any], lang: str = "en
         logger.warning("Telegram bot token not configured.")
         return False
 
-    url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
+    import html
+    title = html.escape(str(job.get("title", "")))
+    company = html.escape(str(job.get("company", "")))
+    location = html.escape(str(job.get("location", "")))
+    desc = html.escape(str(job.get("description", "")[:200]))
+    url = job.get("url", "#")
+
     if lang == "am":
         text = (
-            f"🔔 *አዲስ የሥራ ማስታወቂያ!*\n\n"
-            f"💼 *{job.get('title')}*\n"
-            f"🏢 {job.get('company')} ({job.get('location', '')})\n"
-            f"📝 {job.get('description', '')[:200]}...\n\n"
-            f"🔗 [ዝርዝሩን ይመልከቱ]({job.get('url', '#')})"
+            f"🔔 <b>አዲስ የሥራ ማስታወቂያ!</b>\n\n"
+            f"💼 <b>{title}</b>\n"
+            f"🏢 {company} ({location})\n"
+            f"📝 {desc}...\n\n"
+            f"🔗 <a href='{url}'>ዝርዝሩን ይመልከቱ</a>"
         )
     else:
         text = (
-            f"🔔 *New Job Opportunity!*\n\n"
-            f"💼 *{job.get('title')}*\n"
-            f"🏢 {job.get('company')} ({job.get('location', '')})\n"
-            f"📝 {job.get('description', '')[:200]}...\n\n"
-            f"🔗 [View and Apply]({job.get('url', '#')})"
+            f"🔔 <b>New Job Opportunity!</b>\n\n"
+            f"💼 <b>{title}</b>\n"
+            f"🏢 {company} ({location})\n"
+            f"📝 {desc}...\n\n"
+            f"🔗 <a href='{url}'>View and Apply</a>"
         )
 
+    url_api = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.post(url, json={
+            resp = await client.post(url_api, json={
                 "chat_id": chat_id,
                 "text": text,
-                "parse_mode": "Markdown",
+                "parse_mode": "HTML",
                 "disable_web_page_preview": False
             })
             return resp.status_code == 200
@@ -161,17 +193,26 @@ async def check_and_send_alerts():
             if already_sent:
                 continue
 
-            success = False
-            if channel in ("telegram", "both") and contact.isdigit():
-                # Telegram numeric chat id
-                success = await send_telegram_alert(contact, job, lang)
-            elif channel in ("sms", "both"):
-                success = await send_sms_alert(contact, job, lang)
+            # Determine Telegram and SMS targets
+            tg_target = sub.get("telegram_chat_id") or (contact if contact.isdigit() and len(contact) < 12 else None)
+            sms_target = sub.get("phone") or (contact if not contact.isdigit() or len(contact) >= 9 else None)
 
-            if success:
+            sent_any = False
+            if channel in ("telegram", "both") and tg_target:
+                tg_ok = await send_telegram_alert(tg_target, job, lang)
+                if tg_ok:
+                    sent_any = True
+                    logger.info("Sent Telegram job alert %s to %s", job_id, tg_target)
+
+            if channel in ("sms", "both") and sms_target:
+                sms_ok = await send_sms_alert(sms_target, job, lang)
+                if sms_ok:
+                    sent_any = True
+                    logger.info("Sent SMS job alert %s to %s", job_id, sms_target)
+
+            if sent_any:
                 # Remember sent job for 7 days
                 await r.set(sent_key, "1", ex=7 * 86400)
-                logger.info("Sent job alert %s to %s via %s", job_id, contact, channel)
 
 
 async def main():

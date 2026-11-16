@@ -286,7 +286,13 @@
 
   /* ── Resolve API base URL & initial language ────────────── */
   const params    = new URLSearchParams(window.location.search);
-  const apiUrl    = (params.get('api') || '').replace(/\/$/, '') || '/api';
+  let rawApi = (params.get('api') || '').replace(/\/$/, '');
+  if (rawApi.includes('localhost') && typeof window !== 'undefined' && window.location) {
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      rawApi = window.location.origin;
+    }
+  }
+  const apiUrl    = rawApi || (typeof window !== 'undefined' && window.location ? window.location.origin : '/api');
   const paramLang = params.get('lang');
 
   /* ── Session & history ───────────────────────────────────── */
@@ -1791,11 +1797,18 @@
     chatInput.style.height = Math.min(chatInput.scrollHeight, 128) + 'px';
   });
 
-  /* Keyboard: Ctrl+Enter or Cmd+Enter to send */
+  /* Keyboard: Enter to send, Shift+Enter for newline, or Ctrl/Cmd+Enter */
   chatInput.addEventListener('keydown', function (e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !sendBtn.disabled) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      if (!sendBtn.disabled) {
+        sendMessage();
+      }
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (!sendBtn.disabled) {
+        sendMessage();
+      }
     }
   });
 
@@ -2501,6 +2514,7 @@
     /* Dispatch event to parent host and custom element */
     parent.postMessage({
       type: 'db-assistant:question',
+      text: text,
       question: text,
       language: currentLanguage
     }, '*');
@@ -2554,7 +2568,7 @@
         const audioBtn = lastMsg ? lastMsg.querySelector('.btn-audio-speak') : null;
         if (audioBtn) {
           setTimeout(function () {
-            toggleMessageAudio(reply, currentLanguage, audioBtn);
+            toggleMessageAudio(audioBtn, reply, currentLanguage);
           }, 250);
         } else {
           playSpeechAudio(reply, currentLanguage);

@@ -1,460 +1,1154 @@
-openapi: 3.1.0
+components:
+  schemas:
+    AccommodationRequest:
+      properties:
+        accommodation_type:
+          description: e.g. extra time, screen reader, sign language interpreter
+          title: Accommodation Type
+          type: string
+        email:
+          title: Email
+          type: string
+        interview_date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Interview Date
+        language:
+          anyOf:
+          - enum:
+            - en
+            - am
+            - om
+            - ti
+            - so
+            - ar
+            - sw
+            - fr
+            - auto
+            type: string
+          - type: string
+          default: en
+          title: Language
+        name:
+          title: Name
+          type: string
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        phone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phone
+        user_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User Id
+      required:
+      - name
+      - email
+      - accommodation_type
+      title: AccommodationRequest
+      type: object
+    AccommodationResponse:
+      properties:
+        ethiopian_date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ethiopian Date
+        message:
+          title: Message
+          type: string
+        next_steps:
+          default: []
+          items:
+            type: string
+          title: Next Steps
+          type: array
+        reference:
+          title: Reference
+          type: string
+      required:
+      - reference
+      - message
+      title: AccommodationResponse
+      type: object
+    AskV1Request:
+      properties:
+        language:
+          anyOf:
+          - enum:
+            - en
+            - am
+            - om
+            - ti
+            - so
+            - ar
+            - sw
+            - fr
+            - auto
+            type: string
+          - type: string
+          default: auto
+          title: Language
+        message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message
+        question:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Question
+        session_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Id
+        simple_mode:
+          default: false
+          title: Simple Mode
+          type: boolean
+      title: AskV1Request
+      type: object
+    AskV1Response:
+      properties:
+        answer:
+          title: Answer
+          type: string
+        ethiopian_date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ethiopian Date
+        language:
+          default: en
+          title: Language
+          type: string
+        sources:
+          default: []
+          items:
+            $ref: '#/components/schemas/AskV1Source'
+          title: Sources
+          type: array
+      required:
+      - answer
+      title: AskV1Response
+      type: object
+    AskV1Source:
+      properties:
+        excerpt:
+          default: ''
+          title: Excerpt
+          type: string
+        id:
+          title: Id
+          type: string
+        source:
+          default: ''
+          title: Source
+          type: string
+        title:
+          title: Title
+          type: string
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+      required:
+      - id
+      - title
+      title: AskV1Source
+      type: object
+    BatchTranslateRequest:
+      properties:
+        domain:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Host website domain for context
+          title: Domain
+        site_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: auto
+          description: 'Site type: auto, learning, jobs, or general'
+          title: Site Type
+        source_lang:
+          default: en
+          description: Source language code
+          title: Source Lang
+          type: string
+        strings:
+          description: Array of unique text strings to translate
+          items:
+            type: string
+          title: Strings
+          type: array
+        target_lang:
+          description: Target language code (am, om, ti, so, ar, sw, fr, en)
+          title: Target Lang
+          type: string
+      required:
+      - strings
+      - target_lang
+      title: BatchTranslateRequest
+      type: object
+    BatchTranslateResponse:
+      properties:
+        cached_count:
+          title: Cached Count
+          type: integer
+        provider:
+          title: Provider
+          type: string
+        source_lang:
+          title: Source Lang
+          type: string
+        target_lang:
+          title: Target Lang
+          type: string
+        translated_count:
+          title: Translated Count
+          type: integer
+        translations:
+          additionalProperties:
+            type: string
+          description: Map of original string to translated string
+          title: Translations
+          type: object
+      required:
+      - translations
+      - target_lang
+      - source_lang
+      - cached_count
+      - translated_count
+      - provider
+      title: BatchTranslateResponse
+      type: object
+    Body_transcribe_speech_api_speech_transcribe_post:
+      properties:
+        file:
+          contentMediaType: application/octet-stream
+          description: Audio file (webm, wav, ogg, mp3) from client microphone
+          title: File
+          type: string
+        language:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: auto
+          description: Spoken language hint or 'auto' for zero-shot LID
+          title: Language
+      required:
+      - file
+      title: Body_transcribe_speech_api_speech_transcribe_post
+      type: object
+    Body_transcribe_speech_speech_transcribe_post:
+      properties:
+        file:
+          contentMediaType: application/octet-stream
+          description: Audio file (webm, wav, ogg, mp3) from client microphone
+          title: File
+          type: string
+        language:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: auto
+          description: Spoken language hint or 'auto' for zero-shot LID
+          title: Language
+      required:
+      - file
+      title: Body_transcribe_speech_speech_transcribe_post
+      type: object
+    Body_upload_resume_jobs_upload_resume_post:
+      properties:
+        file:
+          contentMediaType: application/octet-stream
+          title: File
+          type: string
+      required:
+      - file
+      title: Body_upload_resume_jobs_upload_resume_post
+      type: object
+    ChatMessage:
+      properties:
+        content:
+          title: Content
+          type: string
+        language:
+          default: en
+          title: Language
+          type: string
+        role:
+          enum:
+          - user
+          - assistant
+          - system
+          title: Role
+          type: string
+      required:
+      - role
+      - content
+      title: ChatMessage
+      type: object
+    ChatRequest:
+      properties:
+        history:
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+          maxItems: 20
+          title: History
+          type: array
+        language:
+          anyOf:
+          - enum:
+            - en
+            - am
+            - om
+            - ti
+            - so
+            - ar
+            - sw
+            - fr
+            - auto
+            type: string
+          - type: string
+          default: auto
+          title: Language
+        message:
+          maxLength: 4096
+          minLength: 1
+          title: Message
+          type: string
+        page_context:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Active host page lesson context (title, active heading, selection,
+            summary)
+          title: Page Context
+        session_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Id
+        simple_mode:
+          default: false
+          description: Plain-language simple mode for cognitive accessibility
+          title: Simple Mode
+          type: boolean
+        user_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User Id
+      required:
+      - message
+      title: ChatRequest
+      type: object
+    ChatResponse:
+      properties:
+        citations:
+          default: []
+          items:
+            $ref: '#/components/schemas/Citation'
+          title: Citations
+          type: array
+        ethiopian_date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ethiopian Date
+        id:
+          title: Id
+          type: string
+        language:
+          title: Language
+          type: string
+        provider:
+          title: Provider
+          type: string
+        text:
+          title: Text
+          type: string
+        timestamp:
+          format: date-time
+          title: Timestamp
+          type: string
+      required:
+      - id
+      - text
+      - language
+      - provider
+      title: ChatResponse
+      type: object
+    Citation:
+      properties:
+        excerpt:
+          title: Excerpt
+          type: string
+        id:
+          title: Id
+          type: string
+        source:
+          title: Source
+          type: string
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+      required:
+      - id
+      - source
+      - excerpt
+      title: Citation
+      type: object
+    ContentV1Request:
+      properties:
+        lessons:
+          default: []
+          items:
+            $ref: '#/components/schemas/LessonItem'
+          title: Lessons
+          type: array
+      title: ContentV1Request
+      type: object
+    ContentV1Response:
+      properties:
+        count:
+          default: 0
+          title: Count
+          type: integer
+        message:
+          title: Message
+          type: string
+        status:
+          default: indexed
+          title: Status
+          type: string
+      required:
+      - message
+      title: ContentV1Response
+      type: object
+    DescribeImageRequest:
+      properties:
+        context:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Context
+        filename:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Filename
+        image_data:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Data
+        language:
+          anyOf:
+          - enum:
+            - en
+            - am
+            - om
+            - ti
+            - so
+            - ar
+            - sw
+            - fr
+            - auto
+            type: string
+          - type: string
+          default: auto
+          title: Language
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+      title: DescribeImageRequest
+      type: object
+    DescribeImageResponse:
+      properties:
+        ai_provider:
+          default: savanna-ai-vision
+          title: Ai Provider
+          type: string
+        breakdown:
+          anyOf:
+          - $ref: '#/components/schemas/VisualBreakdown'
+          - type: 'null'
+        description:
+          title: Description
+          type: string
+        ethiopian_date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ethiopian Date
+        id:
+          title: Id
+          type: string
+        language:
+          title: Language
+          type: string
+        source:
+          title: Source
+          type: string
+        visual_elements:
+          default: []
+          items:
+            type: string
+          title: Visual Elements
+          type: array
+      required:
+      - id
+      - description
+      - language
+      - source
+      title: DescribeImageResponse
+      type: object
+    EscalateRequest:
+      properties:
+        language:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: en
+          title: Language
+        learner_context:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Learner Context
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        sdp_offer:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sdp Offer
+        session_id:
+          title: Session Id
+          type: string
+        user_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User Id
+      required:
+      - session_id
+      title: EscalateRequest
+      type: object
+    EscalateResponse:
+      properties:
+        message:
+          title: Message
+          type: string
+        operator_notified:
+          title: Operator Notified
+          type: boolean
+        sdp_answer:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sdp Answer
+        ticket_id:
+          title: Ticket Id
+          type: string
+      required:
+      - ticket_id
+      - operator_notified
+      - message
+      title: EscalateResponse
+      type: object
+    EscalationV1Request:
+      properties:
+        conversation:
+          anyOf:
+          - items: {}
+            type: array
+          - type: string
+          default: []
+          title: Conversation
+        learner_context:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Learner Context
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: Learner requested tutor help
+          title: Reason
+        session_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Id
+      title: EscalationV1Request
+      type: object
+    EscalationV1Response:
+      properties:
+        message:
+          default: A tutor will answer here. It may take until morning.
+          title: Message
+          type: string
+        operator_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Operator Url
+        status:
+          default: pending
+          title: Status
+          type: string
+        ticketId:
+          title: Ticketid
+          type: string
+      required:
+      - ticketId
+      title: EscalationV1Response
+      type: object
+    FrequentQuestion:
+      properties:
+        count:
+          title: Count
+          type: integer
+        language:
+          title: Language
+          type: string
+        question:
+          title: Question
+          type: string
+        topic:
+          title: Topic
+          type: string
+      required:
+      - question
+      - topic
+      - language
+      - count
+      title: FrequentQuestion
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    HealthResponse:
+      properties:
+        ai_provider:
+          title: Ai Provider
+          type: string
+        status:
+          title: Status
+          type: string
+        version:
+          title: Version
+          type: string
+      required:
+      - status
+      - version
+      - ai_provider
+      title: HealthResponse
+      type: object
+    Job:
+      properties:
+        company:
+          title: Company
+          type: string
+        description:
+          title: Description
+          type: string
+        id:
+          title: Id
+          type: string
+        location:
+          title: Location
+          type: string
+        posted_at:
+          format: date-time
+          title: Posted At
+          type: string
+        skills:
+          default: []
+          items:
+            type: string
+          title: Skills
+          type: array
+        title:
+          title: Title
+          type: string
+        translations:
+          additionalProperties:
+            additionalProperties: true
+            type: object
+          title: Translations
+          type: object
+        type:
+          title: Type
+          type: string
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+      required:
+      - id
+      - title
+      - company
+      - location
+      - type
+      - description
+      - posted_at
+      title: Job
+      type: object
+    JobAlertRequest:
+      properties:
+        channel:
+          default: both
+          enum:
+          - telegram
+          - sms
+          - both
+          title: Channel
+          type: string
+        contact:
+          default: ''
+          title: Contact
+          type: string
+        keywords:
+          default: []
+          items:
+            type: string
+          title: Keywords
+          type: array
+        language:
+          anyOf:
+          - enum:
+            - en
+            - am
+            - om
+            - ti
+            - so
+            - ar
+            - sw
+            - fr
+            - auto
+            type: string
+          - type: string
+          default: en
+          title: Language
+        phone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phone
+        telegram_chat_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Telegram Chat Id
+        user_id:
+          title: User Id
+          type: string
+      required:
+      - user_id
+      title: JobAlertRequest
+      type: object
+    JobAlertResponse:
+      properties:
+        message:
+          title: Message
+          type: string
+        subscription_id:
+          title: Subscription Id
+          type: string
+      required:
+      - subscription_id
+      - message
+      title: JobAlertResponse
+      type: object
+    JobApplicationRequest:
+      properties:
+        accommodation_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accommodation Type
+        applicant_name:
+          title: Applicant Name
+          type: string
+        cover_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: ''
+          title: Cover Note
+        email:
+          title: Email
+          type: string
+        language:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: en
+          title: Language
+        phone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phone
+        resume_url:
+          default: ''
+          title: Resume Url
+          type: string
+      required:
+      - applicant_name
+      - email
+      title: JobApplicationRequest
+      type: object
+    JobApplicationResponse:
+      properties:
+        accommodation_reference:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accommodation Reference
+        applicant_name:
+          title: Applicant Name
+          type: string
+        application_id:
+          title: Application Id
+          type: string
+        email:
+          title: Email
+          type: string
+        job_id:
+          title: Job Id
+          type: string
+        job_title:
+          title: Job Title
+          type: string
+        message:
+          title: Message
+          type: string
+        status:
+          title: Status
+          type: string
+        submitted_at:
+          title: Submitted At
+          type: string
+      required:
+      - application_id
+      - job_id
+      - job_title
+      - applicant_name
+      - email
+      - status
+      - submitted_at
+      - message
+      title: JobApplicationResponse
+      type: object
+    LessonItem:
+      properties:
+        html:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Html
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Id
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        title:
+          title: Title
+          type: string
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+      required:
+      - title
+      title: LessonItem
+      type: object
+    RecentQuestion:
+      properties:
+        ethiopian_date:
+          title: Ethiopian Date
+          type: string
+        language:
+          title: Language
+          type: string
+        question:
+          title: Question
+          type: string
+        timestamp:
+          title: Timestamp
+          type: string
+        topic:
+          title: Topic
+          type: string
+      required:
+      - question
+      - topic
+      - language
+      - timestamp
+      - ethiopian_date
+      title: RecentQuestion
+      type: object
+    SynthesizeRequest:
+      properties:
+        language:
+          anyOf:
+          - enum:
+            - en
+            - am
+            - om
+            - ti
+            - so
+            - ar
+            - sw
+            - fr
+            - auto
+            type: string
+          - type: string
+          default: en
+          title: Language
+        pitch:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: +0Hz
+          title: Pitch
+        rate:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: +0%
+          title: Rate
+        text:
+          maxLength: 4096
+          minLength: 1
+          title: Text
+          type: string
+        voice:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Voice
+      required:
+      - text
+      title: SynthesizeRequest
+      type: object
+    TeacherAnalyticsResponse:
+      properties:
+        languages_breakdown:
+          additionalProperties:
+            type: integer
+          title: Languages Breakdown
+          type: object
+        most_asked:
+          items:
+            $ref: '#/components/schemas/FrequentQuestion'
+          title: Most Asked
+          type: array
+        recent:
+          items:
+            $ref: '#/components/schemas/RecentQuestion'
+          title: Recent
+          type: array
+        topics:
+          items:
+            $ref: '#/components/schemas/TopicCount'
+          title: Topics
+          type: array
+        total_questions:
+          title: Total Questions
+          type: integer
+      required:
+      - total_questions
+      - languages_breakdown
+      - topics
+      - most_asked
+      - recent
+      title: TeacherAnalyticsResponse
+      type: object
+    TopicCount:
+      properties:
+        count:
+          title: Count
+          type: integer
+        percentage:
+          title: Percentage
+          type: number
+        topic:
+          title: Topic
+          type: string
+      required:
+      - topic
+      - count
+      - percentage
+      title: TopicCount
+      type: object
+    TranscribeResponse:
+      properties:
+        confidence:
+          default: 0.95
+          title: Confidence
+          type: number
+        duration_seconds:
+          default: 0.0
+          title: Duration Seconds
+          type: number
+        language:
+          title: Language
+          type: string
+        provider:
+          default: savanna-stt
+          title: Provider
+          type: string
+        text:
+          title: Text
+          type: string
+      required:
+      - text
+      - language
+      title: TranscribeResponse
+      type: object
+    ValidationError:
+      properties:
+        ctx:
+          title: Context
+          type: object
+        input:
+          title: Input
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+    VisualBreakdown:
+      properties:
+        composition_and_palette:
+          title: Composition And Palette
+          type: string
+        intent_and_purpose:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Intent And Purpose
+        pedagogical_context:
+          title: Pedagogical Context
+          type: string
+        primary_subject:
+          title: Primary Subject
+          type: string
+        visual_elements:
+          default: []
+          items:
+            type: string
+          title: Visual Elements
+          type: array
+      required:
+      - primary_subject
+      - pedagogical_context
+      - composition_and_palette
+      title: VisualBreakdown
+      type: object
+    VoiceInfo:
+      properties:
+        gender:
+          default: neutral
+          enum:
+          - female
+          - male
+          - neutral
+          title: Gender
+          type: string
+        id:
+          title: Id
+          type: string
+        language:
+          title: Language
+          type: string
+        locale:
+          title: Locale
+          type: string
+        name:
+          title: Name
+          type: string
+        provider:
+          title: Provider
+          type: string
+      required:
+      - id
+      - name
+      - language
+      - locale
+      - provider
+      title: VoiceInfo
+      type: object
 info:
-  title: Savanna Multilingual Assistant
   description: Voice and text AI tutor in Amharic and English. Answers questions from
     course content, escalates to humans, and surfaces career opportunities.
+  title: Savanna Multilingual Assistant
   version: 1.0.0
+openapi: 3.1.0
 paths:
-  /chat:
-    post:
-      tags:
-      - Chat
-      summary: Send a chat message
-      description: 'Accept a chat message, run cross-lingual RAG retrieval, call the
-        AI provider,
-
-        and return a structured response with citations in the learner''s language.'
-      operationId: chat_chat_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChatRequest'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChatResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /chat/history/{session_id}:
-    get:
-      tags:
-      - Chat
-      summary: Retrieve chat history for a session
-      description: 'Return the stored message history for *session_id*.
-
-        Returns an empty list if Redis is unavailable or the key does not exist.'
-      operationId: get_history_chat_history__session_id__get
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Session Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ChatMessage'
-                title: Response Get History Chat History  Session Id  Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /escalate:
-    post:
-      tags:
-      - Escalation
-      summary: Escalate session to human operator
-      description: 'Create an escalation ticket. Optionally stores a WebRTC SDP offer
-        for
-
-        screen-sharing sessions (the widget completes the negotiation).'
-      operationId: escalate_escalate_post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EscalateRequest'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EscalateResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    get:
-      tags:
-      - Escalation
-      summary: List recent escalation tickets
-      description: Return a list of recent escalation tickets for the operator dashboard.
-      operationId: list_tickets_escalate_get
-      parameters:
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          default: 50
-          title: Limit
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  additionalProperties: true
-                title: Response List Tickets Escalate Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /escalate/{ticket_id}:
-    get:
-      tags:
-      - Escalation
-      summary: Check escalation ticket status
-      description: Return the current status of an escalation ticket.
-      operationId: get_ticket_escalate__ticket_id__get
-      parameters:
-      - name: ticket_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Ticket Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
-                title: Response Get Ticket Escalate  Ticket Id  Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /escalate/{ticket_id}/answer:
-    post:
-      tags:
-      - Escalation
-      summary: Operator submits SDP answer
-      description: Save operator's WebRTC SDP answer and mark ticket active.
-      operationId: set_ticket_answer_escalate__ticket_id__answer_post
-      parameters:
-      - name: ticket_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Ticket Id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: true
-              title: Payload
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
-                title: Response Set Ticket Answer Escalate  Ticket Id  Answer Post
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /jobs:
-    get:
-      tags:
-      - Career Gateway
-      summary: List all available jobs
-      description: 'Return all jobs from jobs.json. Supports optional `keyword`, `type`,
-        and `language`
-
-        query-string filters. Keyword matching checks English and localized translations.'
-      operationId: list_jobs_jobs_get
-      parameters:
-      - name: keyword
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Filter by keyword in title, description, or skills
-          title: Keyword
-        description: Filter by keyword in title, description, or skills
-      - name: type
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Filter by job type (full-time, part-time, contract, remote)
-          title: Type
-        description: Filter by job type (full-time, part-time, contract, remote)
-      - name: language
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Preferred language for localized job cards (am, om, ti, so,
-            ar, sw, fr, en)
-          title: Language
-        description: Preferred language for localized job cards (am, om, ti, so, ar,
-          sw, fr, en)
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Job'
-                title: Response List Jobs Jobs Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /jobs/{job_id}/schema:
-    get:
-      tags:
-      - Career Gateway
-      summary: Get schema.org/JobPosting JSON-LD for a job (Level 3 Open Standard)
-      description: Return standard schema.org JSON-LD metadata for external search
-        engines.
-      operationId: get_job_schema_jobs__job_id__schema_get
-      parameters:
-      - name: job_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Job Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
-                title: Response Get Job Schema Jobs  Job Id  Schema Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /jobs/{job_id}:
-    get:
-      tags:
-      - Career Gateway
-      summary: Get a single job by ID
-      description: Return a specific job entry by its ID, with optional language adaptation.
-      operationId: get_job_jobs__job_id__get
-      parameters:
-      - name: job_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Job Id
-      - name: language
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Preferred language for job details
-          title: Language
-        description: Preferred language for job details
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Job'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /jobs/{job_id}/answer:
-    post:
-      tags:
-      - Career Gateway
-      summary: Answer questions about a specific job using RAG
-      description: 'Use the RAG retriever (domain=''jobs'') to answer questions about
-        a specific job.
-
-        Returns the answer text and any relevant citations.'
-      operationId: answer_job_question_jobs__job_id__answer_post
-      parameters:
-      - name: job_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Job Id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChatRequest'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
-                title: Response Answer Job Question Jobs  Job Id  Answer Post
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /jobs/alert:
-    post:
-      tags:
-      - Career Gateway
-      summary: Subscribe to job alerts (/jobs/alert)
-      description: 'Store a job-alert subscription in Redis. The alert scheduler
-
-        (api/jobs/alerts.py) picks up these subscriptions every 6 hours.'
-      operationId: subscribe_job_alert_jobs_alert
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/JobAlertRequest'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobAlertResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /jobs/{job_id}/apply:
-    post:
-      tags:
-      - Career Gateway
-      summary: Submit a job application with optional interview accommodation (No
-        medical proof needed)
-      description: 'Submit an application for a specific job listing.
-
-        Supports no-barrier interview accommodation requests without medical proof.
-
-        Persists application in Redis and alerts operators.'
-      operationId: apply_to_job_jobs__job_id__apply_post
-      parameters:
-      - name: job_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Job Id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/JobApplicationRequest'
-      responses:
-        '201':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobApplicationResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /job-alert:
-    post:
-      tags:
-      - Career Gateway
-      summary: Subscribe to job alerts (/job-alert)
-      description: 'Store a job-alert subscription in Redis. The alert scheduler
-
-        (api/jobs/alerts.py) picks up these subscriptions every 6 hours.'
-      operationId: subscribe_job_alert_root
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/JobAlertRequest'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobAlertResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
   /accommodate:
     post:
-      tags:
-      - Accommodation
-      summary: Submit an accessibility / accommodation request
       description: 'Record an accommodation request and notify the accessibility coordinator.
 
         Responds in the requested language (8 supported languages: en, am, om, ti,
@@ -468,152 +1162,376 @@ paths:
         required: true
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccommodationResponse'
+          description: Successful Response
         '422':
-          description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /lti/login:
-    get:
+          description: Validation Error
+      summary: Submit an accessibility / accommodation request
       tags:
-      - LTI 1.3
-      summary: LTI 1.3 OIDC login initiation (GET)
-      description: 'Step 1 of the LTI 1.3 launch: receive the OIDC login hint from
-        the
-
-        platform and redirect back to the platform''s authorisation endpoint.
-
-
-        The platform must be configured to send the user here before the launch.'
-      operationId: lti_login_lti_login_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
+      - Accommodation
+  /api/speech/synthesize:
     post:
-      tags:
-      - LTI 1.3
-      summary: LTI 1.3 OIDC login initiation (POST)
-      description: 'Step 1 of the LTI 1.3 launch: receive the OIDC login hint from
-        the
+      description: 'Synthesize text into speech audio.
 
-        platform and redirect back to the platform''s authorisation endpoint.
+        Supports languages with verified voices from the active provider.
 
-
-        The platform must be configured to send the user here before the launch.'
-      operationId: lti_login_lti_login_post
+        Returns 501 Not Implemented if speech synthesis is unavailable for the requested
+        language.'
+      operationId: synthesize_speech_api_speech_synthesize_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynthesizeRequest'
+        required: true
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema: {}
-  /lti/launch:
-    post:
-      tags:
-      - LTI 1.3
-      summary: LTI 1.3 resource launch
-      description: 'Step 2 of the LTI 1.3 launch: validate the id_token JWT posted
-        by the
-
-        platform and redirect the browser to the widget with LTI context params.
-
-
-        The widget URL is built from api_base_url; adjust as needed.'
-      operationId: lti_launch_lti_launch_post
-      responses:
-        '200':
           description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /lti/jwks:
-    get:
-      tags:
-      - LTI 1.3
-      summary: Tool JSON Web Key Set (public key)
-      description: 'Return the tool''s public RSA key as a JWK Set so the platform
-        can verify
-
-        tokens signed by this tool (e.g. for Deep Linking responses).'
-      operationId: lti_jwks_lti_jwks_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /webhook/sms:
-    post:
-      tags:
-      - SMS Webhook
-      summary: Africa's Talking inbound SMS webhook
-      description: "Receive an inbound SMS from Africa's Talking and reply appropriately.\n\
-        \nAT sends the payload as application/x-www-form-urlencoded with fields:\n\
-        \  from, to, text, date, id, linkId, networkCode"
-      operationId: sms_inbound_webhook_sms_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /webhook/sms/delivery:
-    post:
-      tags:
-      - SMS Webhook
-      summary: Africa's Talking SMS delivery report
-      description: 'Receive delivery status reports from Africa''s Talking.
-
-        We log the payload and always return 200 OK as AT expects.'
-      operationId: sms_delivery_webhook_sms_delivery_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /teacher/analytics:
-    get:
-      tags:
-      - Teacher Analytics
-      summary: Get anonymous teacher analytics
-      description: Return aggregated questions, top topics, and frequency without
-        student identities.
-      operationId: get_analytics_teacher_analytics_get
-      responses:
-        '200':
-          description: Successful Response
+        '422':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TeacherAnalyticsResponse'
-  /teacher/export:
-    get:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Synthesize natural speech from text across supported languages
       tags:
-      - Teacher Analytics
-      summary: Export anonymous questions to CSV
-      description: Download anonymous question dataset in CSV format.
-      operationId: export_csv_teacher_export_get
+      - Speech & Voice Accessibility
+      - Speech & Voice Accessibility
+  /api/speech/transcribe:
+    post:
+      description: 'Transcribe speech audio into text using the configured ASR provider
+        (Addis AI, Whisper, etc.).
+
+        Returns 503 Service Unavailable when no genuine speech-to-text provider is
+        configured or reachable.'
+      operationId: transcribe_speech_api_speech_transcribe_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_transcribe_speech_api_speech_transcribe_post'
+        required: true
       responses:
         '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscribeResponse'
           description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Transcribe audio speech to text with language detection
+      tags:
+      - Speech & Voice Accessibility
+      - Speech & Voice Accessibility
+  /api/speech/voices:
+    get:
+      description: Return verified available neural voices categorized by language
+        from the active TTS provider.
+      operationId: list_voices_api_speech_voices_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/VoiceInfo'
+                  type: array
+                title: Response List Voices Api Speech Voices Get
+                type: object
+          description: Successful Response
+      summary: Get available TTS voices across supported languages
+      tags:
+      - Speech & Voice Accessibility
+      - Speech & Voice Accessibility
+  /api/translate:
+    post:
+      description: 'Translate a batch of website text nodes into the requested target
+        language.
+
+        Uses multi-tier caching (in-memory + disk cache) and high-speed LLM translation.'
+      operationId: batch_translate_api_translate_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchTranslateRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchTranslateResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Batch translate web content
+      tags:
+      - Translation
+      - Translation
+  /api/translate/cache/stats:
+    get:
+      description: Return translation cache metrics.
+      operationId: get_cache_stats_api_translate_cache_stats_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Get Cache Stats Api Translate Cache Stats Get
+                type: object
+          description: Successful Response
+      summary: Get translation cache metrics
+      tags:
+      - Translation
+      - Translation
+  /api/v1/ask:
+    post:
+      description: "Data contract:\n  POST /api/v1/ask { question, language } -> {\
+        \ answer, sources: [{ title, url, id }] }"
+      operationId: ask_v1_api_v1_ask_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskV1Request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskV1Response'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Ask the tutor (Level 2 Technical Guide Contract)
+      tags:
+      - Level 2 Contract
+  /api/v1/content:
+    post:
+      description: "Data contract:\n  POST /api/v1/content\n  The host sends its lessons\
+        \ to be indexed dynamically."
+      operationId: index_content_v1_api_v1_content_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentV1Request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentV1Response'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Index host lessons (Level 2 Technical Guide Contract)
+      tags:
+      - Level 2 Contract
+  /api/v1/escalations:
+    post:
+      description: "Data contract:\n  POST /api/v1/escalations { conversation } ->\
+        \ { ticketId }"
+      operationId: escalate_v1_api_v1_escalations_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalationV1Request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationV1Response'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Escalate to human tutor (Level 2 Technical Guide Contract)
+      tags:
+      - Level 2 Contract
+  /api/v1/sms/inbound:
+    post:
+      description: "Data contract:\n  POST /sms/inbound { from, text } -> plain text\
+        \ reply of at most 160 characters.\n  Accepts both JSON and form-urlencoded\
+        \ payloads."
+      operationId: sms_inbound_v1_api_v1_sms_inbound_post
+      responses:
+        '200':
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Successful Response
+      summary: Text/SMS route (Level 2 Technical Guide Contract)
+      tags:
+      - Level 2 Contract
+  /ask:
+    post:
+      description: "Data contract:\n  POST /api/v1/ask { question, language } -> {\
+        \ answer, sources: [{ title, url, id }] }"
+      operationId: ask_v1_ask_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskV1Request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskV1Response'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Ask the tutor (Level 2 Technical Guide Contract)
+      tags:
+      - Level 2 Contract
+  /chat:
+    post:
+      description: 'Accept a chat message, run cross-lingual RAG retrieval, call the
+        AI provider,
+
+        and return a structured response with citations in the learner''s language.'
+      operationId: chat_chat_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Send a chat message
+      tags:
+      - Chat
+  /chat/history/{session_id}:
+    get:
+      description: 'Return the stored message history for *session_id*.
+
+        Returns an empty list if Redis is unavailable or the key does not exist.'
+      operationId: get_history_chat_history__session_id__get
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ChatMessage'
+                title: Response Get History Chat History  Session Id  Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Retrieve chat history for a session
+      tags:
+      - Chat
+  /content:
+    post:
+      description: "Data contract:\n  POST /api/v1/content\n  The host sends its lessons\
+        \ to be indexed dynamically."
+      operationId: index_content_v1_content_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentV1Request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentV1Response'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Index host lessons (Level 2 Technical Guide Contract)
+      tags:
+      - Level 2 Contract
+  /content.json:
+    get:
+      operationId: get_sample_content_content_json_get
+      responses:
+        '200':
           content:
             application/json:
               schema: {}
+          description: Successful Response
+      summary: Sample course content JSON
+      tags:
+      - Level 1 Contract
   /describe-image:
     post:
-      tags:
-      - Vision & Image Accessibility
-      summary: Get AI visual breakdown for an image
       description: 'Deliver an AI-powered visual breakdown of a course image or diagram
 
         for screen readers and speech synthesis in 8 languages.'
@@ -626,44 +1544,576 @@ paths:
         required: true
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DescribeImageResponse'
+          description: Successful Response
         '422':
-          description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /speech/voices:
-    get:
+          description: Validation Error
+      summary: Get AI visual breakdown for an image
       tags:
-      - Speech & Voice Accessibility
-      - Speech & Voice Accessibility
-      summary: Get available TTS voices across supported languages
-      description: Return verified available neural voices categorized by language
-        from the active TTS provider.
-      operationId: list_voices_speech_voices_get
+      - Vision & Image Accessibility
+  /escalate:
+    get:
+      description: Return a list of recent escalation tickets for the operator dashboard.
+      operationId: list_tickets_escalate_get
+      parameters:
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 50
+          title: Limit
+          type: integer
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema:
-                additionalProperties:
-                  items:
-                    $ref: '#/components/schemas/VoiceInfo'
-                  type: array
+                items:
+                  additionalProperties: true
+                  type: object
+                title: Response List Tickets Escalate Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List recent escalation tickets
+      tags:
+      - Escalation
+    post:
+      description: 'Create an escalation ticket. Optionally stores a WebRTC SDP offer
+        for
+
+        screen-sharing sessions (the widget completes the negotiation).'
+      operationId: escalate_escalate_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalateRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalateResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Escalate session to human operator
+      tags:
+      - Escalation
+  /escalate/{ticket_id}:
+    get:
+      description: Return the current status of an escalation ticket.
+      operationId: get_ticket_escalate__ticket_id__get
+      parameters:
+      - in: path
+        name: ticket_id
+        required: true
+        schema:
+          title: Ticket Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Get Ticket Escalate  Ticket Id  Get
                 type: object
-                title: Response List Voices Speech Voices Get
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Check escalation ticket status
+      tags:
+      - Escalation
+  /escalate/{ticket_id}/answer:
+    post:
+      description: Save operator's WebRTC SDP answer and mark ticket active.
+      operationId: set_ticket_answer_escalate__ticket_id__answer_post
+      parameters:
+      - in: path
+        name: ticket_id
+        required: true
+        schema:
+          title: Ticket Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: true
+              title: Payload
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Set Ticket Answer Escalate  Ticket Id  Answer Post
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Operator submits SDP answer
+      tags:
+      - Escalation
+  /escalations:
+    post:
+      description: "Data contract:\n  POST /api/v1/escalations { conversation } ->\
+        \ { ticketId }"
+      operationId: escalate_v1_escalations_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalationV1Request'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationV1Response'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Escalate to human tutor (Level 2 Technical Guide Contract)
+      tags:
+      - Level 2 Contract
+  /health:
+    get:
+      operationId: health_health_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          description: Successful Response
+      summary: Health
+      tags:
+      - Health
+  /job-alert:
+    post:
+      description: 'Store a job-alert subscription in Redis. The alert scheduler
+
+        (api/jobs/alerts.py) picks up these subscriptions every 6 hours.
+
+        Sends immediate confirmation via Telegram or SMS if configured.'
+      operationId: subscribe_job_alert_root
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobAlertRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAlertResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Subscribe to job alerts (/job-alert)
+      tags:
+      - Career Gateway
+  /jobs:
+    get:
+      description: 'Return all jobs from jobs.json. Supports optional `keyword`, `type`,
+        and `language`
+
+        query-string filters. Keyword matching checks English and localized translations.'
+      operationId: list_jobs_jobs_get
+      parameters:
+      - description: Filter by keyword in title, description, or skills
+        in: query
+        name: keyword
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by keyword in title, description, or skills
+          title: Keyword
+      - description: Filter by job type (full-time, part-time, contract, remote)
+        in: query
+        name: type
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by job type (full-time, part-time, contract, remote)
+          title: Type
+      - description: Preferred language for localized job cards (am, om, ti, so, ar,
+          sw, fr, en)
+        in: query
+        name: language
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Preferred language for localized job cards (am, om, ti, so,
+            ar, sw, fr, en)
+          title: Language
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Job'
+                title: Response List Jobs Jobs Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List all available jobs
+      tags:
+      - Career Gateway
+  /jobs/alert:
+    post:
+      description: 'Store a job-alert subscription in Redis. The alert scheduler
+
+        (api/jobs/alerts.py) picks up these subscriptions every 6 hours.
+
+        Sends immediate confirmation via Telegram or SMS if configured.'
+      operationId: subscribe_job_alert_jobs_alert
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobAlertRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAlertResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Subscribe to job alerts (/jobs/alert)
+      tags:
+      - Career Gateway
+  /jobs/alerts/trigger:
+    post:
+      description: Immediately run the job alerts check and dispatch matching alerts.
+      operationId: trigger_alerts_jobs_alerts_trigger_post
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Trigger job alert check immediately (test/evaluation)
+      tags:
+      - Career Gateway
+  /jobs/upload-resume:
+    post:
+      description: Upload a candidate resume document and return an accessible URL.
+      operationId: upload_resume_jobs_upload_resume_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_resume_jobs_upload_resume_post'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Upload candidate resume file (PDF, DOCX, TXT)
+      tags:
+      - Career Gateway
+  /jobs/{job_id}:
+    get:
+      description: Return a specific job entry by its ID, with optional language adaptation.
+      operationId: get_job_jobs__job_id__get
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: string
+      - description: Preferred language for job details
+        in: query
+        name: language
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Preferred language for job details
+          title: Language
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get a single job by ID
+      tags:
+      - Career Gateway
+  /jobs/{job_id}/answer:
+    post:
+      description: 'Use the RAG retriever (domain=''jobs'') to answer questions about
+        a specific job.
+
+        Returns the answer text and any relevant citations.'
+      operationId: answer_job_question_jobs__job_id__answer_post
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Answer Job Question Jobs  Job Id  Answer Post
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Answer questions about a specific job using RAG
+      tags:
+      - Career Gateway
+  /jobs/{job_id}/apply:
+    post:
+      description: 'Submit an application for a specific job listing.
+
+        Supports no-barrier interview accommodation requests without medical proof.
+
+        Persists application in Redis and alerts operators and applicants.'
+      operationId: apply_to_job_jobs__job_id__apply_post
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobApplicationRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobApplicationResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Submit a job application with optional interview accommodation (No
+        medical proof needed)
+      tags:
+      - Career Gateway
+  /jobs/{job_id}/schema:
+    get:
+      description: Return standard schema.org JSON-LD metadata for external search
+        engines.
+      operationId: get_job_schema_jobs__job_id__schema_get
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Get Job Schema Jobs  Job Id  Schema Get
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get schema.org/JobPosting JSON-LD for a job (Level 3 Open Standard)
+      tags:
+      - Career Gateway
+  /lti/jwks:
+    get:
+      description: 'Return the tool''s public RSA key as a JWK Set so the platform
+        can verify
+
+        tokens signed by this tool (e.g. for Deep Linking responses).'
+      operationId: lti_jwks_lti_jwks_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Tool JSON Web Key Set (public key)
+      tags:
+      - LTI 1.3
+  /lti/launch:
+    post:
+      description: 'Step 2 of the LTI 1.3 launch: validate the id_token JWT posted
+        by the
+
+        platform and redirect the browser to the widget with LTI context params.
+
+
+        The widget URL is built from api_base_url; adjust as needed.'
+      operationId: lti_launch_lti_launch_post
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: LTI 1.3 resource launch
+      tags:
+      - LTI 1.3
+  /lti/login:
+    get:
+      description: 'Step 1 of the LTI 1.3 launch: receive the OIDC login hint from
+        the
+
+        platform and redirect back to the platform''s authorisation endpoint.
+
+
+        The platform must be configured to send the user here before the launch.'
+      operationId: lti_login_lti_login_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: LTI 1.3 OIDC login initiation (GET)
+      tags:
+      - LTI 1.3
+    post:
+      description: 'Step 1 of the LTI 1.3 launch: receive the OIDC login hint from
+        the
+
+        platform and redirect back to the platform''s authorisation endpoint.
+
+
+        The platform must be configured to send the user here before the launch.'
+      operationId: lti_login_lti_login_post
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: LTI 1.3 OIDC login initiation (POST)
+      tags:
+      - LTI 1.3
+  /sms/inbound:
+    post:
+      description: "Data contract:\n  POST /sms/inbound { from, text } -> plain text\
+        \ reply of at most 160 characters.\n  Accepts both JSON and form-urlencoded\
+        \ payloads."
+      operationId: sms_inbound_v1_sms_inbound_post
+      responses:
+        '200':
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Successful Response
+      summary: Text/SMS route (Level 2 Technical Guide Contract)
+      tags:
+      - Level 2 Contract
   /speech/synthesize:
     post:
-      tags:
-      - Speech & Voice Accessibility
-      - Speech & Voice Accessibility
-      summary: Synthesize natural speech from text across supported languages
       description: 'Synthesize text into speech audio.
 
         Supports languages with verified voices from the active provider.
@@ -679,22 +2129,22 @@ paths:
         required: true
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema: {}
+          description: Successful Response
         '422':
-          description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /speech/transcribe:
-    post:
+          description: Validation Error
+      summary: Synthesize natural speech from text across supported languages
       tags:
       - Speech & Voice Accessibility
       - Speech & Voice Accessibility
-      summary: Transcribe audio speech to text with language detection
+  /speech/transcribe:
+    post:
       description: 'Transcribe speech audio into text using the configured ASR provider
         (Addis AI, Whisper, etc.).
 
@@ -709,23 +2159,72 @@ paths:
         required: true
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TranscribeResponse'
+          description: Successful Response
         '422':
-          description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Transcribe audio speech to text with language detection
+      tags:
+      - Speech & Voice Accessibility
+      - Speech & Voice Accessibility
+  /speech/voices:
+    get:
+      description: Return verified available neural voices categorized by language
+        from the active TTS provider.
+      operationId: list_voices_speech_voices_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/VoiceInfo'
+                  type: array
+                title: Response List Voices Speech Voices Get
+                type: object
+          description: Successful Response
+      summary: Get available TTS voices across supported languages
+      tags:
+      - Speech & Voice Accessibility
+      - Speech & Voice Accessibility
+  /teacher/analytics:
+    get:
+      description: Return aggregated questions, top topics, and frequency without
+        student identities.
+      operationId: get_analytics_teacher_analytics_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherAnalyticsResponse'
+          description: Successful Response
+      summary: Get anonymous teacher analytics
+      tags:
+      - Teacher Analytics
+  /teacher/export:
+    get:
+      description: Download anonymous question dataset in CSV format.
+      operationId: export_csv_teacher_export_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Export anonymous questions to CSV
+      tags:
+      - Teacher Analytics
   /translate:
     post:
-      tags:
-      - Translation
-      - Translation
-      summary: Batch translate web content
       description: 'Translate a batch of website text nodes into the requested target
         language.
 
@@ -739,42 +2238,43 @@ paths:
         required: true
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchTranslateResponse'
+          description: Successful Response
         '422':
-          description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /translate/cache/stats:
-    get:
+          description: Validation Error
+      summary: Batch translate web content
       tags:
       - Translation
       - Translation
-      summary: Get translation cache metrics
+  /translate/cache/stats:
+    get:
       description: Return translation cache metrics.
       operationId: get_cache_stats_translate_cache_stats_get
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema:
                 additionalProperties: true
-                type: object
                 title: Response Get Cache Stats Translate Cache Stats Get
-  /api/v1/ask:
-    post:
+                type: object
+          description: Successful Response
+      summary: Get translation cache metrics
       tags:
-      - Level 2 Contract
-      summary: Ask the tutor (Level 2 Technical Guide Contract)
+      - Translation
+      - Translation
+  /v1/ask:
+    post:
       description: "Data contract:\n  POST /api/v1/ask { question, language } -> {\
         \ answer, sources: [{ title, url, id }] }"
-      operationId: ask_v1_api_v1_ask_post
+      operationId: ask_v1_v1_ask_post
       requestBody:
         content:
           application/json:
@@ -783,122 +2283,25 @@ paths:
         required: true
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AskV1Response'
+          description: Successful Response
         '422':
-          description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/content:
-    post:
-      tags:
-      - Level 2 Contract
-      summary: Index host lessons (Level 2 Technical Guide Contract)
-      description: "Data contract:\n  POST /api/v1/content\n  The host sends its lessons\
-        \ to be indexed dynamically."
-      operationId: index_content_v1_api_v1_content_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ContentV1Request'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContentV1Response'
-        '422':
           description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/escalations:
-    post:
-      tags:
-      - Level 2 Contract
-      summary: Escalate to human tutor (Level 2 Technical Guide Contract)
-      description: "Data contract:\n  POST /api/v1/escalations { conversation } ->\
-        \ { ticketId }"
-      operationId: escalate_v1_api_v1_escalations_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EscalationV1Request'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EscalationV1Response'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/sms/inbound:
-    post:
-      tags:
-      - Level 2 Contract
-      summary: Text/SMS route (Level 2 Technical Guide Contract)
-      description: "Data contract:\n  POST /sms/inbound { from, text } -> plain text\
-        \ reply of at most 160 characters.\n  Accepts both JSON and form-urlencoded\
-        \ payloads."
-      operationId: sms_inbound_v1_api_v1_sms_inbound_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            text/plain:
-              schema:
-                type: string
-  /ask:
-    post:
-      tags:
-      - Level 2 Contract
       summary: Ask the tutor (Level 2 Technical Guide Contract)
-      description: "Data contract:\n  POST /api/v1/ask { question, language } -> {\
-        \ answer, sources: [{ title, url, id }] }"
-      operationId: ask_v1_ask_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AskV1Request'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AskV1Response'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /content:
-    post:
       tags:
       - Level 2 Contract
-      summary: Index host lessons (Level 2 Technical Guide Contract)
+  /v1/content:
+    post:
       description: "Data contract:\n  POST /api/v1/content\n  The host sends its lessons\
         \ to be indexed dynamically."
-      operationId: index_content_v1_content_post
+      operationId: index_content_v1_v1_content_post
       requestBody:
         content:
           application/json:
@@ -907,25 +2310,25 @@ paths:
         required: true
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContentV1Response'
+          description: Successful Response
         '422':
-          description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /escalations:
-    post:
+          description: Validation Error
+      summary: Index host lessons (Level 2 Technical Guide Contract)
       tags:
       - Level 2 Contract
-      summary: Escalate to human tutor (Level 2 Technical Guide Contract)
+  /v1/escalations:
+    post:
       description: "Data contract:\n  POST /api/v1/escalations { conversation } ->\
         \ { ticketId }"
-      operationId: escalate_v1_escalations_post
+      operationId: escalate_v1_v1_escalations_post
       requestBody:
         content:
           application/json:
@@ -934,1124 +2337,63 @@ paths:
         required: true
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EscalationV1Response'
+          description: Successful Response
         '422':
-          description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /sms/inbound:
-    post:
+          description: Validation Error
+      summary: Escalate to human tutor (Level 2 Technical Guide Contract)
       tags:
       - Level 2 Contract
-      summary: Text/SMS route (Level 2 Technical Guide Contract)
+  /v1/sms/inbound:
+    post:
       description: "Data contract:\n  POST /sms/inbound { from, text } -> plain text\
         \ reply of at most 160 characters.\n  Accepts both JSON and form-urlencoded\
         \ payloads."
-      operationId: sms_inbound_v1_sms_inbound_post
+      operationId: sms_inbound_v1_v1_sms_inbound_post
       responses:
         '200':
-          description: Successful Response
           content:
             text/plain:
               schema:
                 type: string
-  /health:
-    get:
+          description: Successful Response
+      summary: Text/SMS route (Level 2 Technical Guide Contract)
       tags:
-      - Health
-      summary: Health
-      operationId: health_health_get
+      - Level 2 Contract
+  /webhook/sms:
+    post:
+      description: "Receive an inbound SMS from Africa's Talking and reply appropriately.\n\
+        \nAT sends the payload as application/x-www-form-urlencoded with fields:\n\
+        \  from, to, text, date, id, linkId, networkCode"
+      operationId: sms_inbound_webhook_sms_post
       responses:
         '200':
-          description: Successful Response
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-components:
-  schemas:
-    AccommodationRequest:
-      properties:
-        user_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: User Id
-        name:
-          type: string
-          title: Name
-        email:
-          type: string
-          title: Email
-        phone:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Phone
-        accommodation_type:
-          type: string
-          title: Accommodation Type
-          description: e.g. extra time, screen reader, sign language interpreter
-        interview_date:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Interview Date
-        notes:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Notes
-        language:
-          anyOf:
-          - type: string
-            enum:
-            - en
-            - am
-            - om
-            - ti
-            - so
-            - ar
-            - sw
-            - fr
-            - auto
-          - type: string
-          title: Language
-          default: en
-      type: object
-      required:
-      - name
-      - email
-      - accommodation_type
-      title: AccommodationRequest
-    AccommodationResponse:
-      properties:
-        reference:
-          type: string
-          title: Reference
-        message:
-          type: string
-          title: Message
-        next_steps:
-          items:
-            type: string
-          type: array
-          title: Next Steps
-          default: []
-        ethiopian_date:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Ethiopian Date
-      type: object
-      required:
-      - reference
-      - message
-      title: AccommodationResponse
-    AskV1Request:
-      properties:
-        question:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Question
-        message:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Message
-        language:
-          anyOf:
-          - type: string
-            enum:
-            - en
-            - am
-            - om
-            - ti
-            - so
-            - ar
-            - sw
-            - fr
-            - auto
-          - type: string
-          title: Language
-          default: auto
-        session_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Session Id
-        simple_mode:
-          type: boolean
-          title: Simple Mode
-          default: false
-      type: object
-      title: AskV1Request
-    AskV1Response:
-      properties:
-        answer:
-          type: string
-          title: Answer
-        sources:
-          items:
-            $ref: '#/components/schemas/AskV1Source'
-          type: array
-          title: Sources
-          default: []
-        language:
-          type: string
-          title: Language
-          default: en
-        ethiopian_date:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Ethiopian Date
-      type: object
-      required:
-      - answer
-      title: AskV1Response
-    AskV1Source:
-      properties:
-        id:
-          type: string
-          title: Id
-        title:
-          type: string
-          title: Title
-        url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Url
-        source:
-          type: string
-          title: Source
-          default: ''
-        excerpt:
-          type: string
-          title: Excerpt
-          default: ''
-      type: object
-      required:
-      - id
-      - title
-      title: AskV1Source
-    BatchTranslateRequest:
-      properties:
-        strings:
-          items:
-            type: string
-          type: array
-          title: Strings
-          description: Array of unique text strings to translate
-        target_lang:
-          type: string
-          title: Target Lang
-          description: Target language code (am, om, ti, so, ar, sw, fr, en)
-        source_lang:
-          type: string
-          title: Source Lang
-          description: Source language code
-          default: en
-        domain:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Domain
-          description: Host website domain for context
-        site_type:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Site Type
-          description: 'Site type: auto, learning, jobs, or general'
-          default: auto
-      type: object
-      required:
-      - strings
-      - target_lang
-      title: BatchTranslateRequest
-    BatchTranslateResponse:
-      properties:
-        translations:
-          additionalProperties:
-            type: string
-          type: object
-          title: Translations
-          description: Map of original string to translated string
-        target_lang:
-          type: string
-          title: Target Lang
-        source_lang:
-          type: string
-          title: Source Lang
-        cached_count:
-          type: integer
-          title: Cached Count
-        translated_count:
-          type: integer
-          title: Translated Count
-        provider:
-          type: string
-          title: Provider
-      type: object
-      required:
-      - translations
-      - target_lang
-      - source_lang
-      - cached_count
-      - translated_count
-      - provider
-      title: BatchTranslateResponse
-    Body_transcribe_speech_speech_transcribe_post:
-      properties:
-        file:
-          type: string
-          contentMediaType: application/octet-stream
-          title: File
-          description: Audio file (webm, wav, ogg, mp3) from client microphone
-        language:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Language
-          description: Spoken language hint or 'auto' for zero-shot LID
-          default: auto
-      type: object
-      required:
-      - file
-      title: Body_transcribe_speech_speech_transcribe_post
-    ChatMessage:
-      properties:
-        role:
-          type: string
-          enum:
-          - user
-          - assistant
-          - system
-          title: Role
-        content:
-          type: string
-          title: Content
-        language:
-          type: string
-          title: Language
-          default: en
-      type: object
-      required:
-      - role
-      - content
-      title: ChatMessage
-    ChatRequest:
-      properties:
-        message:
-          type: string
-          maxLength: 4096
-          minLength: 1
-          title: Message
-        language:
-          anyOf:
-          - type: string
-            enum:
-            - en
-            - am
-            - om
-            - ti
-            - so
-            - ar
-            - sw
-            - fr
-            - auto
-          - type: string
-          title: Language
-          default: auto
-        history:
-          items:
-            $ref: '#/components/schemas/ChatMessage'
-          type: array
-          maxItems: 20
-          title: History
-        session_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Session Id
-        user_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: User Id
-        simple_mode:
-          type: boolean
-          title: Simple Mode
-          description: Plain-language simple mode for cognitive accessibility
-          default: false
-      type: object
-      required:
-      - message
-      title: ChatRequest
-    ChatResponse:
-      properties:
-        id:
-          type: string
-          title: Id
-        text:
-          type: string
-          title: Text
-        language:
-          type: string
-          title: Language
-        citations:
-          items:
-            $ref: '#/components/schemas/Citation'
-          type: array
-          title: Citations
-          default: []
-        provider:
-          type: string
-          title: Provider
-        timestamp:
-          type: string
-          format: date-time
-          title: Timestamp
-        ethiopian_date:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Ethiopian Date
-      type: object
-      required:
-      - id
-      - text
-      - language
-      - provider
-      title: ChatResponse
-    Citation:
-      properties:
-        id:
-          type: string
-          title: Id
-        source:
-          type: string
-          title: Source
-        excerpt:
-          type: string
-          title: Excerpt
-        url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Url
-        title:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Title
-      type: object
-      required:
-      - id
-      - source
-      - excerpt
-      title: Citation
-    ContentV1Request:
-      properties:
-        lessons:
-          items:
-            $ref: '#/components/schemas/LessonItem'
-          type: array
-          title: Lessons
-          default: []
-      type: object
-      title: ContentV1Request
-    ContentV1Response:
-      properties:
-        status:
-          type: string
-          title: Status
-          default: indexed
-        count:
-          type: integer
-          title: Count
-          default: 0
-        message:
-          type: string
-          title: Message
-      type: object
-      required:
-      - message
-      title: ContentV1Response
-    DescribeImageRequest:
-      properties:
-        url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Url
-        filename:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Filename
-        language:
-          anyOf:
-          - type: string
-            enum:
-            - en
-            - am
-            - om
-            - ti
-            - so
-            - ar
-            - sw
-            - fr
-            - auto
-          - type: string
-          title: Language
-          default: auto
-        context:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Context
-      type: object
-      title: DescribeImageRequest
-    DescribeImageResponse:
-      properties:
-        id:
-          type: string
-          title: Id
-        description:
-          type: string
-          title: Description
-        language:
-          type: string
-          title: Language
-        source:
-          type: string
-          title: Source
-        ai_provider:
-          type: string
-          title: Ai Provider
-          default: savanna-ai-vision
-        visual_elements:
-          items:
-            type: string
-          type: array
-          title: Visual Elements
-          default: []
-        breakdown:
-          anyOf:
-          - $ref: '#/components/schemas/VisualBreakdown'
-          - type: 'null'
-        ethiopian_date:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Ethiopian Date
-      type: object
-      required:
-      - id
-      - description
-      - language
-      - source
-      title: DescribeImageResponse
-    EscalateRequest:
-      properties:
-        session_id:
-          type: string
-          title: Session Id
-        user_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: User Id
-        reason:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Reason
-        sdp_offer:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Sdp Offer
-        language:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Language
-          default: en
-        learner_context:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Learner Context
-      type: object
-      required:
-      - session_id
-      title: EscalateRequest
-    EscalateResponse:
-      properties:
-        ticket_id:
-          type: string
-          title: Ticket Id
-        operator_notified:
-          type: boolean
-          title: Operator Notified
-        sdp_answer:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Sdp Answer
-        message:
-          type: string
-          title: Message
-      type: object
-      required:
-      - ticket_id
-      - operator_notified
-      - message
-      title: EscalateResponse
-    EscalationV1Request:
-      properties:
-        conversation:
-          anyOf:
-          - items: {}
-            type: array
-          - type: string
-          title: Conversation
-          default: []
-        reason:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Reason
-          default: Learner requested tutor help
-        learner_context:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Learner Context
-        session_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Session Id
-      type: object
-      title: EscalationV1Request
-    EscalationV1Response:
-      properties:
-        ticketId:
-          type: string
-          title: Ticketid
-        status:
-          type: string
-          title: Status
-          default: pending
-        message:
-          type: string
-          title: Message
-          default: A tutor will answer here. It may take until morning.
-        operator_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Operator Url
-      type: object
-      required:
-      - ticketId
-      title: EscalationV1Response
-    FrequentQuestion:
-      properties:
-        question:
-          type: string
-          title: Question
-        topic:
-          type: string
-          title: Topic
-        language:
-          type: string
-          title: Language
-        count:
-          type: integer
-          title: Count
-      type: object
-      required:
-      - question
-      - topic
-      - language
-      - count
-      title: FrequentQuestion
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    HealthResponse:
-      properties:
-        status:
-          type: string
-          title: Status
-        version:
-          type: string
-          title: Version
-        ai_provider:
-          type: string
-          title: Ai Provider
-      type: object
-      required:
-      - status
-      - version
-      - ai_provider
-      title: HealthResponse
-    Job:
-      properties:
-        id:
-          type: string
-          title: Id
-        title:
-          type: string
-          title: Title
-        company:
-          type: string
-          title: Company
-        location:
-          type: string
-          title: Location
-        type:
-          type: string
-          title: Type
-        description:
-          type: string
-          title: Description
-        skills:
-          items:
-            type: string
-          type: array
-          title: Skills
-          default: []
-        posted_at:
-          type: string
-          format: date-time
-          title: Posted At
-        url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Url
-        translations:
-          additionalProperties:
-            additionalProperties: true
-            type: object
-          type: object
-          title: Translations
-      type: object
-      required:
-      - id
-      - title
-      - company
-      - location
-      - type
-      - description
-      - posted_at
-      title: Job
-    JobAlertRequest:
-      properties:
-        user_id:
-          type: string
-          title: User Id
-        channel:
-          type: string
-          enum:
-          - telegram
-          - sms
-          - both
-          title: Channel
-          default: both
-        contact:
-          type: string
-          title: Contact
-        keywords:
-          items:
-            type: string
-          type: array
-          title: Keywords
-          default: []
-        language:
-          anyOf:
-          - type: string
-            enum:
-            - en
-            - am
-            - om
-            - ti
-            - so
-            - ar
-            - sw
-            - fr
-            - auto
-          - type: string
-          title: Language
-          default: en
-      type: object
-      required:
-      - user_id
-      - contact
-      title: JobAlertRequest
-    JobAlertResponse:
-      properties:
-        subscription_id:
-          type: string
-          title: Subscription Id
-        message:
-          type: string
-          title: Message
-      type: object
-      required:
-      - subscription_id
-      - message
-      title: JobAlertResponse
-    JobApplicationRequest:
-      properties:
-        applicant_name:
-          type: string
-          title: Applicant Name
-        email:
-          type: string
-          title: Email
-        resume_url:
-          type: string
-          title: Resume Url
-        cover_note:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Cover Note
-          default: ''
-        accommodation_type:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Accommodation Type
-        language:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Language
-          default: en
-      type: object
-      required:
-      - applicant_name
-      - email
-      - resume_url
-      title: JobApplicationRequest
-    JobApplicationResponse:
-      properties:
-        application_id:
-          type: string
-          title: Application Id
-        job_id:
-          type: string
-          title: Job Id
-        job_title:
-          type: string
-          title: Job Title
-        applicant_name:
-          type: string
-          title: Applicant Name
-        email:
-          type: string
-          title: Email
-        status:
-          type: string
-          title: Status
-        accommodation_reference:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Accommodation Reference
-        submitted_at:
-          type: string
-          title: Submitted At
-        message:
-          type: string
-          title: Message
-      type: object
-      required:
-      - application_id
-      - job_id
-      - job_title
-      - applicant_name
-      - email
-      - status
-      - submitted_at
-      - message
-      title: JobApplicationResponse
-    LessonItem:
-      properties:
-        id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Id
-        title:
-          type: string
-          title: Title
-        html:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Html
-        text:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Text
-        url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Url
-      type: object
-      required:
-      - title
-      title: LessonItem
-    RecentQuestion:
-      properties:
-        question:
-          type: string
-          title: Question
-        topic:
-          type: string
-          title: Topic
-        language:
-          type: string
-          title: Language
-        timestamp:
-          type: string
-          title: Timestamp
-        ethiopian_date:
-          type: string
-          title: Ethiopian Date
-      type: object
-      required:
-      - question
-      - topic
-      - language
-      - timestamp
-      - ethiopian_date
-      title: RecentQuestion
-    SynthesizeRequest:
-      properties:
-        text:
-          type: string
-          maxLength: 4096
-          minLength: 1
-          title: Text
-        language:
-          anyOf:
-          - type: string
-            enum:
-            - en
-            - am
-            - om
-            - ti
-            - so
-            - ar
-            - sw
-            - fr
-            - auto
-          - type: string
-          title: Language
-          default: en
-        voice:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Voice
-        rate:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Rate
-          default: +0%
-        pitch:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Pitch
-          default: +0Hz
-      type: object
-      required:
-      - text
-      title: SynthesizeRequest
-    TeacherAnalyticsResponse:
-      properties:
-        total_questions:
-          type: integer
-          title: Total Questions
-        languages_breakdown:
-          additionalProperties:
-            type: integer
-          type: object
-          title: Languages Breakdown
-        topics:
-          items:
-            $ref: '#/components/schemas/TopicCount'
-          type: array
-          title: Topics
-        most_asked:
-          items:
-            $ref: '#/components/schemas/FrequentQuestion'
-          type: array
-          title: Most Asked
-        recent:
-          items:
-            $ref: '#/components/schemas/RecentQuestion'
-          type: array
-          title: Recent
-      type: object
-      required:
-      - total_questions
-      - languages_breakdown
-      - topics
-      - most_asked
-      - recent
-      title: TeacherAnalyticsResponse
-    TopicCount:
-      properties:
-        topic:
-          type: string
-          title: Topic
-        count:
-          type: integer
-          title: Count
-        percentage:
-          type: number
-          title: Percentage
-      type: object
-      required:
-      - topic
-      - count
-      - percentage
-      title: TopicCount
-    TranscribeResponse:
-      properties:
-        text:
-          type: string
-          title: Text
-        language:
-          type: string
-          title: Language
-        confidence:
-          type: number
-          title: Confidence
-          default: 0.95
-        duration_seconds:
-          type: number
-          title: Duration Seconds
-          default: 0.0
-        provider:
-          type: string
-          title: Provider
-          default: savanna-stt
-      type: object
-      required:
-      - text
-      - language
-      title: TranscribeResponse
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-        input:
-          title: Input
-        ctx:
-          type: object
-          title: Context
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    VisualBreakdown:
-      properties:
-        primary_subject:
-          type: string
-          title: Primary Subject
-        visual_elements:
-          items:
-            type: string
-          type: array
-          title: Visual Elements
-          default: []
-        pedagogical_context:
-          type: string
-          title: Pedagogical Context
-        composition_and_palette:
-          type: string
-          title: Composition And Palette
-      type: object
-      required:
-      - primary_subject
-      - pedagogical_context
-      - composition_and_palette
-      title: VisualBreakdown
-    VoiceInfo:
-      properties:
-        id:
-          type: string
-          title: Id
-        name:
-          type: string
-          title: Name
-        language:
-          type: string
-          title: Language
-        gender:
-          type: string
-          enum:
-          - female
-          - male
-          - neutral
-          title: Gender
-          default: neutral
-        locale:
-          type: string
-          title: Locale
-        provider:
-          type: string
-          title: Provider
-      type: object
-      required:
-      - id
-      - name
-      - language
-      - locale
-      - provider
-      title: VoiceInfo
+              schema: {}
+          description: Successful Response
+      summary: Africa's Talking inbound SMS webhook
+      tags:
+      - SMS Webhook
+  /webhook/sms/delivery:
+    post:
+      description: 'Receive delivery status reports from Africa''s Talking.
+
+        We log the payload and always return 200 OK as AT expects.'
+      operationId: sms_delivery_webhook_sms_delivery_post
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Africa's Talking SMS delivery report
+      tags:
+      - SMS Webhook

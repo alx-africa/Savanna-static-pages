@@ -155,7 +155,7 @@
   if (initialLang) {
     iframeSrc += '&lang=' + encodeURIComponent(initialLang);
   }
-  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.6.0';
+  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.7.3';
   iframe.src = iframeSrc;
   iframe.title = 'Savanna Learning Assistant';
   iframe.setAttribute('allow', 'microphone; display-capture');
@@ -310,18 +310,27 @@
       const qEvt = new CustomEvent('db-assistant:question', {
         bubbles: true,
         composed: true,
-        detail: { question: event.data.question, language: event.data.language }
+        detail: {
+          text: event.data.text || event.data.question,
+          question: event.data.question || event.data.text,
+          language: event.data.language
+        }
       });
       document.dispatchEvent(qEvt);
+      window.dispatchEvent(qEvt);
       const hostElem = document.querySelector('db-assistant');
       if (hostElem) hostElem.dispatchEvent(qEvt);
     } else if (event.data.type === 'db-assistant:escalated') {
       const escEvt = new CustomEvent('db-assistant:escalated', {
         bubbles: true,
         composed: true,
-        detail: { ticketId: event.data.ticketId, conversation: event.data.conversation }
+        detail: {
+          ticketId: event.data.ticketId,
+          conversation: event.data.conversation
+        }
       });
       document.dispatchEvent(escEvt);
+      window.dispatchEvent(escEvt);
       const hostElem = document.querySelector('db-assistant');
       if (hostElem) hostElem.dispatchEvent(escEvt);
     }
@@ -600,7 +609,21 @@
   /* ── 10. Web Component: <db-assistant> (Level 1 Technical Guide Contract) ─ */
   if (typeof customElements !== 'undefined' && !customElements.get('db-assistant')) {
     class DbAssistant extends HTMLElement {
+      static get observedAttributes() {
+        return ['lang', 'api', 'content', 'theme'];
+      }
+
       connectedCallback() {
+        this.applyAttributes();
+      }
+
+      attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue !== newValue) {
+          this.applyAttributes();
+        }
+      }
+
+      applyAttributes() {
         const lang = this.getAttribute('lang');
         const api = this.getAttribute('api');
         const content = this.getAttribute('content');
@@ -612,15 +635,23 @@
           }
         }
         if (api) {
+          let cleanApi = api.replace(/\/$/, '');
+          if (cleanApi.includes('localhost') && typeof window !== 'undefined' && window.location) {
+            const h = window.location.hostname;
+            if (h !== 'localhost' && h !== '127.0.0.1' && h !== '') {
+              cleanApi = window.location.origin;
+            }
+          }
           window.SavannaConfig = window.SavannaConfig || {};
-          window.SavannaConfig.apiUrl = api.replace(/\/$/, '');
+          window.SavannaConfig.apiUrl = cleanApi;
         }
         if (content) {
+          const targetApi = (window.SavannaConfig && window.SavannaConfig.apiUrl) || apiUrl;
           fetch(content)
             .then(res => res.json())
             .then(data => {
               const lessons = Array.isArray(data) ? data : (data.lessons || [data]);
-              fetch((window.SavannaConfig.apiUrl || apiUrl) + '/api/v1/content', {
+              fetch(targetApi + '/api/v1/content', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ lessons: lessons })

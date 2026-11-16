@@ -1,0 +1,28 @@
+{
+  "lessons": [
+    {
+      "id": "concept-va-future",
+      "title": "What is Shaping the Future of VA Work?",
+      "url": "/pages/concept-with-navigation.html#what-is-shaping-the-future-of-va-work",
+      "text": "Artificial intelligence and automation are redefining virtual assistance. Remote workers in Ethiopia and across the continent can leverage generative AI tools to handle administrative tasks faster while focusing on high-value human empathy and critical thinking."
+    },
+    {
+      "id": "concept-ai-collaboration",
+      "title": "Artificial Intelligence and the Future of VA Work",
+      "url": "/pages/concept-with-navigation.html#artificial-intelligence-and-the-future-of-va-work",
+      "text": "AI will not replace virtual assistants who master AI tools. Instead, clients seek professionals who combine digital tools with reliability, emotional intelligence, and proactive problem solving."
+    },
+    {
+      "id": "concept-client-value",
+      "title": "What Clients are Likely to Value More and More",
+      "url": "/pages/concept-with-navigation.html#what-clients-are-likely-to-value-more-and-more",
+      "text": "Clients prioritize communication clarity, punctuality, trustworthy confidentiality handling, and domain-specific problem resolution."
+    },
+    {
+      "id": "accessibility-standards",
+      "title": "Digital Bridge Accessibility Engineering Gate",
+      "url": "/pages/concept-with-navigation.html#accessibility-gate",
+      "text": "The accessibility gate requires WCAG 2.2 AA compliance, full screen reader support (NVDA, TalkBack), zero mouse dependency, barrier-free accommodation requests with no medical proof, and 200% zoom responsiveness."
+    }
+  ]
+}

@@ -27,10 +27,11 @@ services:
     volumes:
       - ./docs:/app/docs:ro
       - ./pages:/app/pages:ro
-      - ./assets:/app/assets:ro
+      - ./assets:/app/assets
       - ./demo:/app/demo:ro
       - ./widget:/app/widget:ro
       - ./operator:/app/operator:ro
+      - ./api:/app
       - chroma_data:/app/chroma_data
     depends_on:
       redis:
@@ -51,6 +52,10 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - API_BASE_URL=http://api:8000
+      - DOCS_PATH=/app/docs
+    volumes:
+      - ./docs:/app/docs:ro
+      - ./api:/app
     depends_on:
       api:
         condition: service_healthy
@@ -65,6 +70,10 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - API_BASE_URL=http://api:8000
+      - DOCS_PATH=/app/docs
+    volumes:
+      - ./docs:/app/docs:ro
+      - ./api:/app
     depends_on:
       api:
         condition: service_healthy

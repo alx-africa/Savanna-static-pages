@@ -32,7 +32,7 @@ from models import (
 )
 from routers.chat import chat as base_chat
 from routers.escalate import _get_redis, _notify_operator
-from routers.sms import _chat_reply, _job_summary, _strip_prefix, truncate_sms
+from routers.sms import _chat_reply, _job_summary, _strip_prefix, truncate_sms, process_sms_message
 from rag.ingest import extract_semantic_sections
 
 logger = logging.getLogger(__name__)
@@ -237,14 +237,7 @@ async def sms_inbound_v1(request: Request) -> Response:
     if not text_content:
         return PlainTextResponse("No question received. Text HELP for commands.", media_type="text/plain")
 
-    from routers.chat import _detect_language
-    language = _detect_language(text_content)
-    stripped, prefix = _strip_prefix(text_content)
-
-    if prefix in ("JOB", "KAZI", "HOJII", "SHAQO", "ስራ", "ስራሕ", "وظيفة", "عمل", "EMPLOI"):
-        reply = _job_summary(language)
-    else:
-        reply = await _chat_reply(stripped or text_content, language)
+    reply = await process_sms_message(from_number, text_content)
 
     # reply is already truncated by _job_summary or _chat_reply
     return PlainTextResponse(reply, media_type="text/plain")

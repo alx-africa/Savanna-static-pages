@@ -929,7 +929,7 @@
                 </a>
               </div>
               <div>
-                <form class="button_to" method="post" action="#">
+                <form class="button_to" method="post" action="#" onsubmit="event.preventDefault(); return false;">
                   <button class="btn btn-primary" type="submit">
                     <span class="align-items-baseline d-inline-flex gap-2">
                       <i aria-hidden="true" class="fa-solid fa-check fa-fw"></i>
@@ -1293,6 +1293,7 @@ alert(example);
     <script src="../assets/js/bootstrap.bundle.js"></script>
     <script src="../assets/js/static-page.js"></script>
     <!-- Savanna Multilingual Assistant & Live Help Widget (Level 1 Drop-in) -->
-    <script src="../widget/widget.js?v=2.7.0"  data-lang="en"></script>
+    <script src="../widget/widget.js?v=2.7.3" data-lang="en"></script>
+    <db-assistant lang="en" content="/content.json"></db-assistant>
   </body>
 </html>

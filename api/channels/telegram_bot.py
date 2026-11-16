@@ -26,8 +26,35 @@ from config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# ── Language store (in-memory, upgrade to Redis for multi-process) ────────────
+# ── Language store (in-memory + Redis persistent) ───────────────────────────
 user_language: dict[int, str] = {}  # user_id → "en" | "am" | "om" | "ti" | "so" | "ar" | "sw" | "fr" | "auto"
+
+
+async def _get_user_lang(user_id: int) -> str:
+    if user_id in user_language:
+        return user_language[user_id]
+    try:
+        import redis.asyncio as aioredis
+        r = aioredis.from_url(settings.redis_url, decode_responses=True)
+        val = await r.get(f"user_lang:{user_id}")
+        await r.aclose()
+        if val:
+            user_language[user_id] = val
+            return val
+    except Exception:
+        pass
+    return "auto"
+
+
+async def _set_user_lang(user_id: int, lang: str) -> None:
+    user_language[user_id] = lang
+    try:
+        import redis.asyncio as aioredis
+        r = aioredis.from_url(settings.redis_url, decode_responses=True)
+        await r.set(f"user_lang:{user_id}", lang)
+        await r.aclose()
+    except Exception:
+        pass
 
 
 def _lang(user_id: int) -> str:
@@ -116,10 +143,13 @@ HELP_TEXT = {
         "📋 *Available Commands*\n\n"
         "/start — Welcome message\n"
         "/help — This help text\n"
+        "/status — Check system & alert status\n"
         "/language — Select your preferred language\n"
         "/jobs — Browse 5 latest job listings\n"
+        "/alerts — Subscribe/manage instant job alerts\n"
         "/accommodate — Request accessibility accommodation\n"
-        "/escalate — Connect to a live human operator\n\n"
+        "/escalate — Connect to a live human operator\n"
+        "/operator — Set this chat as the operator channel\n\n"
         "Or just ask any course question in any language!"
     ),
     "am": (
@@ -128,8 +158,10 @@ HELP_TEXT = {
         "/help — ይህ የእርዳታ ጽሑፍ\n"
         "/language — ቋንቋ ይምረጡ\n"
         "/jobs — 5 የቅርብ ጊዜ የሥራ ዕድሎችን ያሳይ\n"
+        "/alerts — የሥራ ማስጠንቀቂያ ለመመዝገብ\n"
         "/accommodate — ተደራሽነት ጥያቄ ያስገቡ\n"
-        "/escalate — ወደ ሕያው ኦፕሬተር ያስተላልፉ\n\n"
+        "/escalate — ወደ ሕያው ኦፕሬተር ያስተላልፉ\n"
+        "/operator — ይህንን ቻት እንደ ኦፕሬተር ቻናል ያዘጋጁ\n\n"
         "ወይም ማንኛውንም ጥያቄ በፈለጉት ቋንቋ ይጠይቁ!"
     ),
     "om": (
@@ -253,36 +285,83 @@ ESCALATE_MSG = {
 ACCOM_NAME_EMAIL, ACCOM_TYPE, ACCOM_NOTES = range(3)
 
 
-def _format_job(job: dict, lang: str) -> str:
-    title = job.get("title", "N/A")
-    company = job.get("company", "N/A")
-    location = job.get("location", "N/A")
-    jtype = job.get("type", "N/A")
-    url = job.get("url", "")
-    desc = job.get("description", "")[:120]
-    if lang == "am":
-        return f"💼 *{title}*\n🏢 {company}\n📍 {location} | {jtype}\n{desc}…\n🔗 {url}"
-    return f"💼 *{title}*\n🏢 {company}\n📍 {location} | {jtype}\n{desc}…\n🔗 {url}"
+def _format_job(job: dict, lang: str = "en") -> str:
+    import html
+    title = html.escape(str(job.get("title", "Job Title")))
+    company = html.escape(str(job.get("company", "Company")))
+    location = html.escape(str(job.get("location", "Remote")))
+    jtype = html.escape(str(job.get("type", "N/A")))
+    url = job.get("url", "#")
+    desc = html.escape(str(job.get("description", ""))[:130])
+    return f"💼 <b>{title}</b>\n🏢 {company}\n📍 {location} | {jtype}\n{desc}…\n🔗 <a href='{url}'>{url}</a>"
 
 
 async def _load_jobs(n: int = 5) -> list[dict]:
+    import httpx
     import json
     from pathlib import Path
 
-    from config import get_docs_path
-    jobs_path = get_docs_path() / "jobs" / "jobs.json"
+    # 1. Try internal API endpoint
+    api_url = f"{settings.api_base_url}/jobs"
     try:
-        with open(jobs_path, "r", encoding="utf-8") as fh:
-            jobs = json.load(fh)
-        jobs.sort(key=lambda j: j.get("posted_at", ""), reverse=True)
-        return jobs[:n]
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            resp = await client.get(api_url)
+            if resp.status_code == 200:
+                data = resp.json()
+                jobs = data.get("jobs", [])
+                if jobs:
+                    return jobs[:n]
     except Exception as exc:
-        logger.error("Could not load jobs: %s", exc)
-        return []
+        logger.debug("API jobs fetch failed, falling back to disk: %s", exc)
+
+    # 2. Disk candidates
+    candidates = [
+        Path("/app/docs/jobs/jobs.json"),
+        Path("./docs/jobs/jobs.json"),
+        Path(__file__).parent.parent / "docs" / "jobs" / "jobs.json",
+        Path(__file__).parent.parent.parent / "docs" / "jobs" / "jobs.json",
+    ]
+    try:
+        from config import get_docs_path
+        candidates.insert(0, get_docs_path() / "jobs" / "jobs.json")
+    except Exception:
+        pass
+
+    for p in candidates:
+        if p.exists():
+            try:
+                with open(p, "r", encoding="utf-8") as fh:
+                    jobs = json.load(fh)
+                jobs.sort(key=lambda j: j.get("posted_at", ""), reverse=True)
+                return jobs[:n]
+            except Exception as exc:
+                logger.error("Could not load jobs from %s: %s", p, exc)
+
+    return []
 
 
 async def _chat_api(message: str, language: str) -> str:
-    """Call the RAG + AI pipeline and return the reply text."""
+    """Call the API chat endpoint with fallback to local RAG + AI pipeline."""
+    import httpx
+
+    # 1. Primary: Delegate to core API /chat service
+    api_url = f"{settings.api_base_url}/chat"
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            resp = await client.post(api_url, json={"message": message, "language": language})
+            if resp.status_code == 200:
+                data = resp.json()
+                reply = data.get("text", "")
+                citations = data.get("citations", [])
+                if citations:
+                    urls = [f"• {c.get('title', 'Source')}: {c.get('url', '')}" for c in citations if c.get("url")]
+                    if urls:
+                        reply += "\n\n📚 *Sources:*\n" + "\n".join(urls[:3])
+                return reply
+    except Exception as exc:
+        logger.debug("Core chat API request failed, trying local fallback: %s", exc)
+
+    # 2. Local fallback
     try:
         from rag.retriever import retrieve
         from ai.factory import get_provider
@@ -343,27 +422,8 @@ def build_application(token: str):
         filters,
     )
 
-    # ── /start ────────────────────────────────────────────────────────────────
-    async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-        uid = update.effective_user.id
-        lang = user_language.get(uid, "en")
-        if lang == "auto":
-            lang = "en"
-        await update.message.reply_text(WELCOME.get(lang, WELCOME["en"]), parse_mode="Markdown")
-
-    # ── /help ─────────────────────────────────────────────────────────────────
-    async def help_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-        uid = update.effective_user.id
-        lang = user_language.get(uid, "en")
-        if lang == "auto":
-            lang = "en"
-        await update.message.reply_text(HELP_TEXT.get(lang, HELP_TEXT["en"]), parse_mode="Markdown")
-
-    # ── /language ─────────────────────────────────────────────────────────────
-    async def language_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-        uid = update.effective_user.id
-        current = user_language.get(uid, "auto")
-        keyboard = InlineKeyboardMarkup([
+    def _build_language_keyboard() -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("🇬🇧 English", callback_data="setlang_en"),
                 InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="setlang_am"),
@@ -384,11 +444,42 @@ def build_application(token: str):
                 InlineKeyboardButton("✨ Auto-Detect (ራስ-ገዝ)", callback_data="setlang_auto"),
             ],
         ])
+
+    # ── /start ────────────────────────────────────────────────────────────────
+    async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        uid = update.effective_user.id
+        lang = await _get_user_lang(uid)
+        effective_lang = "en" if lang == "auto" else lang
+        welcome_text = WELCOME.get(effective_lang, WELCOME["en"])
+
+        prompt = (
+            f"{welcome_text}\n\n"
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"🌍 *Please select your language / እባክዎ ቋንቋዎን ይምረጡ:*"
+        )
+        await update.message.reply_text(
+            prompt,
+            parse_mode="Markdown",
+            reply_markup=_build_language_keyboard(),
+        )
+
+    # ── /help ─────────────────────────────────────────────────────────────────
+    async def help_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        uid = update.effective_user.id
+        lang = await _get_user_lang(uid)
+        if lang == "auto":
+            lang = "en"
+        await update.message.reply_text(HELP_TEXT.get(lang, HELP_TEXT["en"]), parse_mode="Markdown")
+
+    # ── /language ─────────────────────────────────────────────────────────────
+    async def language_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        uid = update.effective_user.id
+        current = await _get_user_lang(uid)
         prompt = (
             f"🌍 *Select your preferred language / ቋንቋ ይምረጡ*\n"
             f"(Currently: `{current}`)"
         )
-        await update.message.reply_text(prompt, parse_mode="Markdown", reply_markup=keyboard)
+        await update.message.reply_text(prompt, parse_mode="Markdown", reply_markup=_build_language_keyboard())
 
     async def language_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         query = update.callback_query
@@ -397,9 +488,37 @@ def build_application(token: str):
         if data.startswith("setlang_"):
             code = data.replace("setlang_", "")
             uid = query.from_user.id
-            user_language[uid] = code
+            await _set_user_lang(uid, code)
             confirmation = LANGUAGE_CONFIRMED.get(code, f"✅ Language set to *{code}*")
             await query.edit_message_text(confirmation, parse_mode="Markdown")
+
+            # Follow up with welcome & quick navigation in the newly chosen language
+            effective_lang = "en" if code == "auto" else code
+            quick_nav = InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton("💼 Browse Jobs", callback_data="jobs_more"),
+                    InlineKeyboardButton("🔔 Job Alerts", callback_data="jobs_alert_sub"),
+                ],
+                [
+                    InlineKeyboardButton("🌐 Switch Language", callback_data="change_lang"),
+                ]
+            ])
+            action_prompt = (
+                f"{WELCOME.get(effective_lang, WELCOME['en'])}\n\n"
+                f"💡 _Tip: You can ask course questions directly, browse /jobs, or type /help for all commands._"
+            )
+            await query.message.reply_text(action_prompt, parse_mode="Markdown", reply_markup=quick_nav)
+
+    async def change_lang_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        query = update.callback_query
+        await query.answer()
+        uid = query.from_user.id
+        current = await _get_user_lang(uid)
+        prompt = (
+            f"🌍 *Select your preferred language / ቋንቋ ይምረጡ*\n"
+            f"(Currently: `{current}`)"
+        )
+        await query.message.reply_text(prompt, parse_mode="Markdown", reply_markup=_build_language_keyboard())
 
     # ── /jobs ─────────────────────────────────────────────────────────────────
     async def jobs_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -419,14 +538,15 @@ def build_application(token: str):
             keyboard = InlineKeyboardMarkup(
                 [[InlineKeyboardButton("🔗 Apply", url=job.get("url", "#"))]]
             )
-            await update.message.reply_text(text, parse_mode="Markdown", reply_markup=keyboard)
+            await update.message.reply_text(text, parse_mode="HTML", reply_markup=keyboard)
 
-        keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("🔄 Load more", callback_data="jobs_more")]]
-        )
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔄 Load more", callback_data="jobs_more")],
+            [InlineKeyboardButton("🔔 Subscribe to Job Alerts", callback_data="jobs_alert_sub")],
+        ])
         await update.message.reply_text(
-            "Showing 5 latest jobs. Tap below for more." if lang == "en"
-            else "5 የቅርብ ጊዜ ሥራዎችን ያሳያል። ለተጨማሪ ጠቅ ያድርጉ።",
+            "Showing 5 latest jobs. Tap below for more or to get instant alerts." if lang == "en"
+            else "5 የቅርብ ጊዜ ሥራዎችን ያሳያል። ለተጨማሪ ወይም ማስጠንቀቂያ ለመመዝገብ ከታች ጠቅ ያድርጉ።",
             reply_markup=keyboard,
         )
 
@@ -449,7 +569,152 @@ def build_application(token: str):
             keyboard = InlineKeyboardMarkup(
                 [[InlineKeyboardButton("🔗 Apply", url=job.get("url", "#"))]]
             )
-            await query.message.reply_text(text, parse_mode="Markdown", reply_markup=keyboard)
+            await query.message.reply_text(text, parse_mode="HTML", reply_markup=keyboard)
+
+    # ── /alerts Callback and Command ──────────────────────────────────────────
+    async def jobs_alert_sub_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        query = update.callback_query
+        await query.answer()
+        uid = query.from_user.id
+        chat_id = query.message.chat_id
+        lang = user_language.get(uid, "en")
+
+        import redis.asyncio as aioredis
+        import json
+        import uuid
+        r = aioredis.from_url(settings.redis_url, decode_responses=True)
+        sub_id = str(uuid.uuid4())
+        sub_data = {
+            "subscription_id": sub_id,
+            "user_id": f"tg-{uid}",
+            "channel": "telegram",
+            "contact": str(chat_id),
+            "telegram_chat_id": str(chat_id),
+            "keywords": [],
+            "language": lang,
+        }
+        try:
+            async with r:
+                await r.set(f"job_alert:{sub_id}", json.dumps(sub_data))
+        except Exception as exc:
+            logger.error("Error saving alert sub: %s", exc)
+
+        confirm_msg = (
+            "🔔 <b>Job Alerts Activated!</b>\n\nYou will receive instant alerts here on Telegram whenever new jobs are posted.\nType <code>/alerts off</code> to stop."
+            if lang == "en"
+            else "🔔 <b>የሥራ ማስጠንቀቂያ በርቷል!</b>\n\nአዳዲስ ክፍት ሥራዎች ሲለጠፉ ወዲያውኑ እዚህ በቴሌግራም መልእክት ይደርስዎታል።\nለማቆም <code>/alerts off</code> ይፃፉ።"
+        )
+        await query.message.reply_text(confirm_msg, parse_mode="HTML")
+
+    async def alerts_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        uid = update.effective_user.id
+        chat_id = update.effective_chat.id
+        lang = user_language.get(uid, "en")
+        args = ctx.args or []
+        arg_str = " ".join(args).strip().lower()
+
+        import redis.asyncio as aioredis
+        import json
+        import uuid
+        import html
+        r = aioredis.from_url(settings.redis_url, decode_responses=True)
+
+        if arg_str in ("off", "stop", "disable", "unsubscribe"):
+            try:
+                async with r:
+                    keys = await r.keys("job_alert:*")
+                    for k in keys:
+                        v = await r.get(k)
+                        if v and str(chat_id) in v:
+                            await r.delete(k)
+                await update.message.reply_text(
+                    "❌ Job alerts turned off." if lang == "en" else "❌ የሥራ ማስጠንቀቂያ አገልግሎት ጠፍቷል።"
+                )
+            except Exception as exc:
+                logger.error("Error disabling alerts: %s", exc)
+            return
+
+        keywords = [a for a in args if a]
+        sub_id = str(uuid.uuid4())
+        sub_data = {
+            "subscription_id": sub_id,
+            "user_id": f"tg-{uid}",
+            "channel": "telegram",
+            "contact": str(chat_id),
+            "telegram_chat_id": str(chat_id),
+            "keywords": keywords,
+            "language": lang,
+        }
+        try:
+            async with r:
+                await r.set(f"job_alert:{sub_id}", json.dumps(sub_data))
+        except Exception as exc:
+            logger.error("Error registering job alert: %s", exc)
+
+        kw_display = ", ".join(keywords) if keywords else "All Jobs"
+        reply_msg = (
+            f"🔔 <b>Job Alerts Activated!</b>\n\n"
+            f"Target Filters: <b>{html.escape(kw_display)}</b>\n"
+            f"You will receive immediate alerts when matching jobs are indexed.\n"
+            f"Type <code>/alerts off</code> anytime to unsubscribe."
+            if lang == "en"
+            else
+            f"🔔 <b>የሥራ ማስጠንቀቂያ በርቷል!</b>\n\n"
+            f"የተመረጡ ቃላት: <b>{html.escape(kw_display)}</b>\n"
+            f"ተዛማጅ ሥራ ሲገኝ ወዲያውኑ ማስታወቂያ ይደርስዎታል።\n"
+            f"ለማጥፋት <code>/alerts off</code> ይፃፉ።"
+        )
+        await update.message.reply_text(reply_msg, parse_mode="HTML")
+
+    # ── /operator Command ─────────────────────────────────────────────────────
+    async def operator_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        chat_id = update.effective_chat.id
+        from utils.notifications import set_operator_chat_id
+        ok = await set_operator_chat_id(str(chat_id))
+        if ok:
+            await update.message.reply_text(
+                f"🎧 <b>Live Operator Channel Connected!</b>\n\n"
+                f"This chat (ID: <code>{chat_id}</code>) is now registered as the active operator channel.\n\n"
+                f"You will receive live real-time alerts for:\n"
+                f"• 📄 Job candidate applications\n"
+                f"• ♿ Interview accessibility accommodations\n"
+                f"• 🚨 Learner escalations & live support",
+                parse_mode="HTML",
+            )
+        else:
+            await update.message.reply_text("Could not set operator channel. Check Redis connection.")
+
+    # ── /status Command ───────────────────────────────────────────────────────
+    async def status_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        uid = update.effective_user.id
+        chat_id = update.effective_chat.id
+        lang = user_language.get(uid, "en")
+
+        import redis.asyncio as aioredis
+        r = aioredis.from_url(settings.redis_url, decode_responses=True)
+        is_subbed = False
+        try:
+            async with r:
+                keys = await r.keys("job_alert:*")
+                for k in keys:
+                    v = await r.get(k)
+                    if v and str(chat_id) in v:
+                        is_subbed = True
+                        break
+        except Exception:
+            pass
+
+        alert_status = "Active 🔔" if is_subbed else "Not subscribed (type /alerts to enable)"
+        text = (
+            f"📊 <b>Savanna Assistant Status</b>\n\n"
+            f"• <b>Status:</b> 🟢 Operational (Online)\n"
+            f"• <b>Language:</b> <code>{lang.upper()}</code>\n"
+            f"• <b>Chat ID:</b> <code>{chat_id}</code>\n"
+            f"• <b>Job Alerts:</b> {alert_status}\n"
+            f"• <b>Bot:</b> @InkluwBot\n\n"
+            f"Type /help to see all available commands."
+        )
+        await update.message.reply_text(text, parse_mode="HTML")
 
     # ── /escalate ─────────────────────────────────────────────────────────────
     async def escalate_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -615,11 +880,17 @@ def build_application(token: str):
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(CommandHandler("language", language_cmd))
+    app.add_handler(CommandHandler("status", status_cmd))
     app.add_handler(CommandHandler("jobs", jobs_cmd))
+    app.add_handler(CommandHandler("alerts", alerts_cmd))
+    app.add_handler(CommandHandler("subscribe", alerts_cmd))
+    app.add_handler(CommandHandler("operator", operator_cmd))
     app.add_handler(CommandHandler("escalate", escalate_cmd))
     app.add_handler(accommodation_handler)
     app.add_handler(CallbackQueryHandler(jobs_more_callback, pattern="^jobs_more$"))
+    app.add_handler(CallbackQueryHandler(jobs_alert_sub_callback, pattern="^jobs_alert_sub$"))
     app.add_handler(CallbackQueryHandler(language_callback, pattern="^setlang_"))
+    app.add_handler(CallbackQueryHandler(change_lang_callback, pattern="^change_lang$"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     return app
@@ -655,18 +926,22 @@ def main() -> None:
             time.sleep(3600)
 
     logger.info("Starting Savanna Telegram bot (polling mode)…")
-    try:
-        application = build_application(token)
-        application.run_polling(allowed_updates=["message", "callback_query"])
-    except Exception as exc:
-        logger.warning(
-            "Telegram bot polling encountered an error: %s. "
-            "Entering idle standby mode to keep container healthy.",
-            exc,
-        )
-        import time
-        while True:
-            time.sleep(3600)
+    while True:
+        try:
+            application = build_application(token)
+            application.run_polling(
+                allowed_updates=["message", "callback_query"],
+                bootstrap_retries=-1,
+                drop_pending_updates=False,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Telegram bot polling encountered an error: %s. "
+                "Retrying connection in 5 seconds...",
+                exc,
+            )
+            import time
+            time.sleep(5)
 
 
 if __name__ == "__main__":

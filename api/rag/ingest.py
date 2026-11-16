@@ -30,9 +30,27 @@ _COLLECTION_NAME = "savanna_docs"
 _embed_model: Any = None
 
 
+def is_low_memory_environment() -> bool:
+    """Detect if running in a memory-constrained container (e.g. Render free tier 512MB)."""
+    if os.getenv("DISABLE_DENSE_EMBEDDINGS", "").lower() in ("true", "1", "yes") or os.getenv("RENDER"):
+        return True
+    for path in ['/sys/fs/cgroup/memory.max', '/sys/fs/cgroup/memory/memory.limit_in_bytes']:
+        try:
+            with open(path) as f:
+                val = f.read().strip()
+                if val != 'max' and int(val) < 1024 * 1024 * 1024:
+                    return True
+        except Exception:
+            pass
+    return False
+
+
 def _get_embed_model():
     global _embed_model  # noqa: PLW0603
     if _embed_model is None:
+        if is_low_memory_environment():
+            logger.info("Low-memory environment detected; dense SentenceTransformer embeddings disabled.")
+            return None
         from sentence_transformers import SentenceTransformer
         logger.info("Loading embedding model %s …", _EMBED_MODEL)
         _embed_model = SentenceTransformer(_EMBED_MODEL)
@@ -210,6 +228,10 @@ def _collect_documents(docs_path: Path) -> list[dict]:
 
 def _ingest_sync(docs_path: Path, chroma_path: str, force: bool) -> None:
     """Synchronous ingestion — called via asyncio.to_thread."""
+    if is_low_memory_environment():
+        logger.info("Low-memory environment detected (<= 512MB RAM); skipping dense ChromaDB ingestion to preserve RAM.")
+        return
+
     import chromadb
     client = chromadb.PersistentClient(path=chroma_path)
 
@@ -289,5 +311,8 @@ async def ensure_ingested(
     If the collection already exists and *force* is False, this is a no-op.
     Pass force=True to re-index from scratch.
     """
+    if is_low_memory_environment():
+        logger.info("Low-memory environment detected; ensure_ingested no-op.")
+        return
     docs_path = Path(docs_path).resolve()
     await asyncio.to_thread(_ingest_sync, docs_path, chroma_path, force)

@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import get_settings
+from config import get_settings, get_docs_path
 from routers import chat, escalate, jobs, accommodate, lti, sms as sms_router, teacher, vision, speech, translate, v1_contract
 
 logging.basicConfig(level=logging.INFO)
@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
     else:
         try:
             from rag.ingest import ensure_ingested
-            await ensure_ingested(settings.docs_path, settings.chroma_path)
+            await ensure_ingested(get_docs_path(), settings.chroma_path)
             logger.info("Dense vector RAG corpus ready.")
         except Exception as exc:
             logger.warning("Dense RAG ingest skipped: %s", exc)
@@ -94,6 +94,7 @@ def create_app() -> FastAPI:
 
     # ── Level 2 Technical Guide Contract ─────────────────────────────────────
     app.include_router(v1_contract.router, prefix="/api/v1",      tags=["Level 2 Contract"])
+    app.include_router(v1_contract.router, prefix="/v1",          tags=["Level 2 Contract"])
     app.include_router(v1_contract.router, prefix="",             tags=["Level 2 Contract"])
 
     # ── Health ────────────────────────────────────────────────────────────────
@@ -106,6 +107,31 @@ def create_app() -> FastAPI:
             version="1.0.0",
             ai_provider=settings.ai_provider,
         )
+
+    @app.get("/content.json", tags=["Level 1 Contract"], summary="Sample course content JSON")
+    async def get_sample_content():
+        import json
+        for candidate in [
+            os.path.join(base_dir, "content.json"),
+            os.path.join(base_dir, "..", "content.json"),
+            "/app/content.json",
+        ]:
+            if os.path.isfile(candidate):
+                try:
+                    with open(candidate, "r", encoding="utf-8") as f:
+                        return json.load(f)
+                except Exception:
+                    pass
+        return {
+            "lessons": [
+                {
+                    "id": "concept-va-future",
+                    "title": "What is Shaping the Future of VA Work?",
+                    "url": "/pages/concept-with-navigation.html#what-is-shaping-the-future-of-va-work",
+                    "text": "Artificial intelligence and automation are redefining virtual assistance in Ethiopia and across Africa."
+                }
+            ]
+        }
 
     # ── Widget script (Level 1 drop-in) ───────────────────────────────────────
     import os

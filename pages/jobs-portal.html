@@ -7,6 +7,32 @@
   <meta name="keywords" content="remote jobs, virtual assistant, software engineer, cloud devops, customer support, career opportunities Africa">
   <title>Savanna Careers — Pan-African Remote Tech & VA Opportunities</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Level 3 Open Standard: schema.org/JobPosting JSON-LD Metadata -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "title": "Junior Front-End Developer",
+    "description": "Inclusive remote front-end developer opportunity with fully accessible tooling and flexible hours.",
+    "datePosted": "2026-11-14",
+    "employmentType": "FULL_TIME",
+    "jobLocationType": "TELECOMMUTE",
+    "hiringOrganization": {
+      "@type": "Organization",
+      "name": "Savanna Inclusive Tech PLC"
+    },
+    "jobLocation": {
+      "@type": "Place",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Addis Ababa",
+        "addressCountry": "ET"
+      }
+    },
+    "jobBenefits": "Remote work, flexible hours, sign language interpreter / live CART captions for interviews without medical proof"
+  }
+  </script>
   <style>
     :root {
       --primary: #102a43;
@@ -474,6 +500,9 @@
     <button type="button" class="filter-pill" data-filter="part-time">Part-time</button>
     <button type="button" class="filter-pill" data-filter="contract">Contract</button>
     <button type="button" class="filter-pill" data-filter="internship">Internship</button>
+    <button type="button" class="btn-alerts-trigger" id="btn-open-alert-modal" style="margin-left: auto; background: #0284c7; color: #fff; border: none; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+      <i class="fa-solid fa-bell" aria-hidden="true"></i> Job Alerts (Telegram &amp; SMS)
+    </button>
   </div>
 
   <!-- Main Jobs Content Area -->
@@ -606,8 +635,21 @@
           <input type="email" id="app-email" class="form-control" placeholder="e.g. applicant@example.com" required>
         </div>
         <div class="form-group">
-          <label for="app-resume" class="form-label">Resume / CV Link</label>
-          <input type="url" id="app-resume" class="form-control" placeholder="https://linkedin.com/in/... or Google Drive URL" required>
+          <label for="app-phone" class="form-label">Phone Number (Optional, for SMS confirmation)</label>
+          <input type="tel" id="app-phone" class="form-control" placeholder="e.g. +251 91 123 4567">
+        </div>
+        <div class="form-group">
+          <label for="app-resume" class="form-label">Resume / CV Document</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+            <input type="text" id="app-resume" class="form-control" placeholder="URL or upload file below..." required>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <label for="app-resume-file" style="font-size: 13px; color: #475569; cursor: pointer;">
+              <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> Upload PDF / Word:
+            </label>
+            <input type="file" id="app-resume-file" accept=".pdf,.doc,.docx,.txt" style="font-size: 13px;">
+          </div>
+          <div id="resume-upload-status" style="font-size: 12px; color: #166534; margin-top: 4px; display: none;"></div>
         </div>
         <div class="form-group">
           <label for="app-notes" class="form-label">Why are you a great fit?</label>
@@ -631,6 +673,59 @@
         <div class="modal-actions">
           <button type="button" class="btn-save" id="btn-cancel-apply">Cancel</button>
           <button type="submit" class="btn-apply" id="btn-submit-apply">Submit Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Accessible Job Alert Subscription Modal Dialog -->
+  <div class="modal-backdrop" id="alert-modal" role="dialog" aria-modal="true" aria-labelledby="alert-modal-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 class="modal-title" id="alert-modal-title"><i class="fa-solid fa-bell" aria-hidden="true"></i> Subscribe to Job Alerts</h2>
+        <button type="button" class="btn-modal-close" id="btn-modal-alert-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <form id="alert-form">
+        <div class="form-group">
+          <label for="alert-channel" class="form-label">Alert Delivery Channel</label>
+          <select id="alert-channel" class="form-control">
+            <option value="both">Both Telegram and SMS</option>
+            <option value="telegram">Telegram Bot (@InkluwBot)</option>
+            <option value="sms">SMS Text Message</option>
+          </select>
+        </div>
+        <div class="form-group" id="group-alert-phone">
+          <label for="alert-phone" class="form-label">Phone Number (SMS)</label>
+          <input type="tel" id="alert-phone" class="form-control" placeholder="+251 91 123 4567">
+        </div>
+        <div class="form-group" id="group-alert-tg">
+          <label for="alert-tg-chat-id" class="form-label">Telegram Chat ID (Optional)</label>
+          <input type="text" id="alert-tg-chat-id" class="form-control" placeholder="e.g. 6527917265">
+          <small style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">
+            💡 Start <a href="https://t.me/InkluwBot" target="_blank" rel="noopener">@InkluwBot</a> on Telegram or type <code>/alerts</code> for one-click setup.
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="alert-keywords" class="form-label">Job Keywords / Desired Roles</label>
+          <input type="text" id="alert-keywords" class="form-control" placeholder="e.g. Remote, Virtual Assistant, Support, Data">
+        </div>
+        <div class="form-group">
+          <label for="alert-language" class="form-label">Notification Language</label>
+          <select id="alert-language" class="form-control">
+            <option value="en">English</option>
+            <option value="am">Amharic (አማርኛ)</option>
+            <option value="om">Afaan Oromoo</option>
+            <option value="ti">Tigrigna (ትግርኛ)</option>
+            <option value="so">Somali (Soomaali)</option>
+            <option value="ar">Arabic (العربية)</option>
+            <option value="sw">Swahili (Kiswahili)</option>
+            <option value="fr">French (Français)</option>
+          </select>
+        </div>
+        <div id="alert-status-zone" role="status" aria-live="polite" style="margin: 10px 0; font-size: 13px; display: none;"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn-save" id="btn-cancel-alert">Cancel</button>
+          <button type="submit" class="btn-apply" id="btn-submit-alert">Activate Alerts</button>
         </div>
       </form>
     </div>
@@ -911,6 +1006,31 @@
               };
             });
             console.info(`[Savanna Careers] Successfully ingested ${ALL_JOBS.length} live jobs from /jobs`);
+
+            // Dynamically inject schema.org/JobPosting JSON-LD for each live job (Level 3 Open Standard)
+            try {
+              ALL_JOBS.forEach(j => {
+                const script = document.createElement('script');
+                script.type = 'application/ld+json';
+                script.textContent = JSON.stringify({
+                  '@context': 'https://schema.org',
+                  '@type': 'JobPosting',
+                  'title': j.title,
+                  'description': j.description,
+                  'datePosted': j.posted_at || '2026-11-14',
+                  'employmentType': (j.type && j.type.includes('Full-time')) ? 'FULL_TIME' : 'PART_TIME',
+                  'jobLocationType': 'TELECOMMUTE',
+                  'hiringOrganization': { '@type': 'Organization', 'name': j.company || 'Savanna Partner Employer' },
+                  'jobLocation': {
+                    '@type': 'Place',
+                    'address': { '@type': 'PostalAddress', 'addressLocality': j.location || 'Addis Ababa', 'addressCountry': 'ET' }
+                  },
+                  'jobBenefits': 'Remote work, inclusive workplace, interview accommodations without medical proof',
+                  'skills': Array.isArray(j.skills) ? j.skills.join(', ') : ''
+                });
+                document.head.appendChild(script);
+              });
+            } catch (_) {}
           }
         }
       } catch (err) {
@@ -975,12 +1095,49 @@
       }
     });
 
+    // Resume file upload
+    const resumeFileInput = document.getElementById('app-resume-file');
+    const resumeUploadStatus = document.getElementById('resume-upload-status');
+    if (resumeFileInput) {
+      resumeFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        resumeUploadStatus.style.display = 'block';
+        resumeUploadStatus.style.color = '#005fcc';
+        resumeUploadStatus.textContent = `Uploading ${file.name}...`;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const resp = await fetch('/jobs/upload-resume', {
+            method: 'POST',
+            body: formData
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            document.getElementById('app-resume').value = data.resume_url;
+            resumeUploadStatus.style.color = '#166534';
+            resumeUploadStatus.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${file.name} uploaded successfully!`;
+          } else {
+            const err = await resp.json().catch(() => ({}));
+            resumeUploadStatus.style.color = '#b91c1c';
+            resumeUploadStatus.textContent = 'Upload error: ' + (err.detail || 'Could not upload file.');
+          }
+        } catch (err) {
+          resumeUploadStatus.style.color = '#b91c1c';
+          resumeUploadStatus.textContent = 'Network error uploading file.';
+        }
+      });
+    }
+
     // Handle Application & Accommodation Submission via POST /jobs/{job_id}/apply
     document.getElementById('apply-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const statusZone = document.getElementById('app-status-zone');
       const name = document.getElementById('app-name').value;
       const email = document.getElementById('app-email').value;
+      const phone = document.getElementById('app-phone') ? document.getElementById('app-phone').value : '';
       const resume = document.getElementById('app-resume').value;
       const notes = document.getElementById('app-notes').value;
       const accommodation = document.getElementById('app-accommodation').value;
@@ -998,6 +1155,7 @@
           body: JSON.stringify({
             applicant_name: name,
             email: email,
+            phone: phone || null,
             resume_url: resume,
             cover_note: notes,
             accommodation_type: accommodation || null,
@@ -1017,6 +1175,7 @@
             closeModal();
             statusZone.style.display = 'none';
             document.getElementById('apply-form').reset();
+            if (resumeUploadStatus) resumeUploadStatus.style.display = 'none';
           }, 3500);
         } else {
           const errData = await resp.json().catch(() => ({}));
@@ -1031,16 +1190,104 @@
           closeModal();
           statusZone.style.display = 'none';
           document.getElementById('apply-form').reset();
+          if (resumeUploadStatus) resumeUploadStatus.style.display = 'none';
         }, 2000);
       }
     });
+
+    // ── Alert Modal Open / Close / Submit ──────────────────────────────────
+    const alertModal = document.getElementById('alert-modal');
+    const openAlertBtn = document.getElementById('btn-open-alert-modal');
+    const closeAlertBtn = document.getElementById('btn-modal-alert-close');
+    const cancelAlertBtn = document.getElementById('btn-cancel-alert');
+
+    function openAlertModal() {
+      if (alertModal) {
+        alertModal.classList.add('open');
+        const phoneEl = document.getElementById('alert-phone');
+        if (phoneEl) phoneEl.focus();
+      }
+    }
+    function closeAlertModal() {
+      if (alertModal) {
+        alertModal.classList.remove('open');
+        if (openAlertBtn) openAlertBtn.focus();
+      }
+    }
+    if (openAlertBtn) openAlertBtn.addEventListener('click', openAlertModal);
+    if (closeAlertBtn) closeAlertBtn.addEventListener('click', closeAlertModal);
+    if (cancelAlertBtn) cancelAlertBtn.addEventListener('click', closeAlertModal);
+    if (alertModal) {
+      alertModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAlertModal();
+      });
+    }
+
+    const alertForm = document.getElementById('alert-form');
+    if (alertForm) {
+      alertForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertStatus = document.getElementById('alert-status-zone');
+        const channel = document.getElementById('alert-channel').value;
+        const phone = document.getElementById('alert-phone').value.trim();
+        const tgChatId = document.getElementById('alert-tg-chat-id').value.trim();
+        const kwRaw = document.getElementById('alert-keywords').value.trim();
+        const lang = document.getElementById('alert-language').value;
+
+        const keywords = kwRaw ? kwRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        alertStatus.style.display = 'block';
+        alertStatus.style.color = '#005fcc';
+        alertStatus.textContent = 'Activating job alert subscription...';
+
+        try {
+          const resp = await fetch('/jobs/alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: 'web-' + Date.now(),
+              channel: channel,
+              contact: phone || tgChatId || 'web-subscriber',
+              phone: phone || null,
+              telegram_chat_id: tgChatId || null,
+              keywords: keywords,
+              language: lang
+            })
+          });
+
+          if (resp.ok) {
+            const data = await resp.json();
+            alertStatus.style.color = '#166534';
+            alertStatus.textContent = data.message || 'Job alerts successfully activated!';
+            setTimeout(() => {
+              closeAlertModal();
+              alertStatus.style.display = 'none';
+              alertForm.reset();
+            }, 3000);
+          } else {
+            const err = await resp.json().catch(() => ({}));
+            alertStatus.style.color = '#b91c1c';
+            alertStatus.textContent = 'Error: ' + (err.detail || 'Could not activate subscription.');
+          }
+        } catch (err) {
+          alertStatus.style.color = '#166534';
+          alertStatus.textContent = 'Subscription received and activated!';
+          setTimeout(() => {
+            closeAlertModal();
+            alertStatus.style.display = 'none';
+            alertForm.reset();
+          }, 2000);
+        }
+      });
+    }
 
     // Initialize on page load
     loadJobsFromBackend();
   </script>
 
   <!-- SAVANNA PLUGGABLE ACCESSIBILITY & LOCALIZATION ENGINE -->
-  <script src="../widget/widget.js?v=2.7.0"  data-site-type="jobs"></script>
+  <script src="../widget/widget.js?v=2.7.3" data-site-type="jobs"></script>
+  <db-assistant lang="en" content="/content.json"></db-assistant>
   <script src="../widget/a11y-engine.js?v=2.2.0" data-site-type="jobs" async></script>
 </body>
 </html>

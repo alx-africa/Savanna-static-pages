@@ -62,7 +62,7 @@ def truncate_sms(text: str, page: int = 1) -> str:
 
 
 _STRIP_PREFIXES = re.compile(
-    r"^(HELP|JOB|KAZI|HOJII|SHAQO|ስራሕ|ስራ|وظيفة|عمل|EMPLOI|CHAT|HABARI|INFO|MSAADA|START|STOP|YES|NO)\s*",
+    r"^(HELP|JOB|KAZI|HOJII|SHAQO|ስራሕ|ስራ|وظيفة|عمل|EMPLOI|ALERT|SUBSCRIBE|ALERTS|ማስጠንቀቂያ|ተመዝገብ|STOP|UNSUBSCRIBE|ይቁም|ቁም|CHAT|HABARI|INFO|MSAADA|START|YES|NO)\s*",
     re.IGNORECASE,
 )
 
@@ -76,6 +76,124 @@ def _strip_prefix(text: str) -> tuple[str, Optional[str]]:
         prefix = m.group(1).upper()
         return text[m.end():].strip(), prefix
     return text.strip(), None
+
+
+async def _subscribe_sms_alert(phone: str, keywords_str: str, language: str) -> str:
+    """Subscribe a phone number to job alerts via SMS."""
+    import uuid
+    import json
+    import redis.asyncio as aioredis
+    from config import get_settings
+    s = get_settings()
+
+    keywords = [k.strip() for k in keywords_str.split() if k.strip()]
+    sub_id = str(uuid.uuid4())
+    sub_data = {
+        "subscription_id": sub_id,
+        "user_id": f"sms-{phone}",
+        "channel": "sms",
+        "contact": phone,
+        "phone": phone,
+        "keywords": keywords,
+        "language": language,
+    }
+
+    try:
+        r = aioredis.from_url(s.redis_url, decode_responses=True)
+        async with r:
+            await r.set(f"job_alert:{sub_id}", json.dumps(sub_data))
+    except Exception as exc:
+        logger.warning("Could not persist SMS alert sub in Redis: %s", exc)
+
+    confirmations = {
+        "en": "Subscribed to Savanna Job Alerts! You will get matching jobs via SMS. Text STOP to cancel.",
+        "am": "የሥራ ማስጠንቀቂያ ተመዝግቧል! አዳዲስ ሥራዎችን በSMS ይደርስዎታል። ለማቆም STOP ይላኩ።",
+        "om": "Odeeffannoo hojii haarawaaf galmooftaniittu! Dhaabuuf STOP ergaa.",
+        "ti": "ናይ ስራሕ መጠንቀቕታ ተመዝጊብኩም! ንምቁራጽ STOP ስደዱ።",
+        "so": "Waxaad iska diiwaangelisay digniinta shaqada! Jooji: STOP.",
+        "ar": "تم تفعيل تنبيهات الوظائف! لإلغاء الاشتراك أرسل STOP.",
+        "sw": "Umejiandikisha kupokea taarifa za kazi! Kusitisha tuma STOP.",
+        "fr": "Abonné aux alertes d'emploi Savanna! Pour stopper: STOP.",
+    }
+    msg = confirmations.get(language, confirmations["en"])
+    max_len = SMS_UCS2_MAX if language in ("am", "ti", "ar") else SMS_MAX
+    return msg[:max_len]
+
+
+async def _unsubscribe_sms_alert(phone: str, language: str) -> str:
+    """Unsubscribe a phone number from SMS job alerts."""
+    import json
+    import redis.asyncio as aioredis
+    from config import get_settings
+    s = get_settings()
+
+    try:
+        r = aioredis.from_url(s.redis_url, decode_responses=True)
+        async with r:
+            keys = await r.keys("job_alert:*")
+            for k in keys:
+                val = await r.get(k)
+                if val:
+                    try:
+                        d = json.loads(val)
+                        if d.get("contact") == phone or d.get("phone") == phone:
+                            await r.delete(k)
+                    except Exception:
+                        pass
+    except Exception as exc:
+        logger.warning("Error unsubscribing SMS phone in Redis: %s", exc)
+
+    unsub_msgs = {
+        "en": "You have unsubscribed from Savanna Job Alerts.",
+        "am": "ከሥራ ማስጠንቀቂያ አገልግሎት ተሰርዘዋል።",
+        "om": "Beeksisa hojii irraa haqamtaniittu.",
+        "ti": "ካብ ናይ ስራሕ መጠንቀቕታ ተሰሪዝኩም ኣለኹም።",
+        "so": "Waa lagaa saaray digniinta shaqada.",
+        "ar": "تم إلغاء اشتراكك في تنبيهات الوظائف بنجاح.",
+        "sw": "Umejiondoa kwenye taarifa za kazi za Savanna.",
+        "fr": "Vous êtes désabonné des alertes d'emploi Savanna.",
+    }
+    msg = unsub_msgs.get(language, unsub_msgs["en"])
+    max_len = SMS_UCS2_MAX if language in ("am", "ti", "ar") else SMS_MAX
+    return msg[:max_len]
+
+
+async def process_sms_message(from_number: str, text: str) -> str:
+    """Unified handler for incoming SMS text routing across webhook and v1 contract."""
+    from routers.chat import _detect_language
+    language = _detect_language(text)
+    stripped, prefix = _strip_prefix(text)
+
+    # 1. Job Alert Subscription (Level 2/3 Hackathon requirement)
+    if prefix in ("ALERT", "ALERTS", "SUBSCRIBE", "ማስጠንቀቂያ", "ተመዝገብ"):
+        return await _subscribe_sms_alert(from_number, stripped, language)
+
+    # 2. Unsubscribe
+    if prefix in ("STOP", "UNSUBSCRIBE", "ይቁም", "ቁም"):
+        return await _unsubscribe_sms_alert(from_number, language)
+
+    # 3. Help Command
+    if prefix in ("HELP", "INFO", "MSAADA"):
+        help_msgs = {
+            "en": "Savanna: Text JOB for job openings, ALERT [skills] for alerts, or ask any course question.",
+            "am": "ሳቫና: ለክፍት ስራዎች JOB፣ ለማስጠንቀቂያ ALERT ይላኩ ወይም ማንኛውንም ጥያቄ ይጠይቁ።",
+            "om": "Savanna: Hojiif JOB, beeksisaaf ALERT ergaa ykn gaaffii barnootaa gaafadhaa.",
+            "ti": "ሳቫና: ንስራሓት JOB፣ ንመጠንቀቕታ ALERT ስደዱ ወይ ሕቶ ሕተቱ።",
+            "so": "Savanna: Shaqooyinka qor JOB, digniinta ALERT, ama weydii su'aalo.",
+            "ar": "سافانا: أرسل JOB للوظائف أو ALERT لتنبيهات الوظائف أو اسأل أي سؤال.",
+            "sw": "Savanna: Tuma JOB kupata kazi, ALERT kwa taarifa, au uliza swali lolote.",
+            "fr": "Savanna: Envoyez JOB pour offres, ALERT pour alertes, ou posez une question.",
+        }
+        msg = help_msgs.get(language, help_msgs["en"])
+        max_l = SMS_UCS2_MAX if language in ("am", "ti", "ar") else SMS_MAX
+        return msg[:max_l]
+
+    # 4. Job Listings Summary
+    if prefix in ("JOB", "KAZI", "HOJII", "SHAQO", "ስራ", "ስራሕ", "وظيفة", "عمل", "EMPLOI"):
+        return _job_summary(language)
+
+    # 5. Course Q&A via Chat Pipeline
+    return await _chat_reply(stripped or text, language)
 
 
 def _job_summary(language: str = "en") -> str:
@@ -208,14 +326,8 @@ async def sms_inbound(request: Request):
 
     logger.info("SMS from %s: %s", inbound.from_, inbound.text)
 
-    language = _detect_language(inbound.text)
-    stripped, prefix = _strip_prefix(inbound.text)
-
-    # Route based on keyword prefix
-    if prefix in ("JOB", "KAZI", "HOJII", "SHAQO", "ስራ", "ስራሕ", "وظيفة", "عمل", "EMPLOI"):
-        reply = _job_summary(language)
-    else:
-        reply = await _chat_reply(stripped or inbound.text, language)
+    # Route based on unified message processor
+    reply = await process_sms_message(inbound.from_, inbound.text)
 
     # Send the reply
     await _send_sms_reply(inbound.from_, reply)
