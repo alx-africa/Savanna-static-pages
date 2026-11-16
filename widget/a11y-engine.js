@@ -792,11 +792,11 @@
       // Graceful offline/network fallback
     } finally {
       inFlightTranslations[lang] = false;
-      // Continue draining pending queue until 100% of course content and host page is translated
+      // Drain pending queue gracefully without starving browser UI thread
       if (pendingBatchStrings[lang] && pendingBatchStrings[lang].size > 0 && currentLang === lang) {
         setTimeout(() => {
           dispatchBatchTranslation(lang);
-        }, 40);
+        }, 500);
       } else if (!dispatchedInBatch && currentLang === lang && (!pendingBatchStrings[lang] || pendingBatchStrings[lang].size === 0)) {
         if (typeof window !== 'undefined') {
           const Evt = window.CustomEvent || (typeof CustomEvent !== 'undefined' ? CustomEvent : null);

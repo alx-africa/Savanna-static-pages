@@ -155,7 +155,7 @@
   if (initialLang) {
     iframeSrc += '&lang=' + encodeURIComponent(initialLang);
   }
-  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.8.1';
+  iframeSrc += (iframeSrc.includes('?') ? '&' : '?') + 'v=2.8.2';
   iframe.src = iframeSrc;
   iframe.title = 'Savanna Learning Assistant';
   iframe.setAttribute('allow', 'microphone; display-capture');
@@ -300,12 +300,8 @@
       const clampedH = Math.min(Math.max(event.data.height, 200), maxH);
       container.style.height = clampedH + 'px';
     } else if (event.data.type === 'savanna:lang_change' && event.data.lang) {
-      // Synchronize language change with host page and a11y engine
-      if (window.__SAVANNA_A11Y_ENGINE__ && typeof window.__SAVANNA_A11Y_ENGINE__.setLanguage === 'function') {
-        window.__SAVANNA_A11Y_ENGINE__.setLanguage(event.data.lang);
-      }
+      safeStorageSet('savanna_lang', event.data.lang);
       window.dispatchEvent(new CustomEvent('savanna:language_changed', { detail: { lang: event.data.lang } }));
-      window.dispatchEvent(new CustomEvent('savanna:set_language', { detail: { lang: event.data.lang } }));
     } else if (event.data.type === 'db-assistant:question') {
       const qEvt = new CustomEvent('db-assistant:question', {
         bubbles: true,
@@ -546,48 +542,11 @@
       if (hostFocusTimer) clearTimeout(hostFocusTimer);
       hostFocusTimer = setTimeout(function () {
         speakHost(desc);
-      }, 75);
+      }, 350);
     }
   });
 
-  // Prewarm host page interactive cues in background for zero-latency Tab speech
-  function prewarmHostNavigation() {
-    const curLang = safeStorageGet('savanna_lang', 'en');
-    if (curLang === 'en') return;
-    const elements = document.querySelectorAll('a, button, input, [role="button"], [tabindex="0"]');
-    const seen = new Set();
-    let delay = 300;
-    for (let i = 0; i < elements.length && i < 20; i++) {
-      const desc = getHostElementDescription(elements[i]);
-      if (desc && !seen.has(desc)) {
-        seen.add(desc);
-        setTimeout(function () {
-          const cacheKey = curLang + ':' + desc;
-          if (!hostAudioCache.has(cacheKey)) {
-            const base = apiUrl.replace(/\/api$/, '');
-            fetch(base + '/speech/synthesize', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text: desc, language: curLang })
-            }).then(function (res) {
-              if (res.ok) return res.blob();
-            }).then(function (blob) {
-              if (blob) hostAudioCache.set(cacheKey, URL.createObjectURL(blob));
-            }).catch(function () {});
-          }
-        }, delay);
-        delay += 100;
-      }
-    }
-  }
-
-  if (document.readyState === 'complete') {
-    setTimeout(prewarmHostNavigation, 1000);
-  } else {
-    window.addEventListener('load', function () {
-      setTimeout(prewarmHostNavigation, 1000);
-    });
-  }
+  // On-demand speech cache for host interactive cues (no background network flooding)
 
   /* ── 9. Double-Space Shortcut for Live Help Desk ───────────────────────── */
   let lastSpaceTime = 0;

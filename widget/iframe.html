@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
   <title>Savanna Learning Assistant</title>
-  <link rel="stylesheet" href="style.css?v=2.8.1" />
+  <link rel="stylesheet" href="style.css?v=2.8.2" />
   <style>
     /* Iframe-specific overrides — full-height shell */
     html, body { height: 100%; overflow: hidden; }
@@ -1097,9 +1097,6 @@
     try {
       parent.postMessage({ type: 'savanna:lang_change', lang: currentLanguage }, '*');
     } catch (_) {}
-    try {
-      if (typeof prewarmWidgetAudio === 'function') prewarmWidgetAudio();
-    } catch (_) {}
   }
 
   applyLanguage();
@@ -1650,35 +1647,13 @@
     }
   }
 
+  let focusSpeechTimer = null;
   function speakFocus(text) {
     if (!voiceGuideEnabled || !text) return;
-    playSpeechAudio(text, currentLanguage);
-  }
-
-  function prewarmWidgetAudio() {
-    if (!voiceGuideEnabled || currentLanguage === 'en') return;
-    const elements = [closeBtn, langSelect, voiceGuideBtn, simpleModeBtn, chatInput, voiceBtn, sendBtn, escalateBtn];
-    let delay = 100;
-    elements.forEach(function (el) {
-      if (!el) return;
-      const desc = getAccessibleDescription(el);
-      if (!desc) return;
-      const cacheKey = currentLanguage + ':' + desc;
-      if (!widgetAudioCache.has(cacheKey)) {
-        setTimeout(function () {
-          fetch(apiUrl + '/speech/synthesize', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: desc, language: currentLanguage })
-          }).then(function (r) {
-            if (r.ok) return r.blob();
-          }).then(function (blob) {
-            if (blob && window.URL && window.URL.createObjectURL) widgetAudioCache.set(cacheKey, URL.createObjectURL(blob));
-          }).catch(function () {});
-        }, delay);
-        delay += 120;
-      }
-    });
+    if (focusSpeechTimer) clearTimeout(focusSpeechTimer);
+    focusSpeechTimer = setTimeout(function () {
+      playSpeechAudio(text, currentLanguage);
+    }, 400);
   }
 
   function getAccessibleDescription(el) {
@@ -2631,11 +2606,10 @@
         }
         speakFocus((currentLanguage === 'am' ? 'የአሲስታንት ምላሽ በመሰማት ላይ ነው።' : 'Assistant response received. Reading answer out loud.'));
       } else if (voiceGuideEnabled && reply) {
-        if (/\[QUIZ\]/i.test(reply)) {
-          speakFocus((currentLanguage === 'am' ? 'የፈተና ጥያቄዎች ተዘጋጅተዋል። በTab ወደ ጥያቄው ካርድ በመሄድ የቀስት ቁልፎችን በመጠቀም መልሶችን ይምረጡ።' : 'Interactive quiz generated with practice questions. Tab into the question card and use arrow keys to select answers.'));
-        } else {
-          const preview = reply.length > 120 ? (reply.slice(0, 120) + '...') : reply;
-          speakFocus('Assistant: ' + preview + ' Press Alt+L to listen to full response.');
+        // Screen reader announcement via live region without blocking network TTS
+        const announceZone = document.getElementById('ticket-zone') || messageList;
+        if (announceZone) {
+          announceZone.setAttribute('aria-label', (currentLanguage === 'am' ? 'የአሲስታንት ምላሽ ደርሷል።' : 'Assistant response received.'));
         }
       }
 
