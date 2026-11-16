@@ -649,7 +649,7 @@
     } catch (_) {}
   }
 
-  function getTranslateApiUrl() {
+  function getEffectiveApiUrl() {
     let base = '';
     if (typeof window !== 'undefined' && window.SavannaConfig && window.SavannaConfig.apiUrl) {
       base = window.SavannaConfig.apiUrl;
@@ -660,7 +660,6 @@
         base = new URL(currentScript.src).origin;
       } catch (_) {}
     }
-    // Remote host protection: if base references localhost but page is running on remote host (e.g. Cloud Run)
     if (base.includes('localhost') && typeof window !== 'undefined' && window.location) {
       if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
         base = window.location.origin;
@@ -669,9 +668,11 @@
     if (!base && typeof window !== 'undefined' && window.location) {
       base = (window.location.port === '8080') ? 'http://localhost:8000' : window.location.origin;
     }
-    base = (base || '').replace(/\/$/, '');
-    const cleanBase = base.replace(/\/api$/, '');
-    return cleanBase + '/translate';
+    return (base || window.location.origin || 'http://localhost:8000').replace(/\/$/, '').replace(/\/api$/, '');
+  }
+
+  function getTranslateApiUrl() {
+    return getEffectiveApiUrl() + '/translate';
   }
 
   function detectHostSiteType() {
@@ -2630,9 +2631,7 @@
       const cacheKey = currentLang + ':' + cleanText;
       let audioUrl = a11yAudioCache.get(cacheKey);
       if (!audioUrl) {
-        const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl)
-          ? window.SavannaConfig.apiUrl.replace(/\/api$/, '')
-          : 'http://localhost:8000';
+        const apiUrl = getEffectiveApiUrl();
         const resp = await fetch(apiUrl + '/speech/synthesize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2825,7 +2824,7 @@
 
     // Call live AI Vision API endpoint
     if (typeof fetch === 'function') {
-      const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl) || 'http://localhost:8000';
+      const apiUrl = getEffectiveApiUrl();
       fetch(apiUrl + '/describe-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2892,7 +2891,7 @@
     // Call live AI Vision endpoint: Visual explanation FIRST, Intent & Pedagogical purpose SECOND
     const situationContext = 'This user is blind and cannot see the screen. They need to understand what this visual depicts and its educational intent. FIRST clearly describe what is visually depicted in the image, and SECOND clearly explain the intent, pedagogical purpose, and core message of the visual.';
     if (typeof fetch === 'function') {
-      const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl) || 'http://localhost:8000';
+      const apiUrl = getEffectiveApiUrl();
       fetch(apiUrl + '/describe-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2974,9 +2973,7 @@
         speakVisualDescription(fullText);
         return;
       }
-      const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl)
-        ? window.SavannaConfig.apiUrl.replace(/\/api$/, '')
-        : 'http://localhost:8000';
+      const apiUrl = getEffectiveApiUrl();
       if (typeof fetch === 'function') {
         fetch(apiUrl + '/translate', {
           method: 'POST',
@@ -3548,9 +3545,7 @@
 
     const speakText = `${heading}. ${paragraphs}`.slice(0, 600);
     if (currentLang === 'am' && /[a-zA-Z]/.test(speakText) && !/[\u1200-\u137F]/.test(speakText) && typeof fetch === 'function') {
-      const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl)
-        ? window.SavannaConfig.apiUrl.replace(/\/api$/, '')
-        : 'http://localhost:8000';
+      const apiUrl = getEffectiveApiUrl();
       fetch(apiUrl + '/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4209,9 +4204,7 @@
   /* ── 19. Plain-Language Simplification & Step Chunking ──────────────────── */
   async function fetchPlainLanguageSummary(text, lang) {
     try {
-      const apiUrl = (window.SavannaConfig && window.SavannaConfig.apiUrl)
-        ? window.SavannaConfig.apiUrl.replace(/\/api$/, '')
-        : 'http://localhost:8000';
+      const apiUrl = getEffectiveApiUrl();
       const resp = await fetch(apiUrl + '/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

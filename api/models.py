@@ -278,7 +278,7 @@ class TranscribeResponse(BaseModel):
 
 
 class SynthesizeRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=4096)
+    text: str = Field(..., min_length=1, max_length=65536)
     language: SupportedLanguage | str = "en"
     voice: Optional[str] = None
     rate: Optional[str] = "+0%"
