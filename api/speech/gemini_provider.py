@@ -83,7 +83,8 @@ class GeminiSTTProvider(BaseSTTProvider):
             },
         }
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0", retries=2)
+        async with httpx.AsyncClient(transport=transport, timeout=self.timeout) as client:
             resp = await client.post(url, params={"key": self.api_key}, json=payload)
             if resp.status_code != 200:
                 logger.error("Gemini STT error (%s): %s", resp.status_code, resp.text)

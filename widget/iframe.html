@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
   <title>Savanna Learning Assistant</title>
-  <link rel="stylesheet" href="style.css?v=2.6.0" />
+  <link rel="stylesheet" href="style.css?v=2.8.1" />
   <style>
     /* Iframe-specific overrides — full-height shell */
     html, body { height: 100%; overflow: hidden; }
@@ -2483,22 +2483,63 @@
   window.renderQuizComponent = renderQuizComponent;
   window.extractQuizPayload = extractQuizPayload;
 
+  const THINKING_STATUSES = {
+    'en': ['Searching lesson materials...', 'Formulating response...'],
+    'am': ['የትምህርት መረጃዎችን በመፈለግ ላይ...', 'ምላሽ በማዘጋጀት ላይ...'],
+    'om': ['Qabiyyee koorsii barbaadaa jira...', 'Deebii qopheessaa jira...'],
+    'ti': ['ትምህርታዊ መረዳእታ ይድለ ኣሎ...', 'ምላሽ ይዳሎ ኣሎ...'],
+    'so': ['Xogta koorsada ayaa la baarayaa...', 'Jawaabta ayaa la diyaarinayaa...'],
+    'ar': ['جارٍ البحث في مواد الدورة...', 'جارٍ صياغة الرد...'],
+    'sw': ['Inatafuta kwenye maudhui ya kozi...', 'Inaandaa jibu...'],
+    'fr': ['Recherche dans les leçons...', 'Formulation de la réponse...']
+  };
+
+  let thinkingTimer = null;
   function showThinking() {
+    removeThinking();
+    const lang = (currentLanguage && currentLanguage !== 'auto') ? currentLanguage : 'en';
+    const statuses = THINKING_STATUSES[lang] || THINKING_STATUSES.en;
+
     const li = document.createElement('li');
     li.id = 'thinking-indicator';
-    li.setAttribute('aria-label', getI18n().thinking);
+    li.className = 'message-item assistant';
+    li.setAttribute('role', 'status');
+    li.setAttribute('aria-live', 'polite');
+    li.setAttribute('aria-label', getI18n().thinking || 'Assistant is thinking');
+
     li.innerHTML = `
       <div class="thinking-indicator" aria-hidden="true">
-        <span class="thinking-dot"></span>
-        <span class="thinking-dot"></span>
-        <span class="thinking-dot"></span>
+        <div class="thinking-dots-wrapper">
+          <span class="thinking-dot"></span>
+          <span class="thinking-dot"></span>
+          <span class="thinking-dot"></span>
+        </div>
+        <span class="thinking-text">${statuses[0]}</span>
       </div>`;
+
     messageList.appendChild(li);
     try { if (li.scrollIntoView) li.scrollIntoView({ behavior: 'smooth', block: 'end' }); } catch (_) {}
+
+    const textEl = li.querySelector('.thinking-text');
+    if (textEl && statuses[1]) {
+      thinkingTimer = setTimeout(function () {
+        if (textEl) {
+          textEl.style.opacity = '0';
+          setTimeout(function () {
+            textEl.textContent = statuses[1];
+            textEl.style.opacity = '1';
+          }, 150);
+        }
+      }, 900);
+    }
     return li;
   }
 
   function removeThinking() {
+    if (thinkingTimer) {
+      clearTimeout(thinkingTimer);
+      thinkingTimer = null;
+    }
     const el = document.getElementById('thinking-indicator');
     if (el) el.remove();
   }

@@ -24,8 +24,20 @@ class GeminiProvider(AIProvider):
     def __init__(self, settings: Settings):
         self.settings = settings
         self.api_key = settings.gemini_api_key.strip()
-        self.model = settings.gemini_model or "gemini-3.5-flash"
-        self.timeout = 40.0
+        self.model = settings.gemini_model or "gemini-3.5-flash-lite"
+        self.timeout = 25.0
+        self._client: httpx.AsyncClient | None = None
+
+    def _get_client(self) -> httpx.AsyncClient:
+        """Return a persistent warm HTTP client with IPv4 binding and keepalive connection pooling."""
+        if self._client is None or self._client.is_closed:
+            transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0", retries=2)
+            self._client = httpx.AsyncClient(
+                transport=transport,
+                timeout=self.timeout,
+                limits=httpx.Limits(max_keepalive_connections=20, max_connections=50),
+            )
+        return self._client
 
     @property
     def name(self) -> str:
@@ -66,6 +78,9 @@ class GeminiProvider(AIProvider):
             "parts": [{"text": user_prompt}]
         })
 
+        is_quiz = "[QUIZ]" in system_prompt or any(w in message.lower() for w in ["quiz", "test", "ፈተና", "qormaata", "ሕቶታት"])
+        max_tokens = 2500 if is_quiz else 1024
+
         payload = {
             "system_instruction": {
                 "parts": [{"text": system_prompt}]
@@ -73,7 +88,7 @@ class GeminiProvider(AIProvider):
             "contents": contents,
             "generationConfig": {
                 "temperature": 0.3,
-                "maxOutputTokens": 3500,
+                "maxOutputTokens": max_tokens,
             }
         }
 
@@ -81,20 +96,24 @@ class GeminiProvider(AIProvider):
         params = {"key": self.api_key}
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            client = self._get_client()
+            resp = None
+            for attempt in range(2):
                 resp = await client.post(endpoint, params=params, json=payload)
+                if resp.status_code == 404 and self.model != "gemini-3.5-flash-lite":
+                    logger.warning("Gemini model %s returned 404. Retrying with gemini-3.5-flash-lite.", self.model)
+                    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent"
+                    resp = await client.post(endpoint, params=params, json=payload)
+                if resp.status_code in (429, 503) and attempt == 0:
+                    logger.warning("Gemini status %s (high demand/rate limit); quick 0.5s backoff retry...", resp.status_code)
+                    await asyncio.sleep(0.5)
+                    continue
+                break
 
-            if resp.status_code == 404:
-                # Fall back to gemini-3.5-flash-lite if 3.5-flash is not available
-                logger.warning("Gemini model %s returned 404. Retrying with gemini-3.5-flash-lite.", self.model)
-                fallback_endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent"
-                async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    resp = await client.post(fallback_endpoint, params=params, json=payload)
-
-            if resp.status_code != 200:
-                err_text = resp.text
-                logger.error("Gemini API error (%s): %s", resp.status_code, err_text)
-                raise RuntimeError(f"Gemini API returned status {resp.status_code}: {err_text}")
+            if resp is None or resp.status_code != 200:
+                err_text = resp.text if resp is not None else "No response"
+                logger.error("Gemini API error (%s): %s", resp.status_code if resp else "None", err_text)
+                raise RuntimeError(f"Gemini API returned status {resp.status_code if resp else 'None'}: {err_text}")
 
             data = resp.json()
             candidates = data.get("candidates", [])
