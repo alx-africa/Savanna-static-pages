@@ -16,6 +16,7 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 
 COPY . .
 
+ENV PYTHONPATH="/app/api:/app:${PYTHONPATH}"
 ENV PORT=8000
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "cd /app/api 2>/dev/null || cd /app; uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
