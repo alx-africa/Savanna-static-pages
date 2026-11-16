@@ -405,7 +405,20 @@ async def batch_translate(req: BatchTranslateRequest) -> BatchTranslateResponse:
                 logger.warning("Cache entry failed linguistic QA for %s, quarantining: %s (reason: %s)", target, cleaned, val.error_code)
                 missing.append(cleaned)
         else:
-            missing.append(cleaned)
+            # Punctuation-tolerant cache check (e.g. trailing colon, period, question mark)
+            unpunct = re.sub(r"[:.,?!;]+$", "", cleaned).strip()
+            ck_un = _get_cache_key(target, unpunct) if unpunct != cleaned else None
+            if ck_un and ck_un in TRANSLATION_CACHE:
+                cached_candidate = TRANSLATION_CACHE[ck_un]
+                val = LinguisticValidator.validate(cached_candidate, target, source, unpunct)
+                if val.is_valid:
+                    trailing_punct = cleaned[len(unpunct):]
+                    results[s] = cached_candidate + trailing_punct
+                    cached_hits += 1
+                else:
+                    missing.append(cleaned)
+            else:
+                missing.append(cleaned)
 
     # Deduplicate missing strings
     unique_missing = list(dict.fromkeys(missing))

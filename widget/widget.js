@@ -27,9 +27,22 @@
   })();
 
   /* ── 1. Resolve API base URL & initial language ───────────────────────── */
-  const apiUrl = (scriptEl && scriptEl.dataset.apiUrl)
+  let apiUrl = (scriptEl && scriptEl.dataset.apiUrl)
     ? scriptEl.dataset.apiUrl.replace(/\/$/, '')
-    : (window.location.origin + '/api');
+    : '';
+
+  // Smart resolution: if apiUrl contains localhost but page is loaded on a remote host (e.g. Cloud Run),
+  // fallback to window.location.origin to avoid mixed-content and unreachable ports
+  if (apiUrl.includes('localhost') && typeof window !== 'undefined' && window.location) {
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      apiUrl = window.location.origin;
+    }
+  }
+
+  // If apiUrl was empty or omitted, default to current origin (or http://localhost:8000 when static dev server is on port 8080)
+  if (!apiUrl && typeof window !== 'undefined' && window.location) {
+    apiUrl = (window.location.port === '8080') ? 'http://localhost:8000' : window.location.origin;
+  }
 
   window.SavannaConfig = window.SavannaConfig || {};
   window.SavannaConfig.apiUrl = apiUrl;
@@ -288,7 +301,11 @@
       container.style.height = clampedH + 'px';
     } else if (event.data.type === 'savanna:lang_change' && event.data.lang) {
       // Synchronize language change with host page and a11y engine
+      if (window.__SAVANNA_A11Y_ENGINE__ && typeof window.__SAVANNA_A11Y_ENGINE__.setLanguage === 'function') {
+        window.__SAVANNA_A11Y_ENGINE__.setLanguage(event.data.lang);
+      }
       window.dispatchEvent(new CustomEvent('savanna:language_changed', { detail: { lang: event.data.lang } }));
+      window.dispatchEvent(new CustomEvent('savanna:set_language', { detail: { lang: event.data.lang } }));
     } else if (event.data.type === 'db-assistant:question') {
       const qEvt = new CustomEvent('db-assistant:question', {
         bubbles: true,
