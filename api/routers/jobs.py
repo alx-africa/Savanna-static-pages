@@ -18,7 +18,7 @@ from typing import Optional
 import redis.asyncio as aioredis
 from fastapi import APIRouter, HTTPException, Query
 
-from config import get_settings
+from config import get_settings, get_docs_path
 from models import (
     Job,
     JobAlertRequest,
@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 settings = get_settings()
 
-# Path to the jobs data file (relative to the api/ directory)
-_JOBS_PATH = Path(__file__).parent.parent.parent / "docs" / "jobs" / "jobs.json"
+# Path to the jobs data file
+_JOBS_PATH = get_docs_path() / "jobs" / "jobs.json"
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

@@ -217,9 +217,13 @@ def _build_bm25_corpus() -> dict[str, Any]:
     from pathlib import Path
     from bs4 import BeautifulSoup
 
-    base_dir = Path(__file__).parent.parent.parent
-    docs_dir = base_dir / "docs"
+    from config import get_docs_path
+
+    docs_dir = get_docs_path()
+    base_dir = docs_dir.parent
     pages_dir = base_dir / "pages"
+    if not pages_dir.exists() and Path("/app/pages").exists():
+        pages_dir = Path("/app/pages")
 
     chunks: list[dict[str, str]] = []
 

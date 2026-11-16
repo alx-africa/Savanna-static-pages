@@ -51,8 +51,12 @@ def _is_safe_remote_url(url_str: str) -> bool:
 
 # Search paths for local curriculum assets
 ASSET_DIRS = [
+    Path("/app/assets/img"),
+    Path("/app/docs"),
     Path(__file__).parent.parent.parent / "assets" / "img",
     Path(__file__).parent.parent.parent / "docs",
+    Path(__file__).parent.parent / "assets" / "img",
+    Path(__file__).parent.parent / "docs",
 ]
 
 

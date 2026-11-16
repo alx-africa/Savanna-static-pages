@@ -83,7 +83,8 @@ def _job_summary(language: str = "en") -> str:
     import json
     from pathlib import Path
 
-    jobs_path = Path(__file__).parent.parent.parent / "docs" / "jobs" / "jobs.json"
+    from config import get_docs_path
+    jobs_path = get_docs_path() / "jobs" / "jobs.json"
     try:
         with open(jobs_path, "r", encoding="utf-8") as fh:
             jobs = json.load(fh)

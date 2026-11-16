@@ -37,7 +37,8 @@ def load_jobs() -> list[dict[str, Any]]:
     jobs_file = docs_path / "jobs" / "jobs.json"
     if not jobs_file.exists():
         # Try relative fallback
-        jobs_file = Path(__file__).parent.parent.parent / "docs" / "jobs" / "jobs.json"
+        from config import get_docs_path
+        jobs_file = get_docs_path() / "jobs" / "jobs.json"
     if jobs_file.exists():
         try:
             return json.loads(jobs_file.read_text(encoding="utf-8"))

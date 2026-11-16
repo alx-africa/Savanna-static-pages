@@ -32,7 +32,7 @@ import httpx
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from config import get_settings
+from config import get_settings, get_docs_path
 from utils.linguistic_validator import LinguisticValidator, ValidationResult
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ LANGUAGE_NAMES: dict[str, str] = {
     "fr": "French (Français)",
 }
 
-CACHE_FILE = Path(__file__).resolve().parent.parent.parent / "docs" / "translations_cache.json"
+CACHE_FILE = get_docs_path() / "translations_cache.json"
 
 # In-memory translation cache: key is "{target_lang}:{sha256(text)}"
 TRANSLATION_CACHE: dict[str, str] = {}

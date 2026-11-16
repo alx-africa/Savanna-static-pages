@@ -269,7 +269,8 @@ async def _load_jobs(n: int = 5) -> list[dict]:
     import json
     from pathlib import Path
 
-    jobs_path = Path(__file__).parent.parent.parent / "docs" / "jobs" / "jobs.json"
+    from config import get_docs_path
+    jobs_path = get_docs_path() / "jobs" / "jobs.json"
     try:
         with open(jobs_path, "r", encoding="utf-8") as fh:
             jobs = json.load(fh)
