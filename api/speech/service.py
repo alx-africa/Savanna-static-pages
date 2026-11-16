@@ -15,6 +15,7 @@ from config import Settings
 from speech.addis_provider import AddisAISTTProvider, AddisAITTSProvider
 from speech.base import BaseSTTProvider, BaseTTSProvider, TranscribeResult, TTSResult
 from speech.edgetts_provider import EdgeTTSProvider
+from speech.gemini_provider import GeminiSTTProvider
 from speech.offline_provider import OfflineSTTProvider, OfflineTTSProvider
 from speech.whisper_provider import WhisperSTTProvider
 
@@ -51,11 +52,26 @@ class SpeechService:
 
     def _resolve_stt_provider(self) -> BaseSTTProvider:
         prov_name = (self.settings.stt_provider or "addisai").lower()
+        if prov_name == "offline":
+            return OfflineSTTProvider()
+        if prov_name == "gemini" and self.settings.gemini_api_key:
+            return GeminiSTTProvider(
+                api_key=self.settings.gemini_api_key,
+                model=self.settings.gemini_model or "gemini-3.5-flash-lite",
+            )
+
         if prov_name == "addisai":
             if self.settings.addis_api_key:
                 return AddisAISTTProvider(
                     api_key=self.settings.addis_api_key,
                     base_url=self.settings.addis_api_base_url,
+                )
+            # Automatic fallback to Gemini Multimodal STT if configured
+            if self.settings.gemini_api_key:
+                logger.info("STT provider is 'addisai' but ADDIS_API_KEY is not set. Falling back to Gemini Multimodal STT.")
+                return GeminiSTTProvider(
+                    api_key=self.settings.gemini_api_key,
+                    model=self.settings.gemini_model or "gemini-3.5-flash-lite",
                 )
             # Graceful automatic fallback if Addis key missing but OpenAI key present
             if self.settings.openai_api_key:
@@ -64,7 +80,13 @@ class SpeechService:
             return AddisAISTTProvider(api_key="", base_url=self.settings.addis_api_base_url)
 
         if prov_name == "whisper":
-            return WhisperSTTProvider(api_key=self.settings.openai_api_key)
+            if self.settings.openai_api_key:
+                return WhisperSTTProvider(api_key=self.settings.openai_api_key)
+            if self.settings.gemini_api_key:
+                return GeminiSTTProvider(api_key=self.settings.gemini_api_key, model=self.settings.gemini_model or "gemini-3.5-flash-lite")
+
+        if self.settings.gemini_api_key:
+            return GeminiSTTProvider(api_key=self.settings.gemini_api_key, model=self.settings.gemini_model or "gemini-3.5-flash-lite")
 
         return OfflineSTTProvider()
 

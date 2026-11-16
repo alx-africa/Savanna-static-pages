@@ -772,6 +772,132 @@ details[open] summary::before { transform: rotate(90deg); }
   outline-offset: var(--focus-offset);
 }
 
+/* ── Accessible Voice Review & Approval Panel for Blind Learners ── */
+.voice-review-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem 0.85rem;
+  margin: 0.5rem 0.75rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: var(--c-surface-1, #f8fafc);
+  border: 2px solid var(--c-primary, #1e40af);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all var(--transition-fast);
+}
+
+@media (prefers-color-scheme: dark) {
+  .voice-review-panel {
+    background: #0f172a;
+    border-color: #38bdf8;
+  }
+}
+
+.voice-review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.voice-review-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rec-dot-done {
+  color: #16a34a;
+  font-size: 0.95rem;
+}
+
+.voice-review-time {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.voice-review-instructions {
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.voice-review-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.btn-voice-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+  min-height: 38px;
+  transition: all var(--transition-fast);
+}
+
+.btn-voice-action:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.btn-voice-action#voice-preview-btn {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.btn-voice-action#voice-preview-btn.playing {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #93c5fd;
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-voice-action#voice-preview-btn {
+    background: #1e293b;
+    color: #f8fafc;
+    border-color: #475569;
+  }
+  .btn-voice-action#voice-preview-btn.playing {
+    background: #1e3a8a;
+    color: #93c5fd;
+    border-color: #3b82f6;
+  }
+}
+
+.btn-voice-action#voice-rerecord-btn {
+  background: transparent;
+  color: var(--c-text-muted);
+  border-color: var(--c-border);
+}
+
+.btn-voice-action#voice-rerecord-btn:hover {
+  background: var(--c-surface-2);
+}
+
+.btn-voice-action#voice-approve-btn {
+  background: var(--c-primary, #1e40af);
+  color: #ffffff;
+  margin-left: auto;
+}
+
+.btn-voice-action#voice-approve-btn:hover {
+  opacity: 0.92;
+}
+
 .message-audio-controls {
   margin-top: 0.4rem;
   display: flex;

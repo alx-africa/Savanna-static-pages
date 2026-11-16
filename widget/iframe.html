@@ -181,6 +181,34 @@
   <!-- ── Input area ──────────────────────────────────────── -->
   <section class="input-area" aria-label="Message input">
     <div id="voice-recording-status" class="voice-status-banner" role="status" aria-live="polite" style="display: none;"></div>
+
+    <!-- Voice Review & Approval Panel for blind & low-vision learners -->
+    <div id="voice-review-panel" class="voice-review-panel" role="region" aria-label="Voice question review" style="display: none;">
+      <div class="voice-review-header">
+        <span class="voice-review-title">
+          <span class="rec-dot-done" aria-hidden="true">●</span>
+          <span id="voice-review-title-text">Voice Question Ready</span>
+        </span>
+        <span id="voice-review-time" class="voice-review-time" aria-label="Recording length"></span>
+      </div>
+      <p id="voice-review-instructions" class="voice-review-instructions">
+        Listen to your recording to make sure it is clear, or approve and send it to the assistant.
+      </p>
+      <div class="voice-review-actions">
+        <button type="button" id="voice-preview-btn" class="btn btn-secondary btn-voice-action" aria-label="Listen to your recording">
+          <span id="voice-preview-icon" aria-hidden="true">▶️</span>
+          <span id="voice-preview-label">Listen to Recording</span>
+        </button>
+        <button type="button" id="voice-rerecord-btn" class="btn btn-ghost btn-voice-action" aria-label="Discard recording and record again">
+          <span aria-hidden="true">🔄</span>
+          <span id="voice-rerecord-label">Re-record</span>
+        </button>
+        <button type="button" id="voice-approve-btn" class="btn btn-primary btn-voice-action" aria-label="Approve recording and send question to assistant">
+          <span aria-hidden="true">✅</span>
+          <span id="voice-approve-label">Approve & Send</span>
+        </button>
+      </div>
+    </div>
     <div class="input-wrapper">
       <div class="input-label-wrapper">
         <label id="chat-input-label" for="chat-input" class="input-label visually-hidden" style="display: none !important;">
@@ -345,6 +373,22 @@
   const pillTextExample   = document.getElementById('pill-text-example');
   const pillTextQuiz      = document.getElementById('pill-text-quiz');
   const pillTextSelection = document.getElementById('pill-text-selection');
+  const voiceReviewPanel  = document.getElementById('voice-review-panel');
+  const voiceReviewTitleText = document.getElementById('voice-review-title-text');
+  const voiceReviewInstructions = document.getElementById('voice-review-instructions');
+  const voiceReviewTime   = document.getElementById('voice-review-time');
+  const voicePreviewBtn   = document.getElementById('voice-preview-btn');
+  const voicePreviewIcon  = document.getElementById('voice-preview-icon');
+  const voicePreviewLabel = document.getElementById('voice-preview-label');
+  const voiceRerecordBtn  = document.getElementById('voice-rerecord-btn');
+  const voiceRerecordLabel = document.getElementById('voice-rerecord-label');
+  const voiceApproveBtn   = document.getElementById('voice-approve-btn');
+  const voiceApproveLabel = document.getElementById('voice-approve-label');
+
+  let pendingAudioBlob = null;
+  let pendingAudioUrl = null;
+  let reviewAudio = null;
+  let autoPlayResponseAudio = false;
 
   /* ── i18n strings (8 languages + fallback) ────────────────── */
   const i18n = {
@@ -392,6 +436,13 @@
       recStop:      'Stop recording',
       recProcessing:'Transcribing speech...',
       recSuccess:   '✓ Audio transcribed! You can edit text below before sending.',
+      recReviewPrompt: 'Recording captured. Press Listen to hear your recording, Re-record to try again, or Approve and Send to ask the AI.',
+      voiceListenPreview: 'Listen to recording',
+      voicePausePreview: 'Pause recording playback',
+      voiceRerecord: 'Re-record',
+      voiceApproveSend: 'Approve & Send',
+      voiceReviewTitle: 'Voice Question Ready',
+      voiceReviewInstructions: 'Listen to your recording to make sure it is clear, or approve and send it to the assistant.',
       recNoSpeech:  'No speech detected. Please try again.',
       recUnavailable:'Transcription service currently unavailable. You can type your question.',
       ttsUnavailable:'Voice synthesis is not currently available for this language. Text response is provided above.',
@@ -461,6 +512,13 @@
       recStop:      'መቅረጽ አቁም',
       recProcessing:'ድምፅ ወደ ፅሑፍ እየተቀየረ ነው...',
       recSuccess:   '✓ ድምፅዎ ወደ ፅሑፍ ተቀይሯል! ከመላክዎ በፊት ማስተካከል ይችላሉ።',
+      recReviewPrompt: 'ድምፅዎ ተቀርጿል። ለማዳመጥ አዳምጥ፣ እንደገና ለመቅረጽ እንደገና ቅረጽ፣ ወይም ለመላክ አጽድቅና ላክ የሚለውን ይጫኑ።',
+      voiceListenPreview: 'ድምፅዎን ያዳምጡ',
+      voicePausePreview: 'አፍታ አቁም',
+      voiceRerecord: 'እንደገና ቅረጽ',
+      voiceApproveSend: 'አጽድቅና ላክ',
+      voiceReviewTitle: 'የድምፅ ጥያቄ ተዘጋጅቷል',
+      voiceReviewInstructions: 'ድምፅዎን ያዳምጡ ወይም አጽድቀው ለአሲስታንቱ ይላኩ።',
       recNoSpeech:  'ምንም ድምፅ አልተገኘም። እባክዎ እንደገና ይሞክሩ።',
       recUnavailable:'የድምፅ ግልባጭ አገልግሎት ለጊዜው አይገኝም። ጥያቄዎን መጻፍ ይችላሉ።',
       ttsUnavailable:'ለዚህ ቋንቋ የድምፅ ውህደት ለጊዜው አይገኝም። የፅሑፍ ምላሽ ከላይ ተሰጥቷል።',
@@ -530,6 +588,13 @@
       recStop:      'Waraabuu dhaabi',
       recProcessing:'Sagalee gara barreeffamatti jijjiiraa jira...',
       recSuccess:   '✓ Sagaleen gara barreeffamatti jijjiirameera! Erguuf dura sirreessuu dandeessu.',
+      recReviewPrompt: 'Waraabbiin qabameera. Dhaggeeffachuuf Dhaggeeffadhu, irra deebi\'uuf Irra deebi\'i, ykn erguuf Mirkaneessi & Ergi cuqaasi.',
+      voiceListenPreview: 'Waraabbii dhaggeeffadhu',
+      voicePausePreview: 'Dhaabi',
+      voiceRerecord: 'Irra deebi\'i',
+      voiceApproveSend: 'Mirkaneessi & Ergi',
+      voiceReviewTitle: 'Gaaffiin Sagalee Qophii Dha',
+      voiceReviewInstructions: 'Waraabbii kee dhaggeeffadhu ykn mirkaneessitee ergi.',
       recNoSpeech:  'Sagaleen hin dhaga\'amne. Maaloo irra deebiaatii yaalaa.',
       recUnavailable:'Tajaajilli waraabbii yeroof hin jiru. Gaaffii keessan barreessuu dandeessu.',
       ttsUnavailable:'Sagaleen afaan kanaaf yeroof hin jiru. Barreeffamni armaan olitti kennameera.',
@@ -599,6 +664,13 @@
       recStop:      'ምቕዳሕ ኣቋርጽ',
       recProcessing:'ድምጺ ናብ ጽሑፍ ይቕየር ኣሎ...',
       recSuccess:   '✓ ድምጽኹም ናብ ጽሑፍ ተቐይሩ ኣሎ! ቅድሚ ምስዳድኩም ከተዐርዩዎ ትኽእሉ ኢኹም።',
+      recReviewPrompt: 'ድምጽኹም ተቐሪጹ ኣሎ። ንምስማዕ ስማዕ፣ እንደገና ንምቕራጽ እንደገና ቅረጽ፣ ወይ ንምስዳድ ኣጽዲቕካ ስደድ ዝብል ጠውቑ።',
+      voiceListenPreview: 'ድምጽኹም ስምዑ',
+      voicePausePreview: 'ደው ኣብል',
+      voiceRerecord: 'እንደገና ቅረጽ',
+      voiceApproveSend: 'ኣጽዲቕካ ስደድ',
+      voiceReviewTitle: 'ናይ ድምጺ ሕቶ ድሉው ኣሎ',
+      voiceReviewInstructions: 'ድምጽኹም ስምዑ ወይ ኣጽዲቕኩም ናብ ረዳኢ ስደዱ።',
       recNoSpeech:  'ዝተሰምዐ ድምጺ የለን። በጃኹም ደጊምኩም ፈትኑ።',
       recUnavailable:'ናይ ድምጺ ምቕያር ኣገልግሎት ንግዚኡ ኣይርከብን። ሕቶኹም ክትጽሕፉ ትኽእሉ ኢኹም።',
       ttsUnavailable:'ንዚ ቋንቋ ናይ ድምጺ ኣገልግሎት ንግዚኡ ኣይርከብን። ናይ ጽሑፍ መልሲ ተዋሂቡ ኣሎ።',
@@ -668,6 +740,13 @@
       recStop:      'Jooji duubista',
       recProcessing:'Codka waxaa loo beddelayaa qoraal...',
       recSuccess:   '✓ Codka waxaa loo beddelay qoraal! Waad sixi kartaa inta aadan dirin.',
+      recReviewPrompt: 'Duubista waa la qabtay. Riix Dhageyso, Dib u duub ama Ansixi & Dir.',
+      voiceListenPreview: 'Dhageyso codkaaga',
+      voicePausePreview: 'Jooji',
+      voiceRerecord: 'Dib u duub',
+      voiceApproveSend: 'Ansixi & Dir',
+      voiceReviewTitle: 'Su\'aasha Codka waa Diyaar',
+      voiceReviewInstructions: 'Dhageyso codkaaga ka hor intaadan dirin.',
       recNoSpeech:  'Wax cod ah lama helin. Fadlan mar kale isku day.',
       recUnavailable:'Adeegga codka hadda ma heli karo. Waad qori kartaa su\'aashaada.',
       ttsUnavailable:'Codka luuqaddan hadda ma heli karo. Jawaabta qoraalka ayaa kor ku taal.',
@@ -737,6 +816,13 @@
       recStop:      'إيقاف التسجيل',
       recProcessing:'جارٍ تحويل الصوت إلى نص...',
       recSuccess:   '✓ تم تحويل الصوت إلى نص! يمكنك تعديل النص أدناه قبل الإرسال.',
+      recReviewPrompt: 'تم تسجيل صوتك. اضغط استمع لسماع التسجيل، أو إعادة التسجيل، أو موافقة وإرسال.',
+      voiceListenPreview: 'استمع إلى تسجيلك',
+      voicePausePreview: 'إيقاف مؤقت',
+      voiceRerecord: 'إعادة التسجيل',
+      voiceApproveSend: 'موافقة وإرسال',
+      voiceReviewTitle: 'السؤال الصوتي جاهز',
+      voiceReviewInstructions: 'استمع إلى تسجيلك للتأكد منه ثم وافق على إرساله.',
       recNoSpeech:  'لم يتم التقاط أي صوت. يرجى المحاولة مرة أخرى.',
       recUnavailable:'خدمة تحويل الصوت غير متاحة حالياً. يمكنك كتابة سؤالك.',
       ttsUnavailable:'التحويل الصوتي غير متاح حالياً لهذه اللغة. تم توفير الإجابة النصية أعلاه.',
@@ -806,6 +892,13 @@
       recStop:      'Simamisha kurekodi',
       recProcessing:'Inabadilisha sauti kuwa maandishi...',
       recSuccess:   '✓ Sauti imebadilishwa kuwa maandishi! Unaweza kuhariri kabla ya kutuma.',
+      recReviewPrompt: 'Kurekodi kumekamilika. Bonyeza Sikiliza, Rekodi tena, au Idhinisha na Utume.',
+      voiceListenPreview: 'Sikiliza rekodi yako',
+      voicePausePreview: 'Simamisha',
+      voiceRerecord: 'Rekodi tena',
+      voiceApproveSend: 'Idhinisha & Tuma',
+      voiceReviewTitle: 'Swali la Sauti Liko Tayari',
+      voiceReviewInstructions: 'Sikiliza swali lako au uidhinishe na uitume.',
       recNoSpeech:  'Hakuna sauti iliyogunduliwa. Tafadhali jaribu tena.',
       recUnavailable:'Huduma ya kurekodi haipatikani kwa sasa. Unaweza kuandika swali lako.',
       ttsUnavailable:'Usomaji wa sauti haupatikani kwa sasa kwa lugha hii. Jibu la maandishi limetolewa hapo juu.',
@@ -875,6 +968,13 @@
       recStop:      'Arrêter l\'enregistrement',
       recProcessing:'Transcription de la voix en texte...',
       recSuccess:   '✓ Audio transcrit ! Vous pouvez modifier le texte ci-dessous avant de l\'envoyer.',
+      recReviewPrompt: 'Enregistrement capturé. Appuyez sur Écouter, Réenregistrer, ou Approuver et envoyer.',
+      voiceListenPreview: 'Écouter l\'enregistrement',
+      voicePausePreview: 'Pause',
+      voiceRerecord: 'Réenregistrer',
+      voiceApproveSend: 'Approuver et envoyer',
+      voiceReviewTitle: 'Question vocale prête',
+      voiceReviewInstructions: 'Écoutez votre enregistrement pour vérifier sa clarté, ou approuvez-le pour l\'envoyer.',
       recNoSpeech:  'Aucune voix détectée. Veuillez réessayer.',
       recUnavailable:'Le service de transcription est actuellement indisponible. Vous pouvez taper votre question.',
       ttsUnavailable:'La synthèse vocale n\'est pas disponible pour cette langue. La réponse textuelle est fournie ci-dessus.',
@@ -960,6 +1060,14 @@
     if (pillExample) pillExample.setAttribute('aria-label', (t.pillExample || 'Give an example') + ' — ' + (t.title || 'Assistant'));
     if (pillQuiz) pillQuiz.setAttribute('aria-label', (t.pillQuiz || 'Quiz me') + ' — ' + (t.title || 'Assistant'));
     if (selectionPill) selectionPill.setAttribute('aria-label', (t.pillSelection || 'Explain highlighted') + ' — ' + (t.title || 'Assistant'));
+    if (voiceReviewTitleText) voiceReviewTitleText.textContent = t.voiceReviewTitle || 'Voice Question Ready';
+    if (voiceReviewInstructions) voiceReviewInstructions.textContent = t.voiceReviewInstructions || 'Listen to your recording to make sure it is clear, or approve and send it to the assistant.';
+    if (voicePreviewLabel) voicePreviewLabel.textContent = t.voiceListenPreview || 'Listen to Recording';
+    if (voicePreviewBtn) voicePreviewBtn.setAttribute('aria-label', t.voiceListenPreview || 'Listen to your recording');
+    if (voiceRerecordLabel) voiceRerecordLabel.textContent = t.voiceRerecord || 'Re-record';
+    if (voiceRerecordBtn) voiceRerecordBtn.setAttribute('aria-label', t.voiceRerecord || 'Discard recording and record again');
+    if (voiceApproveLabel) voiceApproveLabel.textContent = t.voiceApproveSend || 'Approve & Send';
+    if (voiceApproveBtn) voiceApproveBtn.setAttribute('aria-label', t.voiceApproveSend || 'Approve recording and send question to assistant');
     if (typeof updateContextUI === 'function') updateContextUI();
 
     localStorage.setItem(LANG_KEY, currentLanguage);
@@ -2439,8 +2547,20 @@
 
       playEarcon('answer_ready');
 
-      // Voice Guide announcement for blind learners
-      if (voiceGuideEnabled && reply) {
+      // Voice Guide announcement and auto-playback for blind / voice learners
+      if (autoPlayResponseAudio && reply) {
+        autoPlayResponseAudio = false;
+        const lastMsg = messageList.lastElementChild;
+        const audioBtn = lastMsg ? lastMsg.querySelector('.btn-audio-speak') : null;
+        if (audioBtn) {
+          setTimeout(function () {
+            toggleMessageAudio(reply, currentLanguage, audioBtn);
+          }, 250);
+        } else {
+          playSpeechAudio(reply, currentLanguage);
+        }
+        speakFocus((currentLanguage === 'am' ? 'የአሲስታንት ምላሽ በመሰማት ላይ ነው።' : 'Assistant response received. Reading answer out loud.'));
+      } else if (voiceGuideEnabled && reply) {
         if (/\[QUIZ\]/i.test(reply)) {
           speakFocus((currentLanguage === 'am' ? 'የፈተና ጥያቄዎች ተዘጋጅተዋል። በTab ወደ ጥያቄው ካርድ በመሄድ የቀስት ቁልፎችን በመጠቀም መልሶችን ይምረጡ።' : 'Interactive quiz generated with practice questions. Tab into the question card and use arrow keys to select answers.'));
         } else {
@@ -2559,11 +2679,11 @@
           if (e.data.size > 0) audioChunks.push(e.data);
         };
 
-        mediaRecorder.onstop = async function () {
+        mediaRecorder.onstop = function () {
           stream.getTracks().forEach(function (track) { track.stop(); });
           const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
           if (audioBlob.size > 0) {
-            await uploadAndTranscribe(audioBlob);
+            showVoiceReviewPanel(audioBlob);
           } else {
             if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
             showError(t.recNoSpeech || 'No speech detected. Please try again.');
@@ -2598,7 +2718,100 @@
       }
     }
 
-    async function uploadAndTranscribe(blob) {
+    function showVoiceReviewPanel(blob) {
+      pendingAudioBlob = blob;
+      if (pendingAudioUrl) {
+        try { URL.revokeObjectURL(pendingAudioUrl); } catch (_) {}
+      }
+      try {
+        pendingAudioUrl = URL.createObjectURL(blob);
+        if (reviewAudio) {
+          try { reviewAudio.pause(); } catch (_) {}
+        }
+        reviewAudio = new Audio(pendingAudioUrl);
+
+        if (voiceReviewTime) {
+          voiceReviewTime.textContent = '';
+          reviewAudio.onloadedmetadata = function () {
+            const sec = Math.round(reviewAudio.duration || 0);
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            voiceReviewTime.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+          };
+        }
+
+        reviewAudio.onended = function () {
+          if (voicePreviewIcon) voicePreviewIcon.textContent = '▶️';
+          if (voicePreviewLabel) voicePreviewLabel.textContent = (getI18n().voiceListenPreview || 'Listen to recording');
+          if (voicePreviewBtn) {
+            voicePreviewBtn.classList.remove('playing');
+            voicePreviewBtn.setAttribute('aria-label', getI18n().voiceListenPreview || 'Listen to your recording');
+          }
+          speakFocus('Finished playing recording.');
+        };
+      } catch (err) {
+        console.warn('Audio review creation:', err);
+      }
+
+      if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
+      if (voiceReviewPanel) {
+        voiceReviewPanel.style.display = 'flex';
+        const t = getI18n();
+        speakFocus(t.recReviewPrompt || 'Recording captured. Press Listen to hear your recording, Re-record to try again, or Approve and Send to ask the AI.');
+        if (voicePreviewBtn) {
+          setTimeout(function () { voicePreviewBtn.focus(); }, 150);
+        }
+      }
+    }
+
+    if (voicePreviewBtn) {
+      voicePreviewBtn.addEventListener('click', function () {
+        if (!reviewAudio) return;
+        const t = getI18n();
+        if (!reviewAudio.paused) {
+          reviewAudio.pause();
+          reviewAudio.currentTime = 0;
+          voicePreviewBtn.classList.remove('playing');
+          if (voicePreviewIcon) voicePreviewIcon.textContent = '▶️';
+          if (voicePreviewLabel) voicePreviewLabel.textContent = t.voiceListenPreview || 'Listen to recording';
+          voicePreviewBtn.setAttribute('aria-label', t.voiceListenPreview || 'Listen to your recording');
+        } else {
+          voicePreviewBtn.classList.add('playing');
+          if (voicePreviewIcon) voicePreviewIcon.textContent = '⏸️';
+          if (voicePreviewLabel) voicePreviewLabel.textContent = t.voicePausePreview || 'Pause';
+          voicePreviewBtn.setAttribute('aria-label', t.voicePausePreview || 'Pause recording playback');
+          reviewAudio.play().catch(function () {});
+        }
+      });
+    }
+
+    if (voiceRerecordBtn) {
+      voiceRerecordBtn.addEventListener('click', function () {
+        if (reviewAudio) {
+          try { reviewAudio.pause(); } catch (_) {}
+        }
+        if (voiceReviewPanel) voiceReviewPanel.style.display = 'none';
+        pendingAudioBlob = null;
+        startMediaRecording();
+      });
+    }
+
+    if (voiceApproveBtn) {
+      voiceApproveBtn.addEventListener('click', async function () {
+        if (reviewAudio) {
+          try { reviewAudio.pause(); } catch (_) {}
+        }
+        if (voiceReviewPanel) voiceReviewPanel.style.display = 'none';
+        if (!pendingAudioBlob) return;
+
+        const blobToSend = pendingAudioBlob;
+        pendingAudioBlob = null;
+        autoPlayResponseAudio = true; // Auto-listen to the AI's response!
+        await uploadAndTranscribe(blobToSend, true);
+      });
+    }
+
+    async function uploadAndTranscribe(blob, autoSend) {
       const t = getI18n();
       try {
         if (voiceStatusBanner) {
@@ -2620,18 +2833,22 @@
         if (resp.ok) {
           const data = await resp.json();
           if (data.text && data.text.trim()) {
-            chatInput.value = (chatInput.value ? chatInput.value + ' ' : '') + data.text.trim();
+            chatInput.value = data.text.trim();
             chatInput.dispatchEvent(new Event('input'));
-            chatInput.focus();
 
             if (voiceStatusBanner) {
               voiceStatusBanner.className = 'voice-status-banner success';
               voiceStatusBanner.style.display = 'flex';
-              voiceStatusBanner.textContent = t.recSuccess || '✓ Audio transcribed! You can edit text below before sending.';
-              speakFocus(t.recSuccess || 'Speech transcribed. Review your question in the text box and press Send.');
+              voiceStatusBanner.textContent = t.recSuccess || '✓ Audio transcribed!';
               setTimeout(function () {
                 if (voiceStatusBanner.classList.contains('success')) voiceStatusBanner.style.display = 'none';
-              }, 4500);
+              }, 4000);
+            }
+
+            if (autoSend) {
+              await sendMessage();
+            } else {
+              chatInput.focus();
             }
           } else {
             if (voiceStatusBanner) voiceStatusBanner.style.display = 'none';
